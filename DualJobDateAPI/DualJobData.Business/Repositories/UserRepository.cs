@@ -1,21 +1,15 @@
 ﻿using DualJobData.BusinessLogic.Entities;
+using DualJobData.BusinessLogic.Repositories.Interfaces;
 using DualJobData.DataAccess;
-using DualJobDateAPI.Repository.Interfaces;
 
-namespace DualJobDateAPI.Repository
+namespace DualJobData.BusinessLogic.Repositories
 {
-    public class UserRepository : BaseRepository<User>
+    public class UserRepository(AppDbContext context) : BaseRepository<User>(context), IUserRepository
     {
-        public UserRepository(AppDbContext context, StationTenantConfig stationTenantConfig) : base(context, stationTenantConfig)
-        {
-        }
-
         public IEnumerable<User> GetUsersByStation()
         {
-            var users = base.GetAll()
-                .Where(x => x.StationId == _stationId);
-
-            return users.ToList();
+            var users = base.GetAll();
+            return [.. users];
         }
     }
 }

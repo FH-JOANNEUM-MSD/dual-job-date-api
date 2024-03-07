@@ -1,23 +1,12 @@
-﻿using DualJobData.BusinessLogic.Entities;
+﻿using DualJobData.BusinessLogic.Entities.Base;
+using DualJobData.BusinessLogic.Repositories.Interfaces;
 using DualJobData.DataAccess;
-using DualJobDateAPI.Repository.Interfaces;
 
-namespace DualJobDateAPI.Repository
+namespace DualJobData.BusinessLogic.Repositories
 {
-    public class BaseRepository<T> : IBaseRepository<T>
-        where T : BaseEntity
+    public class BaseRepository<T>(AppDbContext context) : IBaseRepository<T>
+        where T : IBaseEntity
     {
-        private readonly AppDbContext _context;
-        public readonly int? _stationId;
-        public readonly int _tenantId;
-
-        public BaseRepository(AppDbContext context, StationTenantConfig stationTenantConfig)
-        {
-            _context = context;
-            _stationId = stationTenantConfig.StationId;
-            _tenantId = stationTenantConfig.TenantId;
-        }
-
         public void Add(T entity)
         {
             throw new NotImplementedException("Add to db not implemented!");
@@ -49,7 +38,7 @@ namespace DualJobDateAPI.Repository
         }
         public void Dispose()
         {
-            _context.Dispose();
+            ((IDisposable)context).Dispose();
             GC.SuppressFinalize(this);
         }
     }
