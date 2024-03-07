@@ -1,25 +1,14 @@
 ﻿using DualJobData.BusinessLogic.Entities;
 using DualJobData.BusinessLogic.Repositories.Interfaces;
-using DualJobDateAPI.Repository;
-using DualJobDateAPI.Repository.Interfaces;
+using DualJobData.BusinessLogic.Services.Interface;
 
 namespace DualJobData.BusinessLogic.Services
 {
-    public class TestService
+    public class TestService(IUserRepository userRepository) : ITestService
     {
-        private readonly IUserRepository _userRepository;
-
-        public TestService(IUserRepository userRepository)
+        public string Test()
         {
-            _userRepository = userRepository;
-        }
-
-        public void Test()
-        {
-            var user = new User();
-            user.TenantId = 1;
-            user.StationId = 1;
-            _userRepository.Add(user);
+            return "service test call";
         }
     }
 }
