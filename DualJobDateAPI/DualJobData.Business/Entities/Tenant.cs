@@ -1,6 +1,8 @@
-﻿namespace DualJobData.BusinessLogic.Entities
+﻿using DualJobData.BusinessLogic.Entities.Base;
+
+namespace DualJobData.BusinessLogic.Entities
 {
-    public class Tenant
+    public class Tenant : BaseTenantEntity
     {
     }
 }
