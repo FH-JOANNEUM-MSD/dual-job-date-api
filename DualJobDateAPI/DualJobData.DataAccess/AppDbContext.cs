@@ -1,12 +1,12 @@
-﻿namespace DualJobData.DataAccess
+﻿using Microsoft.EntityFrameworkCore;
+
+namespace DualJobData.DataAccess
 {
-    public class AppDbContext : IDisposable//TODO DB Context
+    public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options), IDisposable
     {
         //TODO DbSets
         //TODO OnConfiguring
-        public void Dispose()
-        {
-            throw new NotImplementedException();
-        }
+
+        void IDisposable.Dispose() => base.Dispose();
     }
 }

@@ -1,21 +1,22 @@
-﻿using DualJobData.BusinessLogic.Services;
+﻿using DualJobData.BusinessLogic.Services.Interface;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DualJobDate.API.Controllers
 {
-    public class TestController
+    public class DataController(ITestService myService) : ControllerBase
     {
-        private readonly TestService _testService;
-
-        public TestController(TestService testService)
+        [HttpGet("test")]
+        public IActionResult GetData()
         {
-            _testService = testService;
-        }
-
-        public Action MyAction()
-        {
-            _testService.Test();
-            return null;
+            try
+            {
+                var data = myService.Test();
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
     }
 }
