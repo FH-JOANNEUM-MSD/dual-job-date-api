@@ -9,7 +9,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DualJobData.BusinessLogic",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DualJobData.DataAccess", "DualJobData.DataAccess\DualJobData.DataAccess.csproj", "{D4BEDCDF-873E-4887-902B-B5DDE50F2061}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DatabaseInitializer", "DatabaseInitializer\DatabaseInitializer.csproj", "{86F4730B-A3AD-4646-9EC2-D769E36DC9FF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DualJobDateAPI.DatabaseInitializer", "DualJobDateAPI.DatabaseInitializer\DualJobDateAPI.DatabaseInitializer.csproj", "{86F4730B-A3AD-4646-9EC2-D769E36DC9FF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

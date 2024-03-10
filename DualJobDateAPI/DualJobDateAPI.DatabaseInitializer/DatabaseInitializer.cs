@@ -20,11 +20,10 @@ public class DatabaseInitializer
         _logger.LogInformation("Starting container using Docker Compose...");
         string workingDirectory = Directory.GetCurrentDirectory();
         _logger.LogInformation(workingDirectory);
-
         var startInfo = new ProcessStartInfo
         {
             FileName = "docker-compose",
-            Arguments = "up -d",
+            Arguments = "-f db-dev-compose.yml up -d",
             UseShellExecute = false,
             RedirectStandardOutput = true,
             RedirectStandardError = true,

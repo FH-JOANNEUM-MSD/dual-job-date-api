@@ -22,7 +22,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\DatabaseInitializer\DatabaseInitializer.csproj" />
+      <ProjectReference Include="..\DualJobDateAPI.DatabaseInitializer\DualJobDateAPI.DatabaseInitializer.csproj" />
       <ProjectReference Include="..\DualJobData.Business\DualJobData.BusinessLogic.csproj" />
       <ProjectReference Include="..\DualJobData.DataAccess\DualJobData.DataAccess.csproj" />
     </ItemGroup>
