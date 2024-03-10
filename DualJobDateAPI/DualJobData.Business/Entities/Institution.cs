@@ -2,7 +2,5 @@
 
 namespace DualJobData.BusinessLogic.Entities
 {
-    public class Station : BaseStationEntity
-    {
-    }
+    public class Institution : BaseInstitutionEntity;
 }
