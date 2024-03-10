@@ -2,6 +2,6 @@
 {
     public interface ITestService
     {
-        public string Test();
+        public Task Test();
     }
 }

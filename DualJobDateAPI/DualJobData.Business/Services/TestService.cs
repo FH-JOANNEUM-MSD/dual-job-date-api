@@ -1,14 +1,23 @@
 ﻿using DualJobData.BusinessLogic.Entities;
-using DualJobData.BusinessLogic.Repositories.Interfaces;
 using DualJobData.BusinessLogic.Services.Interface;
+using DualJobData.BusinessLogic.UnitOfWork;
 
 namespace DualJobData.BusinessLogic.Services
 {
-    public class TestService(IUserRepository userRepository) : ITestService
+    public class TestService(IUnitOfWork unitOfWork) : ITestService
     {
-        public string Test()
+        public async Task Test()
         {
-            return "service test call";
+            using var uow = unitOfWork;
+            using var userRepository = uow.UserRepository;
+            var users = await userRepository.GetUsersByAcademicProgramIdAsync(1);
+            var firstUser = users.First();
+            firstUser.UserName = "Test";
+            uow.BeginTransaction();
+            await userRepository.AddAsync(firstUser);
+            var saveTask = uow.SaveChanges();
+            await Task.WhenAll(saveTask);
+            uow.Commit();
         }
     }
 }

@@ -4,5 +4,6 @@ namespace DualJobData.BusinessLogic.Repositories.Interfaces
 {
     public interface IUserRepository : IBaseRepository<User>
     {
+        Task<IEnumerable<User>> GetUsersByAcademicProgramIdAsync(int academicProgramId);
     }
 }

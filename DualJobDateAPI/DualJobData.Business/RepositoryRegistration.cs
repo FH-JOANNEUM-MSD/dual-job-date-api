@@ -1,5 +1,7 @@
 ﻿using DualJobData.BusinessLogic.Repositories;
 using DualJobData.BusinessLogic.Repositories.Interfaces;
+using DualJobData.BusinessLogic.UnitOfWork;
+using DualJobData.DataAccess;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace DualJobData.BusinessLogic
@@ -8,7 +10,9 @@ namespace DualJobData.BusinessLogic
     {
         public static void RegisterRepository(IServiceCollection services)
         {
-            services.AddTransient<IUserRepository, UserRepository>();
+            services.AddScoped<IUnitOfWork, UnitOfWork.UnitOfWork>();
+            services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
+            services.AddScoped<IUserRepository, UserRepository>();
         }
     }
 }

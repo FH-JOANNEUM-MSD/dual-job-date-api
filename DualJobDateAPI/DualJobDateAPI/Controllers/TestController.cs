@@ -6,7 +6,7 @@ namespace DualJobDate.API.Controllers
     public class DataController(ITestService myService) : ControllerBase
     {
         [HttpGet("test")]
-        public IActionResult GetData()
+        public async Task<IActionResult> GetData()
         {
             try
             {

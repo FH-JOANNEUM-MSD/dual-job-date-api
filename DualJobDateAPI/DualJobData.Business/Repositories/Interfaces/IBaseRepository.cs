@@ -2,11 +2,11 @@
 {
     public interface IBaseRepository<T> : IDisposable
     {
-        T GetById(int id);
-        IQueryable<T> GetAll();
-        void Add(T entity);
-        void Update(T entity);
-        void Delete(int id);
-        void Save();
+        Task<T?> GetByIdAsync(int id);
+        Task<IQueryable<T>> GetAllAsync();
+        Task AddAsync(T entity);
+        Task UpdateAsync(T entity);
+        Task DeleteAsync(int id);
+        Task SaveAsync();
     }
 }

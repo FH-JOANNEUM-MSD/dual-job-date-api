@@ -4,41 +4,53 @@ using DualJobData.DataAccess;
 
 namespace DualJobData.BusinessLogic.Repositories
 {
-    public class BaseRepository<T>(AppDbContext context) : IBaseRepository<T>
-        where T : IBaseEntity
+    public class BaseRepository<T>(AppDbContext dbContext) : IBaseRepository<T>
+        where T : class, IBaseEntity
     {
-        public void Add(T entity)
+        private readonly AppDbContext _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
+
+        public async Task<T?> GetByIdAsync(int id)
         {
-            throw new NotImplementedException("Add to db not implemented!");
+            var entity = await _dbContext.Set<T>().FindAsync(id);
+            return entity;
         }
 
-        public void Delete(int id)
+        public async Task<IQueryable<T>> GetAllAsync()
         {
-            throw new NotImplementedException("Delete from db not implemented!");
+            return await Task.FromResult(_dbContext.Set<T>().AsQueryable());
         }
 
-        public IQueryable<T> GetAll()
+        public async Task AddAsync(T entity)
         {
-            throw new NotImplementedException("GetAll from db not implemented!");
+            _dbContext.Set<T>().Add(entity);
+            await SaveAsync();
         }
 
-        public T GetById(int id)
+        public async Task UpdateAsync(T entity)
         {
-            throw new NotImplementedException("Get by id from db not implemented!");
+            _dbContext.Set<T>().Update(entity);
+            await SaveAsync();
         }
 
-        public void Save()
+        public async Task DeleteAsync(int id)
         {
-            throw new NotImplementedException("Save entity from db not implemented!");
+            var entity = await GetByIdAsync(id);
+            if (entity is null)
+            {
+                return;
+            }
+            _dbContext.Set<T>().Remove(entity);
+            await SaveAsync();
         }
 
-        public void Update(T entity)
+        public async Task SaveAsync()
         {
-            throw new NotImplementedException("Update entity from db not implemented!");
+            await _dbContext.SaveChangesAsync();
         }
+
         public void Dispose()
         {
-            ((IDisposable)context).Dispose();
+            _dbContext.Dispose();
             GC.SuppressFinalize(this);
         }
     }

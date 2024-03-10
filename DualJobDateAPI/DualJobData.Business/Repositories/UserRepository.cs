@@ -4,12 +4,12 @@ using DualJobData.DataAccess;
 
 namespace DualJobData.BusinessLogic.Repositories
 {
-    public class UserRepository(AppDbContext context) : BaseRepository<User>(context), IUserRepository
+    public class UserRepository(AppDbContext dbContext) : BaseRepository<User>(dbContext), IUserRepository
     {
-        public IEnumerable<User> GetUsersByStation()
+        public async Task<IEnumerable<User>> GetUsersByAcademicProgramIdAsync(int academicProgramId)
         {
-            var users = base.GetAll();
-            return [.. users];
+            var users = await base.GetAllAsync();
+            return users.Where(x => x.AcademicProgramId == academicProgramId);
         }
     }
 }
