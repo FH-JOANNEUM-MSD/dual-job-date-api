@@ -25,7 +25,7 @@ namespace DualJobDate.API
                 builder.Configuration.GetConnectionString("AppDebugConnection");
 #else
             connectionString =
-                builder.Configuration["AppReleaseConnection"];
+                builder.Configuration.GetConnectionString("AppReleaseConnection");
 #endif
             builder.Services.AddDbContext<AppDbContext>(options =>
                 options.UseMySQL(connectionString));
