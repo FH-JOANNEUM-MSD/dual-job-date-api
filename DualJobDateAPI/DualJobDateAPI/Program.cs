@@ -14,12 +14,21 @@ namespace DualJobDate.API
         private static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+            var logger = builder.Services.BuildServiceProvider().GetRequiredService<ILogger<Program>>();
 
             RepositoryRegistration.RegisterRepository(builder.Services);
             ServiceRegistration.RegisterServices(builder.Services);
+            string connectionString;
 
+#if DEBUG
+            connectionString =
+                builder.Configuration.GetConnectionString("AppDebugConnection");
+#else
+            connectionString =
+                builder.Configuration["AppReleaseConnection"];
+#endif
             builder.Services.AddDbContext<AppDbContext>(options =>
-                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+                options.UseMySQL(connectionString));
             builder.Services.AddSingleton<DatabaseInitializer>();
             builder.Services.AddIdentity<User, IdentityRole>(options =>
             {
@@ -52,7 +61,7 @@ namespace DualJobDate.API
 
             builder.Services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Your API Name", Version = "v1" });
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "DualJobDateAPI", Version = "v1" });
             });
 
             builder.Services.AddControllers();
@@ -63,7 +72,29 @@ namespace DualJobDate.API
             var dbInitializer = app.Services.GetRequiredService<DatabaseInitializer>();
             dbInitializer.InitializeDatabaseAsync();
 #endif
-
+            
+            using (var scope = app.Services.CreateScope())
+            {
+                var services = scope.ServiceProvider;
+                try
+                {
+                    var context = services.GetRequiredService<AppDbContext>();
+                    if (context.Database.CanConnect())
+                    {
+                        logger.LogInformation("Connection to database established!");
+                    }
+                    else
+                    {
+                        logger.LogError("Could not establish connection to database!");
+                        Environment.Exit(-1);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.LogCritical($"Error while trying to establish connection: {ex.Message}");
+                    Environment.Exit(-1);
+                }
+            }
 
             if (app.Environment.IsDevelopment())
             {
