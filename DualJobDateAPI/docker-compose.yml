@@ -1,0 +1,13 @@
+version: '3.8'
+services:
+  mysql-db:
+    image: mysql:8.0
+    container_name: DualJobDate-Database-Container
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: DualJobDate
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    ports:
+      - "3307:3307"
+    restart: unless-stopped

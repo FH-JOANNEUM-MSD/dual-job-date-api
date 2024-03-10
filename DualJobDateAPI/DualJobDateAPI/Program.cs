@@ -20,7 +20,7 @@ namespace DualJobDate.API
 
             builder.Services.AddDbContext<AppDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
+            builder.Services.AddSingleton<DatabaseInitializer>();
             builder.Services.AddIdentity<User, IdentityRole>(options =>
             {
                 // Identity options configuration
@@ -58,6 +58,12 @@ namespace DualJobDate.API
             builder.Services.AddControllers();
 
             var app = builder.Build();
+
+#if DEBUG
+            var dbInitializer = app.Services.GetRequiredService<DatabaseInitializer>();
+            dbInitializer.InitializeDatabaseAsync();
+#endif
+
 
             if (app.Environment.IsDevelopment())
             {
