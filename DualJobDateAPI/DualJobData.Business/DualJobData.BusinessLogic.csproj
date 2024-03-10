@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\DualJobData.BusinessObjects\DualJobData.BusinessObjects.csproj" />
     <ProjectReference Include="..\DualJobData.DataAccess\DualJobData.DataAccess.csproj" />
   </ItemGroup>
 
