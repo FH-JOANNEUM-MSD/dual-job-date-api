@@ -18,9 +18,18 @@ namespace DualJobDate.API
             RepositoryRegistration.RegisterRepository(builder.Services);
             ServiceRegistration.RegisterServices(builder.Services);
 
+#if DEBUG
+            var connectionString =
+                builder.Configuration.GetConnectionString("AppDebugConnection");
+#else
+            var connectionString =
+                builder.Configuration.GetConnectionString("AppReleaseConnection");
+#endif
             builder.Services.AddDbContext<AppDbContext>(options =>
-                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
+            {
+                if (connectionString != null) options.UseMySQL(connectionString);
+            });
+            builder.Services.AddSingleton<DatabaseInitializer.DatabaseInitializer>();
             builder.Services.AddIdentity<User, IdentityRole>(options =>
             {
                 // Identity options configuration
@@ -52,17 +61,47 @@ namespace DualJobDate.API
 
             builder.Services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Your API Name", Version = "v1" });
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "DualJobDate API", Version = "v1" });
             });
 
             builder.Services.AddControllers();
 
             var app = builder.Build();
+            var logger = app.Services.GetRequiredService<ILogger<Program>>();
+
+
+#if DEBUG
+            var dbInitializer = app.Services.GetRequiredService<DatabaseInitializer.DatabaseInitializer>();
+            dbInitializer.InitializeDatabaseAsync();
+#endif
+            
+            using (var scope = app.Services.CreateScope())
+            {
+                var services = scope.ServiceProvider;
+                try
+                {
+                    var context = services.GetRequiredService<AppDbContext>();
+                    if (context.Database.CanConnect())
+                    {
+                        logger.LogInformation("Connection to database established!");
+                    }
+                    else
+                    {
+                        logger.LogError("Could not establish connection to database!");
+                        Environment.Exit(-1);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.LogCritical("Error while trying to establish connection: {ExMessage}", ex.Message);
+                    Environment.Exit(-1);
+                }
+            }
 
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
-                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Your API Name v1"));
+                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "DualJobDate API v1"));
             }
 
             app.UseHttpsRedirection();
