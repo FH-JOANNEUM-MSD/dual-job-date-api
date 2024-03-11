@@ -1,52 +1,44 @@
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 
-public class DatabaseInitializer
+namespace DatabaseInitializer
 {
-    private readonly ILogger<DatabaseInitializer> _logger;
-
-    public DatabaseInitializer(ILogger<DatabaseInitializer> logger)
+    public class DatabaseInitializer(ILogger<DatabaseInitializer> logger)
     {
-        _logger = logger;
-    }
-
-    public void InitializeDatabaseAsync()
-    {
-        StartContainer();
-    }
-
-    private void StartContainer()
-    {
-        _logger.LogInformation("Starting container using Docker Compose...");
-        string workingDirectory = Directory.GetCurrentDirectory();
-        _logger.LogInformation(workingDirectory);
-        var startInfo = new ProcessStartInfo
+        public void InitializeDatabaseAsync()
         {
-            FileName = "docker-compose",
-            Arguments = "-f db-dev-compose.yml up -d",
-            UseShellExecute = false,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            CreateNoWindow = true,
-            WorkingDirectory = workingDirectory
-        };
-
-        using (var process = Process.Start(startInfo))
+            StartContainer();
+        }
+    
+        private void StartContainer()
         {
-            process.WaitForExit();
+            logger.LogInformation("Starting container using Docker Compose...");
+            var workingDirectory = Directory.GetCurrentDirectory();
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "docker-compose",
+                Arguments = "-f db-dev-compose.yml up -d",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true,
+                WorkingDirectory = workingDirectory
+            };
 
-            // Lies und logge den Standard- und Fehleroutput
-            var output = process.StandardOutput.ReadToEnd();
-            var error = process.StandardError.ReadToEnd();
-
+            using var process = Process.Start(startInfo);
+            process?.WaitForExit();
+    
+            var output = process?.StandardOutput.ReadToEnd();
+            var error = process?.StandardError.ReadToEnd();
+    
             if (!string.IsNullOrWhiteSpace(output))
             {
-                _logger.LogInformation($"Output: {output}");
+                logger.LogInformation("Output: {Output}", output);
             }
-
+    
             if (!string.IsNullOrWhiteSpace(error))
             {
-                _logger.LogInformation($"Output: {error}");
+                logger.LogInformation("Output: {Error}", error);
             }
         }
     }

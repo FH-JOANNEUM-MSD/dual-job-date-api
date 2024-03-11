@@ -14,22 +14,22 @@ namespace DualJobDate.API
         private static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-            var logger = builder.Services.BuildServiceProvider().GetRequiredService<ILogger<Program>>();
 
             RepositoryRegistration.RegisterRepository(builder.Services);
             ServiceRegistration.RegisterServices(builder.Services);
-            string connectionString;
 
 #if DEBUG
-            connectionString =
+            var connectionString =
                 builder.Configuration.GetConnectionString("AppDebugConnection");
 #else
-            connectionString =
+            var connectionString =
                 builder.Configuration.GetConnectionString("AppReleaseConnection");
 #endif
             builder.Services.AddDbContext<AppDbContext>(options =>
-                options.UseMySQL(connectionString));
-            builder.Services.AddSingleton<DatabaseInitializer>();
+            {
+                if (connectionString != null) options.UseMySQL(connectionString);
+            });
+            builder.Services.AddSingleton<DatabaseInitializer.DatabaseInitializer>();
             builder.Services.AddIdentity<User, IdentityRole>(options =>
             {
                 // Identity options configuration
@@ -61,15 +61,17 @@ namespace DualJobDate.API
 
             builder.Services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "DualJobDateAPI", Version = "v1" });
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "DualJobDate API", Version = "v1" });
             });
 
             builder.Services.AddControllers();
 
             var app = builder.Build();
+            var logger = app.Services.GetRequiredService<ILogger<Program>>();
+
 
 #if DEBUG
-            var dbInitializer = app.Services.GetRequiredService<DatabaseInitializer>();
+            var dbInitializer = app.Services.GetRequiredService<DatabaseInitializer.DatabaseInitializer>();
             dbInitializer.InitializeDatabaseAsync();
 #endif
             
@@ -91,7 +93,7 @@ namespace DualJobDate.API
                 }
                 catch (Exception ex)
                 {
-                    logger.LogCritical($"Error while trying to establish connection: {ex.Message}");
+                    logger.LogCritical("Error while trying to establish connection: {ExMessage}", ex.Message);
                     Environment.Exit(-1);
                 }
             }
@@ -99,7 +101,7 @@ namespace DualJobDate.API
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
-                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Your API Name v1"));
+                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "DualJobDate API v1"));
             }
 
             app.UseHttpsRedirection();
