@@ -9,3 +9,9 @@ Docker must be installed on your system. If it's not already installed, visit th
 
 ### Building and Running the Application
 Simply start the application in debug mode. A docker-compose file will be executed with `docker-compose up -d`, which creates a MySQL8 database within a docker container and starts it.
+
+### Migrating DB
+dotnet ef migrations add Migration_20240311 --project DualJobDate.DataAccess --startup-project DualJobDate.Api
+
+### Updating DB
+dotnet ef database update --project DualJobDate.DataAccess --startup-project DualJobDate.Api
