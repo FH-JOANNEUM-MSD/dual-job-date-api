@@ -1,3 +1,4 @@
+using DualJobDate.Api.Extensions;
 using DualJobDate.BusinessLogic;
 using DualJobDate.BusinessObjects.Entities;
 using DualJobDate.DataAccess;
@@ -29,7 +30,6 @@ namespace DualJobDate.API
             {
                 if (connectionString != null) options.UseMySQL(connectionString);
             });
-            builder.Services.AddSingleton<DatabaseInitializer.DatabaseInitializer>();
             builder.Services.AddIdentity<User, IdentityRole>(options =>
             {
                 // Identity options configuration
@@ -67,36 +67,14 @@ namespace DualJobDate.API
             builder.Services.AddControllers();
 
             var app = builder.Build();
-            var logger = app.Services.GetRequiredService<ILogger<Program>>();
-
 
 #if DEBUG
-            var dbInitializer = app.Services.GetRequiredService<DatabaseInitializer.DatabaseInitializer>();
-            dbInitializer.InitializeDatabaseAsync();
+            using var scope = app.Services.CreateScope();
+            var services = scope.ServiceProvider;
+            var loggerFactory = services.GetRequiredService<ILoggerFactory>();
+            DatabaseInitializer.DatabaseInitializer.InitializeDb(loggerFactory);
 #endif
-            
-            using (var scope = app.Services.CreateScope())
-            {
-                var services = scope.ServiceProvider;
-                try
-                {
-                    var context = services.GetRequiredService<AppDbContext>();
-                    if (context.Database.CanConnect())
-                    {
-                        logger.LogInformation("Connection to database established!");
-                    }
-                    else
-                    {
-                        logger.LogError("Could not establish connection to database!");
-                        Environment.Exit(-1);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    logger.LogCritical("Error while trying to establish connection: {ExMessage}", ex.Message);
-                    Environment.Exit(-1);
-                }
-            }
+            DatabaseConnectionTester.TestDbConnection(app).Wait();
 
             if (app.Environment.IsDevelopment())
             {
@@ -108,6 +86,8 @@ namespace DualJobDate.API
 
             app.UseAuthentication();
             app.UseAuthorization();
+            app.MapGet("/", () => "DualJobDate API. Following Endpoints are accessible:");
+
 
             app.MapControllers();
 
