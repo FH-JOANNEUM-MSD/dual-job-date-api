@@ -1,4 +1,4 @@
-/DualJobDateAPI/DualJobDate.DataAccess\Migrations/*
+/DualJobDateAPI/DualJobDate.DataAccess/Migrations/*
 
 # macOS
 *.DS_Store
