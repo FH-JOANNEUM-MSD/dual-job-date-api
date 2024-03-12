@@ -1,17 +1,13 @@
 using System.Diagnostics;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace DualJobDate.DatabaseInitializer
 {
     public static class DatabaseInitializer
     {
-        public static void InitializeDb(WebApplication app)
+        public static void InitializeDb(ILoggerFactory loggerFactory)
         {
-            using var scope = app.Services.CreateScope();
-            var services = scope.ServiceProvider;
-            var loggerFactory = services.GetRequiredService<ILoggerFactory>();
+
             var logger = loggerFactory.CreateLogger("DatabaseInitializer");
             logger.LogInformation("Starting container using Docker Compose...");
 
