@@ -69,7 +69,10 @@ namespace DualJobDate.API
             var app = builder.Build();
 
 #if DEBUG
-            DatabaseInitializer.DatabaseInitializer.InitializeDb(app);
+            using var scope = app.Services.CreateScope();
+            var services = scope.ServiceProvider;
+            var loggerFactory = services.GetRequiredService<ILoggerFactory>();
+            DatabaseInitializer.DatabaseInitializer.InitializeDb(loggerFactory);
 #endif
             DatabaseConnectionTester.TestDbConnection(app).Wait();
 
