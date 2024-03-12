@@ -1,4 +1,5 @@
-﻿using DualJobDate.BusinessObjects.Entities.Interface;
+﻿using DualJobDate.BusinessObjects.Entities.Enum;
+using DualJobDate.BusinessObjects.Entities.Interface;
 using Microsoft.AspNetCore.Identity;
 
 namespace DualJobDate.BusinessObjects.Entities
@@ -10,5 +11,7 @@ namespace DualJobDate.BusinessObjects.Entities
         public Institution? Institution { get; set; }
         public int InstitutionId { get; set; }
         int IBaseEntity.Id { get; set; }
+        public bool IsActive { get; set; }
+        public UserType UserType { get; set; }
     }
 }
