@@ -14,36 +14,35 @@ public static class DatabaseConnectionTester
 
         while (!isConnected && attempt < 5)
         {
-            using (var scope = app.Services.CreateScope())
+            using var scope = app.Services.CreateScope();
+            var services = scope.ServiceProvider;
+            try
             {
-                var services = scope.ServiceProvider;
-                try
+                var context = services.GetRequiredService<AppDbContext>();
+                if (await context.Database.CanConnectAsync())
                 {
-                    var context = services.GetRequiredService<AppDbContext>();
-                    if (await context.Database.CanConnectAsync())
-                    {
-                        logger.LogInformation("Connection to database established!");
-                        isConnected = true;
-                        break;
-                    }
-                    else
-                    {
-                        logger.LogError("Could not establish connection to database!");
-                    }
+                    logger.LogInformation("Connection to database established!");
+                    isConnected = true;
+                    break;
                 }
-                catch (Exception ex)
+                else
                 {
-                    logger.LogCritical("Error while trying to establish connection: {ExMessage}", ex.Message);
+                    logger.LogError("Could not establish connection to database!");
                 }
             }
-
-            attempt++;
-            if (!isConnected && attempt < 5)
+            catch (Exception ex)
             {
-                logger.LogInformation("Waiting 5 seconds before attempt {Attempt}...", attempt + 1);
-                await Task.Delay(5000);
+                logger.LogCritical("Error while trying to establish connection: {ExMessage}", ex.Message);
             }
         }
+
+        attempt++;
+        if (!isConnected && attempt < 5)
+        {
+            logger.LogInformation("Waiting 5 seconds before attempt {Attempt}...", attempt + 1);
+            await Task.Delay(5000);
+        }
+        
 
         if (!isConnected)
         {
