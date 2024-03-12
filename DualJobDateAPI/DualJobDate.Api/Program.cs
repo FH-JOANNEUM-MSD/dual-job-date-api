@@ -2,6 +2,7 @@ using DualJobDate.Api.Extensions;
 using DualJobDate.BusinessLogic;
 using DualJobDate.BusinessObjects.Entities;
 using DualJobDate.DataAccess;
+using DualJobDate.DatabaseInitializer;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -73,6 +74,8 @@ namespace DualJobDate.API
             var services = scope.ServiceProvider;
             var loggerFactory = services.GetRequiredService<ILoggerFactory>();
             DatabaseInitializer.DatabaseInitializer.InitializeDb(loggerFactory);
+            var dbContext = services.GetRequiredService<AppDbContext>();
+            DatabaseUpdater.DatabaseMigrationHelper(dbContext, loggerFactory);
 #endif
             DatabaseConnectionTester.TestDbConnection(app).Wait();
 
