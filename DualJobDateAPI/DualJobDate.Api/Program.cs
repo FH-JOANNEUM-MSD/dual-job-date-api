@@ -71,7 +71,7 @@ namespace DualJobDate.API
 #if DEBUG
             DatabaseInitializer.DatabaseInitializer.InitializeDb(app);
 #endif
-            DatabaseTester.TestDbConnection(app).Wait();
+            DatabaseConnectionTester.TestDbConnection(app).Wait();
 
             if (app.Environment.IsDevelopment())
             {

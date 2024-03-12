@@ -3,7 +3,7 @@ using DualJobDate.DataAccess;
 
 namespace DualJobDate.Api.Extensions;
 
-public static class DatabaseTester
+public static class DatabaseConnectionTester
 {
     public static async Task TestDbConnection(WebApplication app)
     {
