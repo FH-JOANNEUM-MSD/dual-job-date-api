@@ -13,5 +13,8 @@ public class Address : BaseEntity
     public float Floor { get; set; }
     
     //navigation properties
-    public List<Company> Companies { get; set; } = new();
+    public int? CompanyId { get; set; }
+    public Company? Company { get; set; }
+    public int? InstitutionId { get; set; }
+    public Institution? Institution { get; set; }
 }

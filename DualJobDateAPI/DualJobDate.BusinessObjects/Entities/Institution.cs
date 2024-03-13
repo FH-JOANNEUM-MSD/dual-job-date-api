@@ -9,8 +9,7 @@ namespace DualJobDate.BusinessObjects.Entities
         public string Website { get; set; }
         
         //navigation properties
-        public int AddressId { get; set; }
-        public Address Address { get; set; }
+        public List<Address> Addresses { get; set; } = new();
         public List<User> Users { get; set; } = new();
     }
 }
