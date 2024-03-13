@@ -8,8 +8,6 @@ namespace DualJobDate.BusinessObjects.Entities
     {
         public AcademicProgram? AcademicProgram { get; set; }
         public int? AcademicProgramId { get; set; }
-        public Institution? Institution { get; set; }
-        public int InstitutionId { get; set; }
         int IBaseEntity.Id { get; set; }
         public bool IsActive { get; set; }
         public UserTypeEnum UserType { get; set; }
@@ -19,5 +17,10 @@ namespace DualJobDate.BusinessObjects.Entities
         public DateTime BirthDate { get; set; }
         public bool IsNew { get; set; }
         // Mail in IdentityUser
+        
+        //navigation properties
+        public int InstitutionId { get; set; }
+        public Institution? Institution { get; set; }
+        public List<Company> Companies { get; set; } = new();
     }
 }

@@ -1,6 +1,6 @@
 ﻿namespace DualJobDate.BusinessObjects.Entities.Enums;
 
-public enum AcademicDegree
+public enum AcademicDegreeEnum
 {
     Bachelor,
     Master,

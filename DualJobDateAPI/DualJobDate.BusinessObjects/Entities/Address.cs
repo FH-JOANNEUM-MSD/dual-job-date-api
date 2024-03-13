@@ -1,6 +1,8 @@
-﻿namespace DualJobDate.BusinessObjects.Entities;
+﻿using DualJobDate.BusinessObjects.Entities.Base;
 
-public class Address
+namespace DualJobDate.BusinessObjects.Entities;
+
+public class Address : BaseEntity
 {
     public string Street { get; set; }
     public string BuildingNumber { get; set; }
@@ -9,4 +11,7 @@ public class Address
     public string PostalCode { get; set; }
     public string Country { get; set; }
     public float Floor { get; set; }
+    
+    //navigation properties
+    public List<Company> Companies { get; set; } = new();
 }

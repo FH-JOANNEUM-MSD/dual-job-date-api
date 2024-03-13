@@ -8,6 +8,6 @@ namespace DualJobDate.BusinessObjects.Entities
         public int Year { get; set; }
         public string Name { get; set; }
         public string KeyName { get; set; }
-        public AcademicDegree AcademicDegree { get; set; } = AcademicDegree.Default;
+        public AcademicDegreeEnum AcademicDegreeEnum { get; set; } = AcademicDegreeEnum.Default;
     }
 }
