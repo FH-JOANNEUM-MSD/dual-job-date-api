@@ -12,9 +12,10 @@ public class Company: BaseEntity
     
     
     //navigation properties
-    public int UserId { get; set; }
     public User User { get; set; }
     public int CompanyDetailsId { get; set; }
     public CompanyDetails CompanyDetails { get; set; }
     public List<Address> Addresses { get; set; } = new();
+    public List<CompanyActivity> CompanyActivities { get; set; } = new();
+    public List<AcademicProgram> AcademicPrograms { get; set; } = new();
 }
