@@ -14,5 +14,18 @@ namespace DualJobDate.DataAccess
         }
 
         void IDisposable.Dispose() => base.Dispose();
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder
+                .Entity<UserType>()
+                .Property(x => x.UserTypeEnum)
+                .HasConversion<int>();
+            
+            modelBuilder
+                .Entity<AcademicDegree>()
+                .Property(x => x.AcademicDegreeEnum)
+                .HasConversion<int>();
+        }
     }
 }
