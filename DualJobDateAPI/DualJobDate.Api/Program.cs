@@ -86,6 +86,8 @@ namespace DualJobDate.API
 
             app.UseAuthentication();
             app.UseAuthorization();
+            app.MapGet("/", () => "DualJobDate API. Following Endpoints are accessible:");
+
 
             app.MapControllers();
 
