@@ -1,12 +1,17 @@
+using System.Reflection;
+using AutoMapper;
 using DualJobDate.Api.Extensions;
 using DualJobDate.BusinessLogic;
 using DualJobDate.BusinessObjects.Entities;
 using DualJobDate.DataAccess;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Swashbuckle.AspNetCore.Filters;
+using The_Reading_Muse_API.Mapping;
 
 namespace DualJobDate.API
 {
@@ -18,7 +23,6 @@ namespace DualJobDate.API
 
             RepositoryRegistration.RegisterRepository(builder.Services);
             ServiceRegistration.RegisterServices(builder.Services);
-
 #if DEBUG
             var connectionString =
                 builder.Configuration.GetConnectionString("AppDebugConnection");
@@ -30,6 +34,11 @@ namespace DualJobDate.API
             {
                 if (connectionString != null) options.UseMySQL(connectionString);
             });
+            
+            builder.Services.AddEndpointsApiExplorer();
+
+            builder.Services.AddControllers();
+
             builder.Services.AddIdentity<User, IdentityRole>(options =>
             {
                 // Identity options configuration
@@ -43,29 +52,36 @@ namespace DualJobDate.API
             })
                 .AddEntityFrameworkStores<AppDbContext>()
                 .AddDefaultTokenProviders();
-
-            builder.Services.AddAuthentication(options =>
+            builder.Services.AddAuthorization(options =>
             {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            }).AddJwtBearer(options =>
-            {
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-                };
+                options.AddPolicy("Admin", policy => policy.RequireRole("Admin"));
             });
 
+            builder.Services.AddAuthentication().AddBearerToken(IdentityConstants.BearerScheme);
+            builder.Services.AddAuthorizationBuilder();
+            
             builder.Services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "DualJobDate API", Version = "v1" });
+                c.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme()
+                    {
+                        In = ParameterLocation.Header,
+                        Name = "Authorization",
+                        Type = SecuritySchemeType.ApiKey
+                    }
+                );
+                c.OperationFilter<SecurityRequirementsOperationFilter>();
             });
-
-            builder.Services.AddControllers();
-
+            
+            var mappingConfig = new MapperConfiguration(mc =>
+            {
+                mc.AddProfile(new ModelToResourceProfile());
+                mc.AddProfile(new ResourceToModelProfile());
+            });
+            
+            var mapper = mappingConfig.CreateMapper();
+            builder.Services.AddSingleton(mapper);
+            
             var app = builder.Build();
 
 #if DEBUG
@@ -73,8 +89,12 @@ namespace DualJobDate.API
             var services = scope.ServiceProvider;
             var loggerFactory = services.GetRequiredService<ILoggerFactory>();
             DatabaseInitializer.DatabaseInitializer.InitializeDb(loggerFactory);
+            var userManager = services.GetRequiredService<UserManager<User>>();
+            var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+            DatabaseInitializer.DatabaseInitializer.SeedData(userManager, roleManager);
 #endif
             DatabaseConnectionTester.TestDbConnection(app).Wait();
+
 
             if (app.Environment.IsDevelopment())
             {
@@ -86,11 +106,8 @@ namespace DualJobDate.API
 
             app.UseAuthentication();
             app.UseAuthorization();
-            app.MapGet("/", () => "DualJobDate API. Following Endpoints are accessible:");
-
-
             app.MapControllers();
-
+            app.MapGet("/", () => "DualJobDate API. Following Endpoints are accessible:");
             app.Run();
         }
     }

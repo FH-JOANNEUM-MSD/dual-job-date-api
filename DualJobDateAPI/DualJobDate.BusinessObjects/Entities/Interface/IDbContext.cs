@@ -5,8 +5,9 @@ namespace DualJobDate.BusinessObjects.Entities.Interface
 {
     public interface IDbContext : IDisposable
     {
-        DbSet<Institution> Institutions { get; set; }
-        DbSet<AcademicProgram> AcademicPrograms { get; set; }
+        
+        public DbSet<User> Users { get; set; }
+
         Task<int> SaveChangesAsync();
     }
 }

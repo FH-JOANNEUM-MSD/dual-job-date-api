@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using DualJobDate.BusinessObjects.Entities;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 
 namespace DualJobDate.DatabaseInitializer
@@ -38,6 +40,19 @@ namespace DualJobDate.DatabaseInitializer
             if (!string.IsNullOrWhiteSpace(error))
             {
                 logger.LogInformation("Output: {Error}", error);
+            }
+        }
+        
+        public static async Task SeedData(UserManager<User> userManager, RoleManager<IdentityRole> roleManager)
+        {
+            await SeedRoles(roleManager);
+        }
+
+        public static async Task SeedRoles(RoleManager<IdentityRole> roleManager)
+        {
+            if (!await roleManager.RoleExistsAsync("Admin"))
+            {
+                await roleManager.CreateAsync(new IdentityRole("Admin"));
             }
         }
     }
