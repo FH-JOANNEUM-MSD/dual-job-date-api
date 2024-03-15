@@ -9,6 +9,7 @@ namespace DualJobDate.BusinessLogic
         public static void RegisterServices(IServiceCollection services)
         {
             services.AddTransient<ITestService, TestService>();
+            services.AddTransient<IEmailSender, EmailSender>();
         }
 
     }

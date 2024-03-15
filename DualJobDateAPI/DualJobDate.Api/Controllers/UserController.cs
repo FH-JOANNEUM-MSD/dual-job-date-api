@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using AutoMapper;
 using DualJobDate.API.Models;
 using DualJobDate.API.Resources;
+using DualJobDate.BusinessLogic.Services;
 using DualJobDate.BusinessObjects.Entities;
 using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.Authorization;
@@ -19,7 +20,8 @@ public class UserController(
     UserManager<User> userManager,
     SignInManager<User> signInManager,
     IServiceProvider serviceProvider,
-    IMapper _mapper)
+    IMapper _mapper,
+    IEmailSender _emailSender)
     : ControllerBase
 {
     private static readonly EmailAddressAttribute EmailAddressAttribute = new();
@@ -40,7 +42,6 @@ public class UserController(
 
         var user = new User { Email = model.Email };
         await userStore.SetUserNameAsync(user, email, CancellationToken.None);
-        await emailStore.SetEmailAsync(user, email, CancellationToken.None);
         const string password = "Password!1";
         var result = await userManager.CreateAsync(user, password);
 
@@ -51,7 +52,7 @@ public class UserController(
 
         await userManager.AddToRoleAsync(user, role);
         
-        // await SendConfirmationEmailAsync(user, userManager, context, email);
+        _emailSender.SendEmailAsync(user.Email, password);
         return Ok($"User '{user.Email}' created successfully");
     }
     

@@ -23,4 +23,8 @@
     <ProjectReference Include="..\DualJobDate.BusinessObjects\DualJobDate.BusinessObjects.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="Templates\email.html" />
+  </ItemGroup>
+
 </Project>

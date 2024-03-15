@@ -29,4 +29,8 @@
       <ProjectReference Include="..\DualJobDate.DatabaseInitializer\DualJobDate.DatabaseInitializer.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Remove="email.html" />
+    </ItemGroup>
+
 </Project>
