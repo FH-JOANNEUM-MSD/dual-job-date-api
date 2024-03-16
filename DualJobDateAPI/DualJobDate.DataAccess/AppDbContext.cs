@@ -35,6 +35,12 @@ namespace DualJobDate.DataAccess
                 .Entity<AcademicDegree>()
                 .Property(x => x.AcademicDegreeEnum)
                 .HasConversion<int>();
+
+            modelBuilder.Entity<AcademicProgram>(builder =>
+            {
+                builder.HasIndex(x => new { x.Year, x.KeyName })
+                    .IsUnique();
+            });
         }
     }
 }
