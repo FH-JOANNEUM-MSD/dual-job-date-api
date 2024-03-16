@@ -4,13 +4,9 @@ using Microsoft.AspNetCore.Identity;
 
 namespace DualJobDate.BusinessObjects.Entities
 {
-    public class User : IdentityUser<string>, IBaseAcademicProgramEntity
+    public class User : IdentityUser<string>, IBaseEntity
     {
-        public AcademicProgram? AcademicProgram { get; set; }
-        public int? AcademicProgramId { get; set; }
-        public Institution? Institution { get; set; }
-        public int InstitutionId { get; set; }
-        int IBaseEntity.Id { get; set; }
+        public int Id { get; set; }
         public bool IsActive { get; set; }
         public UserTypeEnum UserType { get; set; }
         public string FirstName { get; set; }
@@ -19,5 +15,13 @@ namespace DualJobDate.BusinessObjects.Entities
         public DateTime BirthDate { get; set; }
         public bool IsNew { get; set; }
         // Mail in IdentityUser
+        
+        //navigation properties
+        public int? AcademicProgramId { get; set; }
+        public AcademicProgram? AcademicProgram { get; set; }
+        public int? InstitutionId { get; set; }
+        public Institution? Institution { get; set; }
+        public int? CompanyId { get; set; }
+        public Company? Company { get; set; }
     }
 }
