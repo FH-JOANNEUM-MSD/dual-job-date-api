@@ -1,14 +1,11 @@
-using System.Reflection;
 using AutoMapper;
 using DualJobDate.Api.Extensions;
 using DualJobDate.BusinessLogic;
 using DualJobDate.BusinessObjects.Entities;
 using DualJobDate.DataAccess;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+using DualJobDate.DatabaseInitializer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Filters;
 using The_Reading_Muse_API.Mapping;
@@ -40,24 +37,24 @@ namespace DualJobDate.API
             builder.Services.AddControllers();
 
             builder.Services.AddIdentity<User, IdentityRole>(options =>
-            {
-                // Identity options configuration
-                options.Password.RequiredLength = 8;
-                options.Password.RequireDigit = true;
-                options.Password.RequireNonAlphanumeric = true;
-                options.Lockout.MaxFailedAccessAttempts = 5;
-                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
-                options.SignIn.RequireConfirmedAccount = true;
-                options.User.RequireUniqueEmail = true;
-            })
+                {
+                    options.Password.RequiredLength = 8;
+                    options.Password.RequireDigit = true;
+                    options.Password.RequireNonAlphanumeric = true;
+                    options.Lockout.MaxFailedAccessAttempts = 5;
+                    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+                    options.User.RequireUniqueEmail = true;
+                })
                 .AddEntityFrameworkStores<AppDbContext>()
                 .AddDefaultTokenProviders();
+
             builder.Services.AddAuthorization(options =>
             {
                 options.AddPolicy("Admin", policy => policy.RequireRole("Admin"));
             });
 
-            builder.Services.AddAuthentication().AddBearerToken(IdentityConstants.BearerScheme);
+            builder.Services.AddAuthentication()
+                .AddBearerToken(IdentityConstants.BearerScheme);
             builder.Services.AddAuthorizationBuilder();
             
             builder.Services.AddSwaggerGen(c =>
@@ -88,22 +85,19 @@ namespace DualJobDate.API
             using var scope = app.Services.CreateScope();
             var services = scope.ServiceProvider;
             var loggerFactory = services.GetRequiredService<ILoggerFactory>();
-            DatabaseInitializer.DatabaseInitializer.InitializeDb(loggerFactory);
+            DbInitializer.InitializeDb(loggerFactory);
             var userManager = services.GetRequiredService<UserManager<User>>();
             var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-            DatabaseInitializer.DatabaseInitializer.SeedData(userManager, roleManager);
-#endif
+            DbInitializer.SeedData(userManager, roleManager);
             DatabaseConnectionTester.TestDbConnection(app).Wait();
-
 
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "DualJobDate API v1"));
             }
-
+#endif
             app.UseHttpsRedirection();
-
             app.UseAuthentication();
             app.UseAuthorization();
             app.MapControllers();
