@@ -5,12 +5,12 @@ using Microsoft.Extensions.Logging;
 
 namespace DualJobDate.DatabaseInitializer
 {
-    public static class DatabaseInitializer
+    public static class DbInitializer
     {
         public static void InitializeDb(ILoggerFactory loggerFactory)
         {
 
-            var logger = loggerFactory.CreateLogger("DatabaseInitializer");
+            var logger = loggerFactory.CreateLogger("DbInitializer");
             logger.LogInformation("Starting container using Docker Compose...");
 
             logger.LogInformation("Starting container using Docker Compose...");
