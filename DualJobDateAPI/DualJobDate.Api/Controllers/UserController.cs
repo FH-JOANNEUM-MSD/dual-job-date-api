@@ -1,16 +1,16 @@
-using System.ComponentModel.DataAnnotations;
-using System.Security.Cryptography;
 using AutoMapper;
-using DualJobDate.API.Models;
 using DualJobDate.API.Resources;
-using DualJobDate.BusinessLogic.Services;
 using DualJobDate.BusinessObjects.Entities;
+using DualJobDate.BusinessObjects.Entities.Interface;
+using DualJobDate.BusinessObjects.Entities.Models;
 using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using System.ComponentModel.DataAnnotations;
+using System.Security.Cryptography;
 
 namespace DualJobDate.Api.Controllers;
 
@@ -20,8 +20,9 @@ public class UserController(
     UserManager<User> userManager,
     SignInManager<User> signInManager,
     IServiceProvider serviceProvider,
-    IMapper _mapper,
-    IEmailSender _emailSender)
+    IMapper mapper,
+    IEmailSender emailSender,
+    IJwtHelper jwtHelper)
     : ControllerBase
 {
     private static readonly EmailAddressAttribute EmailAddressAttribute = new();
@@ -50,29 +51,35 @@ public class UserController(
             return BadRequest(result.Errors);
         }
 
-        await userManager.AddToRoleAsync(user, role);
+        await userManager.AddToRoleAsync(user, "Admin");
         
-        _emailSender.SendEmailAsync(user.Email, password);
+        emailSender.SendEmailAsync(user.Email, password);
         return Ok($"User '{user.Email}' created successfully");
     }
     
     [HttpPost]
     [Route("Login")]
-    public async Task<IActionResult> Login([FromBody] LoginModel model, [FromQuery] bool? useCookies, [FromQuery] bool? useSessionCookies)
-    {
-        var useCookieScheme = (useCookies == true) || (useSessionCookies == true);
-        var isPersistent = (useCookies == true) && (useSessionCookies != true);
-        signInManager.AuthenticationScheme = useCookieScheme ? IdentityConstants.ApplicationScheme : IdentityConstants.BearerScheme;
+    public async Task<IActionResult> Login([FromBody] LoginModel model) {
+        var user = await userManager.FindByEmailAsync(model.Email);
+        const string unauthorizedMessage = "Wrong Email or Password";
 
-        var result = await signInManager.PasswordSignInAsync(model.Email, model.Password, isPersistent, true);
-        
-        if (!result.Succeeded)
+        if (user is null || user.Email is null)
         {
-            return Unauthorized("Wrong Email or Password");
+            return Unauthorized(unauthorizedMessage);
         }
 
-        // The signInManager already produced the needed response in the form of a cookie or bearer token.
-        return Ok();
+        var result = user.PasswordHash != null && user.PasswordHash.Equals(model.Password);
+
+        if (!result)
+        {
+            await userManager.AccessFailedAsync(user);
+            return Unauthorized(unauthorizedMessage);
+        }
+
+        var token = jwtHelper.GenerateJwtToken(user.Email);
+
+        await userManager.ResetAccessFailedCountAsync(user);
+        return Ok(new { Token = token });
     }
     
     [HttpPost]
@@ -84,7 +91,7 @@ public class UserController(
         var refreshTicket = refreshTokenProtector.Unprotect(refreshRequest.RefreshToken);
 
         // Reject the /refresh attempt with a 401 if the token expired or the security stamp validation fails
-        if (refreshTicket?.Properties?.ExpiresUtc is not { } expiresUtc ||
+        if (refreshTicket?.Properties.ExpiresUtc is not { } expiresUtc ||
             DateTime.Now >= expiresUtc ||
             await signInManager.ValidateSecurityStampAsync(refreshTicket.Principal) is not { } user)
         {
@@ -158,7 +165,7 @@ public class UserController(
     public Task<ActionResult<IEnumerable<UserResource>>> GetAllUsers()
     {
         var users = userManager.Users.ToList();
-        var userResources = _mapper.Map<List<User>, List<UserResource>>(users);
+        var userResources = mapper.Map<List<User>, List<UserResource>>(users);
         return Task.FromResult<ActionResult<IEnumerable<UserResource>>>(Ok(userResources));
     }
 
@@ -218,6 +225,7 @@ public class UserController(
     private const string SpecialChars = "!@#$%^&*()_-+=[{]};:<>|./?";
 
     // Generiert ein Passwort der angegebenen Länge mit mindestens einem Zeichen aus jeder Kategorie
+    [Obsolete("Obsolete")]
     public static string GeneratePassword(int length = 12)
     {
         if (length < 4) throw new ArgumentException("Länge muss mindestens 4 Zeichen betragen.", nameof(length));
@@ -231,11 +239,9 @@ public class UserController(
         };
 
         byte[] data = new byte[length];
-        using (var crypto = new RNGCryptoServiceProvider())
-        {
-            crypto.GetBytes(data);
-        }
-
+        using var crypto = new RNGCryptoServiceProvider();
+        crypto.GetBytes(data);
+        
         char[] passwordChars = new char[length];
         for (int i = 0; i < length; i++)
         {
@@ -253,14 +259,14 @@ public class UserController(
 
     private static void EnsureEachCategory(char[] passwordChars, string[] charCategories)
     {
-        Random random = new Random();
-        for (int i = 0; i < charCategories.Length; i++)
+        var random = new Random();
+        foreach (var t in charCategories)
         {
-            if (!passwordChars.Any(p => charCategories[i].Contains(p)))
+            if (!passwordChars.Any(p => t.Contains(p)))
             {
                 // Ersetzt ein zufälliges Zeichen im Passwort durch ein Zeichen aus der fehlenden Kategorie
                 int replaceIndex = random.Next(passwordChars.Length);
-                passwordChars[replaceIndex] = charCategories[i][random.Next(charCategories[i].Length)];
+                passwordChars[replaceIndex] = t[random.Next(t.Length)];
             }
         }
     }
