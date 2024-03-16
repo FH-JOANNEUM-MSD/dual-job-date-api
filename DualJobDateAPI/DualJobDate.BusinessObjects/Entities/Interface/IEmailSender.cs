@@ -1,4 +1,4 @@
-namespace DualJobDate.BusinessLogic.Services;
+namespace DualJobDate.BusinessObjects.Entities.Interface;
 
 public interface IEmailSender
 {
