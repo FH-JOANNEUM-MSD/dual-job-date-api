@@ -1,4 +1,4 @@
-namespace DualJobDate.API.Models;
+namespace DualJobDate.BusinessObjects.Entities.Models;
 
 public class ChangePasswordModel
 {
