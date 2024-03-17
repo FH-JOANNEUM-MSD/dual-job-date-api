@@ -1,5 +1,4 @@
-﻿using DualJobDate.BusinessObjects.Entities.Interface;
-using DualJobDate.BusinessLogic.Services;
+﻿using DualJobDate.BusinessLogic.Services;
 using Microsoft.Extensions.DependencyInjection;
 using DualJobDate.BusinessLogic.Helper;
 using Microsoft.Extensions.Configuration;
@@ -18,6 +17,7 @@ namespace DualJobDate.BusinessLogic
                 var secretKey = configuration["JwtSecret"] ?? throw new NotImplementedException("JwtSecret is not defined");
                 return new JwtHelper(secretKey);
             });
+            services.AddTransient<ICompanyService, CompanyService>();
         }
 
     }

@@ -1,4 +1,5 @@
-﻿using DualJobDate.BusinessObjects.Entities;
+﻿using DualJobDate.BusinessLogic.Services.Interface;
+using DualJobDate.BusinessObjects.Entities;
 using DualJobDate.BusinessObjects.Entities.Interface;
 
 namespace DualJobDate.BusinessLogic.Services
