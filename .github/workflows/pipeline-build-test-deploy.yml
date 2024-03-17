@@ -22,9 +22,11 @@ jobs:
           dotnet-version: '8.0'
 
       - name: Restore dependencies
+        working-directory: DualJobDateAPI
         run: dotnet restore DualJobDateAPI.sln
 
       - name: Build
+        working-directory: DualJobDateAPI
         run: dotnet build --no-restore DualJobDateAPI.sln -c Release
 
       - name: Cache NuGet Packages
@@ -46,4 +48,5 @@ jobs:
           dotnet-version: '8.0'
 
       - name: Test
+        working-directory: DualJobDateAPI
         run: dotnet test --no-build DualJobDateAPI.sln -c Release
