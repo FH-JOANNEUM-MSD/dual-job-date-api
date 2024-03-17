@@ -14,6 +14,7 @@ namespace DualJobDate.BusinessObjects.Entities
         public string? ProfilePicture { get; set; }
         public DateTime BirthDate { get; set; }
         public bool IsNew { get; set; }
+        public List<Match> Matches { get; set; }
         // Mail in IdentityUser
         
         //navigation properties
