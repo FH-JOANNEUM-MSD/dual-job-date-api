@@ -1,13 +1,12 @@
-using AutoMapper;
-using DualJobDate.Api.Extensions;
 using DualJobDate.BusinessLogic;
 using DualJobDate.BusinessObjects.Entities;
 using DualJobDate.DataAccess;
 using DualJobDate.DatabaseInitializer;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi.Models;
-using Swashbuckle.AspNetCore.Filters;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using The_Reading_Muse_API.Mapping;
 
 namespace DualJobDate.API
@@ -17,26 +16,42 @@ namespace DualJobDate.API
         private static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+            ConfigureServices(builder.Services, builder.Configuration);
+            var app = builder.Build();
+            Configure(app);
+            app.Run();
+        }
 
-            RepositoryRegistration.RegisterRepository(builder.Services);
-            ServiceRegistration.RegisterServices(builder.Services);
+        private static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
+        {
+            RepositoryRegistration.RegisterRepository(services);
+            ServiceRegistration.RegisterServices(services);
+            ConfigureDatabase(services, configuration);
+            ConfigureIdentity(services);
+            ConfigureJwtAuthentication(services, configuration);
+            ConfigureAuthorization(services);
+            ConfigureSwagger(services);
+            ConfigureMapper(services);
+            services.AddControllers();
+        }
+
+        private static void ConfigureDatabase(IServiceCollection services, IConfiguration configuration)
+        {
 #if DEBUG
-            var connectionString =
-                builder.Configuration.GetConnectionString("AppDebugConnection");
+            var connectionString = configuration.GetConnectionString("AppDebugConnection");
 #else
             var connectionString =
                 builder.Configuration.GetConnectionString("AppReleaseConnection");
 #endif
-            builder.Services.AddDbContext<AppDbContext>(options =>
+            services.AddDbContext<AppDbContext>(options =>
             {
-                if (connectionString != null) options.UseMySQL(connectionString);
+                options.UseMySQL(connectionString);
             });
-            
-            builder.Services.AddEndpointsApiExplorer();
+        }
 
-            builder.Services.AddControllers();
-
-            builder.Services.AddIdentity<User, IdentityRole>(options =>
+        private static void ConfigureIdentity(IServiceCollection services)
+        {
+            services.AddIdentity<User, IdentityRole>(options =>
                 {
                     options.Password.RequiredLength = 8;
                     options.Password.RequireDigit = true;
@@ -45,64 +60,88 @@ namespace DualJobDate.API
                     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
                     options.User.RequireUniqueEmail = true;
                 })
-                .AddEntityFrameworkStores<AppDbContext>()
-                .AddDefaultTokenProviders();
+                .AddEntityFrameworkStores<AppDbContext>();
+        }
 
-            builder.Services.AddAuthorization(options =>
+        private static void ConfigureJwtAuthentication(IServiceCollection services, IConfiguration configuration)
+        {
+            var jwtSecretKey = configuration["JwtSecret"];
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+                .AddJwtBearer(options =>
+                {
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecretKey)),
+                        ValidIssuer = "localhost",
+                        ValidAudience = "localhost"
+                    };
+                });
+        }
+
+        private static void ConfigureAuthorization(IServiceCollection services)
+        {
+            services.AddAuthorization(options =>
             {
                 options.AddPolicy("Admin", policy => policy.RequireRole("Admin"));
             });
+        }
 
-            builder.Services.AddAuthentication()
-                .AddBearerToken(IdentityConstants.BearerScheme);
-            builder.Services.AddAuthorizationBuilder();
-            
-            builder.Services.AddSwaggerGen(c =>
+        private static void ConfigureSwagger(IServiceCollection services)
+        {
+            services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "DualJobDate API", Version = "v1" });
-                c.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme()
-                    {
-                        In = ParameterLocation.Header,
-                        Name = "Authorization",
-                        Type = SecuritySchemeType.ApiKey
-                    }
-                );
-                c.OperationFilter<SecurityRequirementsOperationFilter>();
+                c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "DualJobDate API", Version = "v1" });
             });
-            
-            var mappingConfig = new MapperConfiguration(mc =>
+        }
+
+        private static void ConfigureMapper(IServiceCollection services)
+        {
+            var mappingConfig = new AutoMapper.MapperConfiguration(mc =>
             {
                 mc.AddProfile(new ModelToResourceProfile());
                 mc.AddProfile(new ResourceToModelProfile());
             });
-            
-            var mapper = mappingConfig.CreateMapper();
-            builder.Services.AddSingleton(mapper);
-            
-            var app = builder.Build();
 
-#if DEBUG
+            var mapper = mappingConfig.CreateMapper();
+            services.AddSingleton(mapper);
+        }
+
+        private static void Configure(WebApplication app)
+        {
             using var scope = app.Services.CreateScope();
             var services = scope.ServiceProvider;
             var loggerFactory = services.GetRequiredService<ILoggerFactory>();
             DbInitializer.InitializeDb(loggerFactory);
+
             var userManager = services.GetRequiredService<UserManager<User>>();
             var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
             DbInitializer.SeedData(userManager, roleManager);
-            DatabaseConnectionTester.TestDbConnection(app).Wait();
+
+            app.UseAuthentication();
+            app.UseRouting();
+            app.UseAuthorization();
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllers();
+            });
 
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "DualJobDate API v1"));
             }
-#endif
-            app.UseHttpsRedirection();
-            app.UseAuthentication();
-            app.UseAuthorization();
+
             app.MapControllers();
             app.MapGet("/", () => "DualJobDate API. Following Endpoints are accessible:");
-            app.Run();
         }
     }
 }

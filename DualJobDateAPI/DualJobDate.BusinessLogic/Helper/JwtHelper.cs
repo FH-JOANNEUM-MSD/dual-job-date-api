@@ -11,15 +11,22 @@ namespace DualJobDate.BusinessLogic.Helper
     {
         private readonly string _secretKey = secretKey;
 
-        public string GenerateJwtToken(string email, int? expiresInMinute = null)
+        public string GenerateJwtToken(string userId, string userType, int? expiresInMinute = null)
         {
             var key = Encoding.ASCII.GetBytes(_secretKey);
             var tokenHandler = new JwtSecurityTokenHandler();
             var tokenDescription = new SecurityTokenDescriptor
             {
-                Subject = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, email) }),
+                Subject = new ClaimsIdentity(new[]
+                {
+                    new Claim(ClaimTypes.NameIdentifier, userId),
+                    new Claim(ClaimTypes.Role, userType),
+                }),
                 Expires = DateTime.UtcNow.AddMinutes(expiresInMinute ?? Constants.JwtConstants.ExpiresInMinutes),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
+                //TODO Set Issuer and Audience
+                Issuer = "localhost",
+                Audience = "localhost"
             };
             var token = tokenHandler.CreateToken(tokenDescription);
             return tokenHandler.WriteToken(token);
