@@ -1,0 +1,49 @@
+name: .NET CI/CD Pipeline
+
+on:
+  push:
+    branches: 
+      - feature/cicd #change to main before merge
+  pull_request:
+    branches:
+      - feature/cicd #change to main before merge
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '8.0'
+
+      - name: Restore dependencies
+        run: dotnet restore DualJobDateAPI.sln
+
+      - name: Build
+        run: dotnet build --no-restore DualJobDateAPI.sln -c Release
+
+      - name: Cache NuGet Packages
+        uses: actions/cache@v2
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: ${{ runner.os }}-nuget-
+
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '8.0'
+
+      - name: Test
+        run: dotnet test --no-build DualJobDateAPI.sln -c Release
