@@ -1,14 +1,15 @@
-﻿using DualJobDate.BusinessLogic.Services.Interface;
-using DualJobDate.BusinessObjects.Dto;
+﻿using DualJobDate.BusinessObjects.Dto;
+using DualJobDate.BusinessObjects.Entities.Interface.Service;
 using System.Text.Json;
 
-namespace DualJobDate.BusinessLogic.Services;
-
-public class CompanyService : ICompanyService
+namespace DualJobDate.BusinessLogic.Services
 {
-    public Task<string> GetCompanyByIdAsync(int id)
+    public class CompanyService : ICompanyService
     {
-        var result = JsonSerializer.Serialize(new CompanyDto(id, "Foo Bar Company"));
-        return Task.FromResult(result);
+        public Task<string> GetCompanyByIdAsync(int id)
+        {
+            var result = JsonSerializer.Serialize(new CompanyDto(id, "Foo Bar Company"));
+            return Task.FromResult(result);
+        }
     }
 }

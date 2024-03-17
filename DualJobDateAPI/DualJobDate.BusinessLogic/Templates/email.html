@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Willkommen bei DualJobDate</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; color: #333; }
+        .container { background-color: #f4f4f4; padding: 20px; }
+        .header { padding: 10px 0; text-align: center; }
+        .content { background-color: #fff; padding: 20px; }
+        .footer { margin-top: 20px; text-align: center; font-size: 0.9em; color: #666; }
+        .button { background-color: #007BFF; color: #ffffff; padding: 10px 20px; text-align: center; display: inline-block; border-radius: 5px; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h2>Willkommen bei DualJobDate!</h2>
+    </div>
+    <div class="content">
+        <p>Hallo,</p>
+        <p>Sie wurden für DualJobDate registriert. Unten finden Sie Ihre Anmeldedaten.</p>
+        <table>
+            <tr>
+                <td>Email:</td>
+                <td><strong>{{email}}</strong></td>
+            </tr>
+            <tr>
+                <td>Einmaliges Passwort:</td>
+                <td><strong>{{temporaryPassword}}</strong></td>
+            </tr>
+        </table>
+        <p>Bitte melden Sie sich mit diesen Credentials an und ändern Sie Ihr Passwort umgehend.</p>
+        <a href="{{InvitationLink}}" class="button">Jetzt anmelden</a>
+        <p>Wenn Sie Fragen haben oder Hilfe benötigen, zögern Sie nicht, uns zu kontaktieren.</p>
+    </div>
+    <div class="footer">
+        <p>Dies ist eine automatisch generierte E-Mail, bitte antworten Sie nicht darauf.</p>
+    </div>
+</div>
+</body>
+</html>

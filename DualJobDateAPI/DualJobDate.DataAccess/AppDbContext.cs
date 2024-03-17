@@ -1,10 +1,14 @@
-﻿using DualJobDate.BusinessObjects.Entities;
+﻿using System.Security.Claims;
+using DualJobDate.BusinessObjects.Entities;
 using DualJobDate.BusinessObjects.Entities.Interface;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DualJobDate.DataAccess
 {
-    public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options), IDbContext
+    public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbContext(options), IDbContext
     {
         public DbSet<Institution> Institutions { get; set; }
         public DbSet<AcademicProgram> AcademicPrograms { get; set; }
@@ -14,7 +18,7 @@ namespace DualJobDate.DataAccess
         public DbSet<Company> Companies { get; set; }
         public DbSet<CompanyActivity> CompanyActivities { get; set; }
         public DbSet<CompanyDetails> CompanyDetailsEnumerable { get; set; }
-        public DbSet<User> Users { get; set; }
+        public DbSet<ApplicationUser> ApplicationUsers { get; set; }
         public DbSet<UserType> UserTypes { get; set; }
         
         public Task<int> SaveChangesAsync()
@@ -22,10 +26,20 @@ namespace DualJobDate.DataAccess
             return base.SaveChangesAsync();
         }
 
+
         void IDisposable.Dispose() => base.Dispose();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<IdentityUserLogin<string>>()
+                .HasKey(l => l.UserId);
+
+            modelBuilder.Entity<IdentityUserRole<string>>()
+                .HasKey(ur => new { ur.UserId, ur.RoleId });
+
+            modelBuilder.Entity<IdentityUserToken<string>>()
+                .HasKey(t => new { t.UserId, t.LoginProvider, t.Name });
+
             modelBuilder
                 .Entity<UserType>()
                 .Property(x => x.UserTypeEnum)

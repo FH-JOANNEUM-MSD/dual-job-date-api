@@ -10,6 +10,6 @@ namespace DualJobDate.BusinessObjects.Entities
         
         //navigation properties
         public List<Address> Addresses { get; set; } = new();
-        public List<User> Users { get; set; } = new();
+        public List<ApplicationUser> Users { get; set; } = new();
     }
 }

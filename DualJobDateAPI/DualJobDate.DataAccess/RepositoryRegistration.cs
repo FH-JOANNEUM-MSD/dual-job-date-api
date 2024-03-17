@@ -1,4 +1,5 @@
 ﻿using DualJobDate.BusinessObjects.Entities.Interface;
+using DualJobDate.BusinessObjects.Entities.Interface.Repository;
 using DualJobDate.DataAccess.Repositories;
 using Microsoft.Extensions.DependencyInjection;
 

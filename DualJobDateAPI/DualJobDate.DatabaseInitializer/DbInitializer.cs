@@ -1,14 +1,16 @@
 using System.Diagnostics;
+using DualJobDate.BusinessObjects.Entities;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 
 namespace DualJobDate.DatabaseInitializer
 {
-    public static class DatabaseInitializer
+    public static class DbInitializer
     {
         public static void InitializeDb(ILoggerFactory loggerFactory)
         {
 
-            var logger = loggerFactory.CreateLogger("DatabaseInitializer");
+            var logger = loggerFactory.CreateLogger("DbInitializer");
             logger.LogInformation("Starting container using Docker Compose...");
 
             logger.LogInformation("Starting container using Docker Compose...");
@@ -38,6 +40,19 @@ namespace DualJobDate.DatabaseInitializer
             if (!string.IsNullOrWhiteSpace(error))
             {
                 logger.LogInformation("Output: {Error}", error);
+            }
+        }
+        
+        public static async Task SeedData(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
+        {
+            await SeedRoles(roleManager);
+        }
+
+        public static async Task SeedRoles(RoleManager<IdentityRole> roleManager)
+        {
+            if (!await roleManager.RoleExistsAsync("Admin"))
+            {
+                await roleManager.CreateAsync(new IdentityRole("Admin"));
             }
         }
     }

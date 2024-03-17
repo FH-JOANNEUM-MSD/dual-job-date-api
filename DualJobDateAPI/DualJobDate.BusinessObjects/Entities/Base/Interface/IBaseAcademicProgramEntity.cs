@@ -1,6 +1,4 @@
-﻿using DualJobDate.BusinessObjects.Entities;
-
-namespace DualJobDate.BusinessObjects.Entities.Interface
+﻿namespace DualJobDate.BusinessObjects.Entities.Base.Interface
 {
     public interface IBaseAcademicProgramEntity : IBaseInstitutionEntity
     {
