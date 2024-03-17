@@ -1,6 +1,6 @@
-﻿using DualJobDate.BusinessObjects.Entities.Interface;
-using DualJobDate.BusinessLogic.Services;
+﻿using DualJobDate.BusinessLogic.Services;
 using Microsoft.Extensions.DependencyInjection;
+using DualJobDate.BusinessLogic.Services.Interface;
 
 namespace DualJobDate.BusinessLogic
 {
@@ -9,6 +9,7 @@ namespace DualJobDate.BusinessLogic
         public static void RegisterServices(IServiceCollection services)
         {
             services.AddTransient<ITestService, TestService>();
+            services.AddTransient<ICompanyService, CompanyService>();
         }
 
     }
