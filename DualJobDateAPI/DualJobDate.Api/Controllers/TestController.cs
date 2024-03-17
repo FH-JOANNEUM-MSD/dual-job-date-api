@@ -1,4 +1,4 @@
-﻿using DualJobDate.BusinessObjects.Entities.Interface;
+﻿using DualJobDate.BusinessLogic.Services.Interface;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DualJobDate.API.Controllers
