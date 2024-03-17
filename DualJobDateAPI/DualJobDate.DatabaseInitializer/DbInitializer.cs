@@ -43,7 +43,7 @@ namespace DualJobDate.DatabaseInitializer
             }
         }
         
-        public static async Task SeedData(UserManager<User> userManager, RoleManager<IdentityRole> roleManager)
+        public static async Task SeedData(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
         {
             await SeedRoles(roleManager);
         }

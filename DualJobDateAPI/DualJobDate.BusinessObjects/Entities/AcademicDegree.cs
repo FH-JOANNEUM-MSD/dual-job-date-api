@@ -1,5 +1,5 @@
 ﻿using DualJobDate.BusinessObjects.Entities.Base;
-using DualJobDate.BusinessObjects.Entities.Enums;
+using DualJobDate.BusinessObjects.Entities.Enum;
 
 namespace DualJobDate.BusinessObjects.Entities
 {

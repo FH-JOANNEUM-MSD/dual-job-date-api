@@ -1,11 +1,11 @@
 using System.Net;
 using System.Net.Mail;
 using System.Reflection;
-using DualJobDate.BusinessObjects.Entities.Interface;
+using DualJobDate.BusinessObjects.Entities.Interface.Helper;
 
-namespace DualJobDate.BusinessLogic.Services;
+namespace DualJobDate.BusinessLogic.Helper;
 
-public class EmailSender : IEmailSender
+public class EmailHelper : IEmailHelper
 {
     public void SendEmailAsync(string recipientEmail, string recipientPassword)
     {
@@ -42,13 +42,13 @@ public class EmailSender : IEmailSender
             }
         });
     }
-    
+
     private static async Task<string> GetEmailTemplate(string invitationLink, string email, string password)
     {
         var assembly = Assembly.GetExecutingAssembly();
         const string templatePath = "DualJobDate.BusinessLogic.Templates.email.html";
         await using var stream = assembly.GetManifestResourceStream(templatePath);
-        
+
         using var reader = new StreamReader(stream);
 
         var content = await reader.ReadToEndAsync();

@@ -1,13 +1,14 @@
 using AutoMapper;
-using DualJobDate.API.Resources;
 using DualJobDate.BusinessObjects.Entities;
+using DualJobDate.BusinessObjects.Resources;
 
-namespace The_Reading_Muse_API.Mapping;
-
-public class ModelToResourceProfile : Profile
+namespace DualJobDate.Api.Mapping
 {
-    public ModelToResourceProfile()
+    public class ModelToResourceProfile : Profile
     {
-        CreateMap<User, UserResource>();
+        public ModelToResourceProfile()
+        {
+            CreateMap<ApplicationUser, UserResource>();
+        }
     }
 }

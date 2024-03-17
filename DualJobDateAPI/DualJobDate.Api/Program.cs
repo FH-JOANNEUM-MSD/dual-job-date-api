@@ -7,7 +7,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using The_Reading_Muse_API.Mapping;
+using DualJobDate.Api.Extensions;
+using DualJobDate.Api.Mapping;
 
 namespace DualJobDate.API
 {
@@ -51,7 +52,7 @@ namespace DualJobDate.API
 
         private static void ConfigureIdentity(IServiceCollection services)
         {
-            services.AddIdentity<User, IdentityRole>(options =>
+            services.AddIdentity<ApplicationUser, IdentityRole>(options =>
                 {
                     options.Password.RequiredLength = 8;
                     options.Password.RequireDigit = true;
@@ -121,8 +122,8 @@ namespace DualJobDate.API
             var services = scope.ServiceProvider;
             var loggerFactory = services.GetRequiredService<ILoggerFactory>();
             DbInitializer.InitializeDb(loggerFactory);
-
-            var userManager = services.GetRequiredService<UserManager<User>>();
+            DatabaseConnectionTester.TestDbConnection(app);
+            var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
             var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
             DbInitializer.SeedData(userManager, roleManager);
 

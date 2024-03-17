@@ -1,6 +1,9 @@
-namespace DualJobDate.BusinessObjects.Entities.Models;
-
-public class RegisterUserModel
+namespace DualJobDate.BusinessObjects.Entities.Models
 {
-    public required string Email { get; set; }
+    public class RegisterUserModel
+    {
+        public required string Email { get; set; }
+        public required string Role { get; set; }
+    }
 }
+
