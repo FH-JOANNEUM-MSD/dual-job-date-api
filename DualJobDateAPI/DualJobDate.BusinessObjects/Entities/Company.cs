@@ -5,9 +5,9 @@ namespace DualJobDate.BusinessObjects.Entities
     public class Company: BaseEntity
     {
         public string Name { get; set; }
-        public string Industry { get; set; }
-        public string LogoBase64 { get; set; }
-        public string Website { get; set; }
+        public string? Industry { get; set; }
+        public string? LogoBase64 { get; set; }
+        public string? Website { get; set; }
         public bool isActive { get; set; }
     
     

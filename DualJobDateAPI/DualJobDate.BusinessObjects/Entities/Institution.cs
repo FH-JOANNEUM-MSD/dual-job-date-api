@@ -6,7 +6,7 @@ namespace DualJobDate.BusinessObjects.Entities
     {
         public string Name { get; set; }
         public string KeyName { get; set; }
-        public string Website { get; set; }
+        public string? Website { get; set; }
         
         //navigation properties
         public List<Address> Addresses { get; set; } = new();
