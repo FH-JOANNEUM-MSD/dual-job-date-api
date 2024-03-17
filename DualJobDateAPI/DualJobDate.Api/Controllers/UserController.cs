@@ -76,13 +76,13 @@ public class UserController(
             return Unauthorized(unauthorizedMessage);
         }
 
-        var token = jwtHelper.GenerateJwtToken(user.Email);
-
+        var token = jwtHelper.GenerateJwtToken(user.Id, user.UserType.ToString());
         await userManager.ResetAccessFailedCountAsync(user);
         return Ok(new { Token = token });
     }
     
     [HttpPost]
+    [Authorize(Policy = "Admin")]
     [Route("Refresh")]
     public async Task<IActionResult> RefreshToken([FromBody] RefreshRequest refreshRequest)
     { 

@@ -66,13 +66,13 @@ namespace DualJobDate.API
         private static void ConfigureJwtAuthentication(IServiceCollection services, IConfiguration configuration)
         {
             var jwtSecretKey = configuration["JwtSecret"];
+            var bytes = Encoding.UTF8.GetBytes(jwtSecretKey);
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-                .AddJwtBearer(options =>
+            }).AddJwtBearer(options =>
                 {
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
@@ -80,9 +80,9 @@ namespace DualJobDate.API
                         ValidateAudience = true,
                         ValidateLifetime = true,
                         ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecretKey)),
+                        IssuerSigningKey = new SymmetricSecurityKey(bytes),
                         ValidIssuer = "localhost",
-                        ValidAudience = "localhost"
+                        ValidAudience = "localhost",
                     };
                 });
         }
@@ -128,11 +128,7 @@ namespace DualJobDate.API
 
             app.UseAuthentication();
             app.UseRouting();
-            app.UseAuthorization();
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllers();
-            });
+            app.UseAuthorization(); 
 
             if (app.Environment.IsDevelopment())
             {

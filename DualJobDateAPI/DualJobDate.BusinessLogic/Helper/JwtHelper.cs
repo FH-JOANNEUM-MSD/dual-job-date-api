@@ -1,4 +1,5 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
+using System.Reflection.Metadata.Ecma335;
 using System.Security.Claims;
 using System.Text;
 using DualJobDate.BusinessObjects.Entities;
@@ -23,13 +24,13 @@ namespace DualJobDate.BusinessLogic.Helper
                     new Claim(ClaimTypes.Role, userType),
                 }),
                 Expires = DateTime.UtcNow.AddMinutes(expiresInMinute ?? Constants.JwtConstants.ExpiresInMinutes),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256),
                 //TODO Set Issuer and Audience
                 Issuer = "localhost",
                 Audience = "localhost"
             };
-            var token = tokenHandler.CreateToken(tokenDescription);
-            return tokenHandler.WriteToken(token);
+
+            return tokenHandler.CreateEncodedJwt(tokenDescription);
         }
     }
 }
