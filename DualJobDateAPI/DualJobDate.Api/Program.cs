@@ -121,11 +121,11 @@ namespace DualJobDate.API
             using var scope = app.Services.CreateScope();
             var services = scope.ServiceProvider;
             var loggerFactory = services.GetRequiredService<ILoggerFactory>();
-            DbInitializer.InitializeDb(loggerFactory);
+            // DbInitializer.InitializeDb(loggerFactory);
             DatabaseConnectionTester.TestDbConnection(app);
             var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
             var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-            DbInitializer.SeedData(userManager, roleManager);
+            //DbInitializer.SeedData(userManager, roleManager);
 
             app.UseAuthentication();
             app.UseRouting();
