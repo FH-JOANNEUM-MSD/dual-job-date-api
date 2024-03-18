@@ -42,7 +42,7 @@ namespace DualJobDate.API
             var connectionString = configuration.GetConnectionString("AppDebugConnection");
 #else
             var connectionString =
-                builder.Configuration.GetConnectionString("AppReleaseConnection");
+                connection.GetConnectionString("AppReleaseConnection");
 #endif
             services.AddDbContext<AppDbContext>(options =>
             {
