@@ -6,15 +6,17 @@ namespace DualJobDate.API.Controllers
 {
     [ApiController]
     [Authorize]
-    public class DataController(ITestService myService) : ControllerBase
+    [Route("[controller]")]
+    public class CompanyController(ICompanyService myService)
+        : ControllerBase
     {
-        [HttpGet("test")]
-        public async Task<IActionResult> GetData()
+        [HttpGet("{id}")]
+        public async Task<IActionResult> Index(int id)
         {
             try
             {
-                await myService.Test();
-                return Ok();
+                var company = await myService.GetCompanyByIdAsync(id);
+                return Ok(company);
             }
             catch (Exception ex)
             {
