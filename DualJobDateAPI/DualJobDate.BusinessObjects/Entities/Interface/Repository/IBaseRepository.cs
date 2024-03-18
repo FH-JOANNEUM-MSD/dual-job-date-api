@@ -1,4 +1,4 @@
-﻿namespace DualJobDate.BusinessObjects.Entities.Interface
+﻿namespace DualJobDate.BusinessObjects.Entities.Interface.Repository
 {
     public interface IBaseRepository<T> : IDisposable
     {

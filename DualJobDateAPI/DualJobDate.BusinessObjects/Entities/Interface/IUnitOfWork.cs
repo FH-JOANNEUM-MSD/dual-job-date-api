@@ -1,4 +1,6 @@
-﻿namespace DualJobDate.BusinessObjects.Entities.Interface
+﻿using DualJobDate.BusinessObjects.Entities.Interface.Repository;
+
+namespace DualJobDate.BusinessObjects.Entities.Interface
 {
     public interface IUnitOfWork : IDisposable
     {

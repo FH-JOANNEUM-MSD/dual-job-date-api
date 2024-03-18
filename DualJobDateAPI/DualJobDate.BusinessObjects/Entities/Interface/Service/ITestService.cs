@@ -1,4 +1,4 @@
-﻿namespace DualJobDate.BusinessObjects.Entities.Interface
+﻿namespace DualJobDate.BusinessObjects.Entities.Interface.Service
 {
     public interface ITestService
     {

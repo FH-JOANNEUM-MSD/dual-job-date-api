@@ -1,4 +1,4 @@
-﻿using DualJobDate.BusinessObjects.Entities.Interface;
+﻿using DualJobDate.BusinessObjects.Entities.Base.Interface;
 
 namespace DualJobDate.BusinessObjects.Entities.Base
 {

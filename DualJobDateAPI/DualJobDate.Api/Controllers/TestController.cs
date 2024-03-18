@@ -1,8 +1,11 @@
-﻿using DualJobDate.BusinessObjects.Entities.Interface;
+﻿using DualJobDate.BusinessObjects.Entities.Interface.Service;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DualJobDate.API.Controllers
 {
+    [ApiController]
+    [Authorize]
     public class DataController(ITestService myService) : ControllerBase
     {
         [HttpGet("test")]

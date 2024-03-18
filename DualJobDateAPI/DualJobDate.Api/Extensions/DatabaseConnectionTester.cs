@@ -25,10 +25,8 @@ public static class DatabaseConnectionTester
                     isConnected = true;
                     break;
                 }
-                else
-                {
-                    logger.LogError("Could not establish connection to database!");
-                }
+
+                logger.LogError("Could not establish connection to database!");
             }
             catch (Exception ex)
             {
