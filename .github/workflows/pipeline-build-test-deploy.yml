@@ -56,6 +56,9 @@ jobs:
         run: dotnet test --no-build DualJobDateAPI.sln -c Release
 
   build-and-push-docker:
+    permissions:
+      contents: read
+      packages: write
     needs: test
     runs-on: ubuntu-latest
     steps:
