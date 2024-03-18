@@ -1,4 +1,4 @@
-﻿namespace DualJobDate.BusinessLogic.Services.Interface;
+﻿namespace DualJobDate.BusinessObjects.Entities.Interface.Service;
 
 public interface IUserService
 {

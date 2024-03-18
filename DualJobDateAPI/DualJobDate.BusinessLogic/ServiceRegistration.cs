@@ -4,7 +4,6 @@ using DualJobDate.BusinessObjects.Entities.Interface.Helper;
 using DualJobDate.BusinessObjects.Entities.Interface.Service;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using DualJobDate.BusinessLogic.Services.Interface;
 
 namespace DualJobDate.BusinessLogic
 {

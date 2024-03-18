@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
-using DualJobDate.BusinessLogic.Services.Interface;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using System.ComponentModel.DataAnnotations;
@@ -14,13 +13,14 @@ using System.Security.Cryptography;
 using System.Text;
 using DualJobDate.BusinessObjects.Resources;
 using DualJobDate.BusinessObjects.Entities.Interface.Helper;
+using DualJobDate.BusinessObjects.Entities.Interface.Service;
 
 namespace DualJobDate.Api.Controllers
 {
-
     [Route("[controller]")]
     [ApiController]
     public class UserController(
+        IUserService userService,
     UserManager<ApplicationUser> userManager,
     SignInManager<ApplicationUser> signInManager,
         IServiceProvider serviceProvider,
@@ -232,6 +232,20 @@ namespace DualJobDate.Api.Controllers
             else
             {
                 return BadRequest(result.Errors);
+            }
+        }
+
+        [HttpGet("{userId}")]
+        public async Task<IActionResult> GetUserById(int userId)
+        {
+            try
+            {
+                var user = await userService.GetUserById(userId);
+                return Ok(user);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
             }
         }
 

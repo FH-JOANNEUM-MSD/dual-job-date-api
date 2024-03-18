@@ -1,5 +1,5 @@
-﻿using DualJobDate.BusinessLogic.Services.Interface;
-using DualJobDate.BusinessObjects.Dto;
+﻿using DualJobDate.BusinessObjects.Dto;
+using DualJobDate.BusinessObjects.Entities.Interface.Service;
 using System.Text.Json;
 
 namespace DualJobDate.BusinessLogic.Services;
