@@ -1,5 +1,5 @@
 ﻿using DualJobDate.BusinessObjects.Entities;
-using DualJobDate.BusinessObjects.Entities.Interface;
+using DualJobDate.BusinessObjects.Entities.Interface.Repository;
 using DualJobDate.DataAccess;
 
 namespace DualJobDate.DataAccess.Repositories

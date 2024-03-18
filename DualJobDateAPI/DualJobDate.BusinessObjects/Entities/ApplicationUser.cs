@@ -1,10 +1,10 @@
-﻿using DualJobDate.BusinessObjects.Entities.Enum;
-using DualJobDate.BusinessObjects.Entities.Interface;
+﻿using DualJobDate.BusinessObjects.Entities.Base.Interface;
+using DualJobDate.BusinessObjects.Entities.Enum;
 using Microsoft.AspNetCore.Identity;
 
 namespace DualJobDate.BusinessObjects.Entities
 {
-    public class User : IdentityUser<string>, IBaseEntity
+    public class ApplicationUser : IdentityUser<string>, IBaseEntity
     {
         public int Id { get; set; }
         public bool IsActive { get; set; }
@@ -14,6 +14,7 @@ namespace DualJobDate.BusinessObjects.Entities
         public string? ProfilePicture { get; set; }
         public DateTime BirthDate { get; set; }
         public bool IsNew { get; set; }
+        public List<Match> Matches { get; set; }
         // Mail in IdentityUser
         
         //navigation properties

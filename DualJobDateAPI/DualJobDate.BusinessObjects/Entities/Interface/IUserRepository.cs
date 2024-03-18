@@ -1,9 +1,9 @@
-﻿using DualJobDate.BusinessObjects.Entities;
+﻿using DualJobDate.BusinessObjects.Entities.Interface.Repository;
 
 namespace DualJobDate.BusinessObjects.Entities.Interface
 {
-    public interface IUserRepository : IBaseRepository<User>
+    public interface IUserRepository : IBaseRepository<ApplicationUser>
     {
-        Task<IEnumerable<User>> GetUsersByAcademicProgramIdAsync(int academicProgramId);
+        Task<IEnumerable<ApplicationUser>> GetUsersByAcademicProgramIdAsync(int academicProgramId);
     }
 }
