@@ -52,7 +52,7 @@ namespace DualJobDate.API
 
         private static void ConfigureIdentity(IServiceCollection services)
         {
-            services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+            services.AddIdentity<User, Role>(options =>
                 {
                     options.Password.RequiredLength = 8;
                     options.Password.RequireDigit = true;
@@ -123,7 +123,7 @@ namespace DualJobDate.API
             var loggerFactory = services.GetRequiredService<ILoggerFactory>();
             DbInitializer.InitializeDb(loggerFactory);
             DatabaseConnectionTester.TestDbConnection(app);
-            var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
+            var userManager = services.GetRequiredService<UserManager<User>>();
             var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
             DbInitializer.SeedData(userManager, roleManager);
 

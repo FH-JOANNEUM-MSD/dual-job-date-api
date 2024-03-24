@@ -5,11 +5,10 @@ using Microsoft.EntityFrameworkCore.Storage;
 
 namespace DualJobDate.DataAccess
 {
-    public class UnitOfWork(AppDbContext dbContext, IUserRepository userRepository,
+    public class UnitOfWork(AppDbContext dbContext,
         IInstitutionRepository institutionRepository) : IUnitOfWork, IDisposable
     {
         private readonly AppDbContext _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
-        public IUserRepository UserRepository => userRepository ?? throw new ArgumentNullException(nameof(userRepository));
         public IInstitutionRepository InstitutionRepository => institutionRepository ?? throw new ArgumentNullException(nameof(institutionRepository));
 
         private IDbContextTransaction? _transaction;

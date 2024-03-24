@@ -7,15 +7,15 @@ namespace DualJobDate.BusinessObjects.Entities
     public class AcademicProgram : BaseEntity, IBaseInstitutionEntity
     {
         public int Year { get; set; }
-        public string Name { get; set; }
-        public string KeyName { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string KeyName { get; set; } = string.Empty;
         public AcademicDegreeEnum AcademicDegreeEnum { get; set; } = AcademicDegreeEnum.Default;
         
         //navigation properties
         public int? InstitutionId { get; set; }
         public Institution? Institution { get; set; }
-        public List<ApplicationUser> Users { get; set; } = new();
-        public List<Activity> Activities { get; set; } = new();
-        public List<Company> Companies { get; set; } = new();
+        public ICollection<User> Users { get; set; } = [];
+        public ICollection<Activity> Activities { get; set; } = [];
+        public ICollection<Company> Companies { get; set; } = [];
     }
 }

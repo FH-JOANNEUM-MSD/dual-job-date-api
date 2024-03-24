@@ -20,8 +20,8 @@ namespace DualJobDate.Api.Controllers
     [Route("[controller]")]
     [ApiController]
     public class UserController(
-    UserManager<ApplicationUser> userManager,
-    SignInManager<ApplicationUser> signInManager,
+    UserManager<User> userManager,
+    SignInManager<User> signInManager,
         IServiceProvider serviceProvider,
         IMapper mapper,
         IEmailHelper emailHelper,
@@ -34,8 +34,8 @@ namespace DualJobDate.Api.Controllers
         [Route("Register")]
         public async Task<IActionResult> RegisterUser([FromBody] RegisterUserModel model)
         {
-            var userStore = serviceProvider.GetRequiredService<IUserStore<ApplicationUser>>();
-            var emailStore = (IUserEmailStore<ApplicationUser>)userStore;
+            var userStore = serviceProvider.GetRequiredService<IUserStore<User>>();
+            var emailStore = (IUserEmailStore<User>)userStore;
             
 
             if (string.IsNullOrEmpty(model.Email) || !EmailAddressAttribute.IsValid(model.Email))
@@ -43,14 +43,11 @@ namespace DualJobDate.Api.Controllers
                 return BadRequest($"Email '{model.Email}' is invalid.");
             }
 
-            var user = new ApplicationUser
+            var user = new User
             {
                 Email = model.Email,
                 UserType = UserTypeEnum.Admin,
-                BirthDate = new DateTime(),
                 IsNew = true,
-                FirstName = "root",
-                LastName = "root",
             };
 
             await userStore.SetUserNameAsync(user, model.Email, CancellationToken.None);
@@ -72,7 +69,7 @@ namespace DualJobDate.Api.Controllers
             await userManager.AddToRoleAsync(user, "Admin");
 
             emailHelper.SendEmailAsync(user.Email, password);
-            return Ok($"ApplicationUser '{user.Email}' created successfully");
+            return Ok($"User '{user.Email}' created successfully");
         }
 
         [HttpPost]
@@ -182,7 +179,7 @@ namespace DualJobDate.Api.Controllers
         public Task<ActionResult<IEnumerable<UserResource>>> GetAllUsers()
         {
             var users = userManager.Users.ToList();
-            var userResources = mapper.Map<List<ApplicationUser>, List<UserResource>>(users);
+            var userResources = mapper.Map<List<User>, List<UserResource>>(users);
             return Task.FromResult<ActionResult<IEnumerable<UserResource>>>(Ok(userResources));
         }
 

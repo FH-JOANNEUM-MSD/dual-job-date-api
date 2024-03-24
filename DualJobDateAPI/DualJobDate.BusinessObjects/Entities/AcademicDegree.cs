@@ -5,7 +5,7 @@ namespace DualJobDate.BusinessObjects.Entities
 {
     public class AcademicDegree : BaseEntity
     {
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
         public AcademicDegreeEnum AcademicDegreeEnum { get; set; }
     } 
 }

@@ -4,19 +4,23 @@ namespace DualJobDate.BusinessObjects.Entities
 {
     public class Company: BaseEntity
     {
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
         public string? Industry { get; set; }
         public string? LogoBase64 { get; set; }
         public string? Website { get; set; }
-        public bool isActive { get; set; }
+        public bool IsActive { get; set; }
     
     
         //navigation properties
-        public ApplicationUser? User { get; set; }
+        public User? User { get; set; }
         public int CompanyDetailsId { get; set; }
         public CompanyDetails? CompanyDetails { get; set; }
-        public List<Address> Addresses { get; set; } = new();
-        public List<CompanyActivity> CompanyActivities { get; set; } = new();
-        public List<AcademicProgram> AcademicPrograms { get; set; } = new();
+        public ICollection<Address> Addresses { get; set; } = [];
+        public ICollection<Activity> Activities { get; set; } = [];
+        public ICollection<CompanyActivity> CompanyActivities { get; set; } = [];
+        
+        public ICollection<AcademicProgram> AcademicPrograms { get; set; } = [];
+        public ICollection<User> Likers { get; set; } = [];
+        public ICollection<StudentCompany> StudentCompanies { get; set; } = [];
     }
 }

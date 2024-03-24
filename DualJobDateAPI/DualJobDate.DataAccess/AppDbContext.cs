@@ -1,14 +1,12 @@
-﻿using System.Security.Claims;
-using DualJobDate.BusinessObjects.Entities;
+﻿using DualJobDate.BusinessObjects.Entities;
 using DualJobDate.BusinessObjects.Entities.Interface;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace DualJobDate.DataAccess
 {
-    public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbContext(options), IDbContext
+    public class AppDbContext : IdentityDbContext<User, Role, string>, IDbContext
     {
         public DbSet<Institution> Institutions { get; set; }
         public DbSet<AcademicProgram> AcademicPrograms { get; set; }
@@ -17,33 +15,48 @@ namespace DualJobDate.DataAccess
         public DbSet<Address> Addresses { get; set; }
         public DbSet<Company> Companies { get; set; }
         public DbSet<CompanyActivity> CompanyActivities { get; set; }
-        public DbSet<CompanyDetails> CompanyDetailsEnumerable { get; set; }
-        public DbSet<ApplicationUser> ApplicationUsers { get; set; }
-        public DbSet<UserType> UserTypes { get; set; }
+        public DbSet<CompanyDetails> CompanyDetails { get; set; }
+        public DbSet<StudentCompany> StudentCompanies { get; set; }
+        public AppDbContext()
+        {
+        }
+    
+        public AppDbContext(DbContextOptions<AppDbContext> options)
+            : base(options)
+        {
+        }
         
         public Task<int> SaveChangesAsync()
         {
             return base.SaveChangesAsync();
         }
 
-
         void IDisposable.Dispose() => base.Dispose();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<IdentityUserLogin<string>>()
-                .HasKey(l => l.UserId);
+            modelBuilder.Ignore<IdentityUserLogin<string>>();
+
 
             modelBuilder.Entity<IdentityUserRole<string>>()
                 .HasKey(ur => new { ur.UserId, ur.RoleId });
 
-            modelBuilder.Entity<IdentityUserToken<string>>()
-                .HasKey(t => new { t.UserId, t.LoginProvider, t.Name });
+            modelBuilder.Ignore<IdentityUserToken<string>>();
 
-            modelBuilder
-                .Entity<UserType>()
-                .Property(x => x.UserTypeEnum)
-                .HasConversion<int>();
+            modelBuilder.Entity<User>()
+                .HasMany(e => e.Likes)
+                .WithMany(e => e.Likers)
+                .UsingEntity<StudentCompany>();
+            
+            modelBuilder.Entity<Company>()
+                .HasOne(c => c.User)
+                .WithOne(u => u.Company)
+                .HasForeignKey<User>(u => u.CompanyId);
+                
+            modelBuilder.Entity<Company>()
+                .HasMany(e => e.Activities)
+                .WithMany(e => e.Companies)
+                .UsingEntity<CompanyActivity>();
             
             modelBuilder
                 .Entity<AcademicDegree>()
