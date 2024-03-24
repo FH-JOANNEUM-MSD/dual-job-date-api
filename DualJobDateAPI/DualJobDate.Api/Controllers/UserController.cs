@@ -24,12 +24,12 @@ namespace DualJobDate.Api.Controllers
     SignInManager<User> signInManager,
         IServiceProvider serviceProvider,
         IMapper mapper,
-        IEmailHelper emailHelper,
         IJwtHelper jwtHelper)
         : ControllerBase
     {
         private static readonly EmailAddressAttribute EmailAddressAttribute = new();
 
+        [Authorize(Policy = "Admin")]
         [HttpPut]
         [Route("Register")]
         public async Task<IActionResult> RegisterUser([FromBody] RegisterUserModel model)
@@ -68,7 +68,6 @@ namespace DualJobDate.Api.Controllers
 
             await userManager.AddToRoleAsync(user, "Admin");
 
-            emailHelper.SendEmailAsync(user.Email, password);
             return Ok($"User '{user.Email}' created successfully");
         }
 
@@ -182,6 +181,16 @@ namespace DualJobDate.Api.Controllers
             var userResources = mapper.Map<List<User>, List<UserResource>>(users);
             return Task.FromResult<ActionResult<IEnumerable<UserResource>>>(Ok(userResources));
         }
+        
+        [Authorize(Policy = "Admin")]
+        [HttpGet]
+        [Route("GetUser/{UserId}")]
+        public async Task<ActionResult<IEnumerable<UserResource>>> GetAllUsers(string UserId)
+        {
+            var user = await userManager.FindByIdAsync(UserId);
+            var userResource = mapper.Map<User, UserResource>(user);
+            return Ok(userResource);
+        }
 
 
         [Authorize(Policy = "Admin")]
@@ -198,7 +207,7 @@ namespace DualJobDate.Api.Controllers
             var result = await userManager.DeleteAsync(user);
             if (result.Succeeded)
             {
-                return Ok();
+                return Ok("User deleted successfully!");
             }
 
             return BadRequest(result.Errors);
@@ -211,19 +220,19 @@ namespace DualJobDate.Api.Controllers
             var user = await userManager.GetUserAsync(User);
             if (user == null)
             {
-                return NotFound();
+                return NotFound("Wrong Credentials!");
             }
 
             var checkPasswordResult = await signInManager.CheckPasswordSignInAsync(user, model.Password, lockoutOnFailure: false);
             if (!checkPasswordResult.Succeeded)
             {
-                return BadRequest();
+                return NotFound("Wrong Credentials!");
             }
 
             var result = await userManager.DeleteAsync(user);
             if (result.Succeeded)
             {
-                return Ok();
+                return Ok("User deleted successfully!");
             }
             else
             {
