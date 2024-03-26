@@ -98,13 +98,15 @@ namespace DualJobDate.API
         {
             services.AddSwaggerGen(option =>
             {
-                option.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme()
-                    {
-                        In = ParameterLocation.Header,
-                        Name = "Authorization",
-                        Type = SecuritySchemeType.ApiKey
-                    }
-                );
+                option.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
+                {
+                    Description = "JWT Authorization header using the Bearer scheme",
+                    Name = "Authorization",
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "Bearer"
+                });
+
                 option.OperationFilter<SecurityRequirementsOperationFilter>();
             });
         }
