@@ -6,7 +6,6 @@ namespace DualJobDate.BusinessObjects.Entities
 {
     public class User : IdentityUser<string>, IBaseAcademicProgramEntity
     {
-        public int Id { get; set; }
         public bool IsActive { get; set; }
         public UserTypeEnum UserType { get; set; }
         public bool IsNew { get; set; }

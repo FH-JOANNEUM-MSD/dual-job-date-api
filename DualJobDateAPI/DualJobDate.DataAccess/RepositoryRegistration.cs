@@ -1,9 +1,7 @@
-﻿using DualJobDate.BusinessObjects.Entities;
-using DualJobDate.BusinessObjects.Entities.Interface;
+﻿using DualJobDate.BusinessObjects.Entities.Interface;
 using DualJobDate.BusinessObjects.Entities.Interface.Repository;
 using DualJobDate.DataAccess.Repositories;
 using Microsoft.Extensions.DependencyInjection;
-using Activity = System.Diagnostics.Activity;
 
 namespace DualJobDate.DataAccess
 {

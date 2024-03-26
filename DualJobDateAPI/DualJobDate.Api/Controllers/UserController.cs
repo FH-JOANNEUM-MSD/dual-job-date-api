@@ -14,6 +14,7 @@ using System.Text;
 using DualJobDate.BusinessObjects.Resources;
 using DualJobDate.BusinessObjects.Entities.Interface.Helper;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace DualJobDate.Api.Controllers
 {
@@ -25,6 +26,7 @@ namespace DualJobDate.Api.Controllers
     SignInManager<User> signInManager,
         IServiceProvider serviceProvider,
         IMapper mapper,
+        IEmailHelper emailHelper,
         IJwtHelper jwtHelper)
         : ControllerBase
     {
@@ -62,55 +64,52 @@ namespace DualJobDate.Api.Controllers
                 return BadRequest(result.Errors);
             }
 
-            await userManager.AddToRoleAsync(user, "Admin");
+            await userManager.AddToRoleAsync(user, model.Role);
 
             return Ok($"User '{user.Email}' created successfully");
         }
 
         [HttpPost]
         [Route("Login")]
-        public async Task<IActionResult> Login([FromBody] LoginModel model)
+        public async Task<Results<Ok<AccessTokenResponse>, EmptyHttpResult, ProblemHttpResult>> Login([FromBody] LoginRequest login, [FromQuery] bool? useCookies, [FromQuery] bool? useSessionCookies)
         {
-            var user = await userManager.FindByEmailAsync(model.Email);
-            const string unauthorizedMessage = "Wrong Email or Password";
 
-            if (user?.Email is null)
-            {
-                return Unauthorized(unauthorizedMessage);
-            }
+            var useCookieScheme = (useCookies == true) || (useSessionCookies == true);
+            var isPersistent = (useCookies == true) && (useSessionCookies != true);
+            signInManager.AuthenticationScheme = useCookieScheme ? IdentityConstants.ApplicationScheme : IdentityConstants.BearerScheme;
 
-            var result = await signInManager.CheckPasswordSignInAsync(user, model.Password, false);
+            var result = await signInManager.PasswordSignInAsync(login.Email, login.Password, isPersistent, lockoutOnFailure: true);
 
             if (!result.Succeeded)
             {
-                await userManager.AccessFailedAsync(user);
-                return Unauthorized(unauthorizedMessage);
+                return TypedResults.Problem(result.ToString(), statusCode: StatusCodes.Status401Unauthorized);
             }
 
-            var token = jwtHelper.GenerateJwtToken(user.Id, user.UserType.ToString());
-            await userManager.ResetAccessFailedCountAsync(user);
-
-            return Ok(new { Token = token });
+            // The signInManager already produced the needed response in the form of a cookie or bearer token.
+            return TypedResults.Empty;
         }
 
         [HttpPost]
-        [Authorize(Policy = "Admin")]
         [Route("Refresh")]
-        public async Task<IActionResult> RefreshToken([FromBody] RefreshRequest refreshRequest)
+        public async Task<Results<Ok<AccessTokenResponse>, UnauthorizedHttpResult, SignInHttpResult, ChallengeHttpResult>> RefreshToken
+        ([FromBody] RefreshRequest refreshRequest)
         {
             var optionsMonitor = serviceProvider.GetRequiredService<IOptionsMonitor<BearerTokenOptions>>();
             var refreshTokenProtector = optionsMonitor.Get(IdentityConstants.BearerScheme).RefreshTokenProtector;
             var refreshTicket = refreshTokenProtector.Unprotect(refreshRequest.RefreshToken);
 
-            if (refreshTicket?.Properties.ExpiresUtc is not { } expiresUtc ||
+            // Reject the /refresh attempt with a 401 if the token expired or the security stamp validation fails
+            if (refreshTicket?.Properties?.ExpiresUtc is not { } expiresUtc ||
                 DateTime.Now >= expiresUtc ||
-                await signInManager.ValidateSecurityStampAsync(refreshTicket.Principal) is not { } user)
+                await signInManager.ValidateSecurityStampAsync(refreshTicket.Principal) is not User user)
+
             {
-                return Unauthorized();
+                return TypedResults.Challenge();
             }
 
             var newPrincipal = await signInManager.CreateUserPrincipalAsync(user);
-            return Ok(newPrincipal);
+            return TypedResults.SignIn(newPrincipal, authenticationScheme: IdentityConstants.BearerScheme);
+
         }
 
         [HttpPost]
