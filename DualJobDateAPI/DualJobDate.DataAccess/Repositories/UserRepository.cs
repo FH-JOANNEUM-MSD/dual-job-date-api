@@ -3,9 +3,9 @@ using DualJobDate.BusinessObjects.Entities.Interface;
 
 namespace DualJobDate.DataAccess.Repositories
 {
-    public class UserRepository(AppDbContext dbContext) : BaseRepository<ApplicationUser>(dbContext), IUserRepository
+    public class UserRepository(AppDbContext dbContext) : BaseRepository<User>(dbContext), IUserRepository
     {
-        public async Task<IEnumerable<ApplicationUser>> GetUsersByAcademicProgramIdAsync(int academicProgramId)
+        public async Task<IEnumerable<User>> GetUsersByAcademicProgramIdAsync(int academicProgramId)
         {
             var users = await GetAllAsync();
             return users.Where(x => x.AcademicProgramId == academicProgramId);

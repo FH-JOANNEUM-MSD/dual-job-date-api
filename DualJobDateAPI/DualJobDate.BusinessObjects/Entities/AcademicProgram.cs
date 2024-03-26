@@ -14,7 +14,7 @@ namespace DualJobDate.BusinessObjects.Entities
         //navigation properties
         public int? InstitutionId { get; set; }
         public Institution? Institution { get; set; }
-        public List<ApplicationUser> Users { get; set; } = new();
+        public List<User> Users { get; set; } = new();
         public List<Activity> Activities { get; set; } = new();
         public List<Company> Companies { get; set; } = new();
     }

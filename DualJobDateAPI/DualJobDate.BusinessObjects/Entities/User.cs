@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace DualJobDate.BusinessObjects.Entities
 {
-    public class ApplicationUser : IdentityUser<string>, IBaseEntity
+    public class User : IdentityUser<string>, IBaseEntity
     {
         public int Id { get; set; }
         public bool IsActive { get; set; }
