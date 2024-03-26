@@ -10,10 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Cryptography;
-using System.Text;
 using DualJobDate.BusinessObjects.Resources;
-using DualJobDate.BusinessObjects.Entities.Interface.Helper;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace DualJobDate.Api.Controllers
@@ -25,20 +22,34 @@ namespace DualJobDate.Api.Controllers
     UserManager<User> userManager,
     SignInManager<User> signInManager,
         IServiceProvider serviceProvider,
-        IMapper mapper,
-        IEmailHelper emailHelper,
-        IJwtHelper jwtHelper)
+        IMapper mapper)
         : ControllerBase
     {
         private static readonly EmailAddressAttribute EmailAddressAttribute = new();
 
-        [Authorize(Policy = "Admin")]
+        [Authorize("AdminOrInstitution")]
         [HttpPut]
         [Route("Register")]
         public async Task<IActionResult> RegisterUser([FromBody] RegisterUserModel model)
         {
+            var adminUser = await userManager.GetUserAsync(User);
+            int institution;
+            int program;
+            if (User.IsInRole("Admin"))
+            {
+                if (model.InstitutionId == null || model.AcademicProgramId == null)
+                {
+                    return BadRequest("InstitutionId or AcademicProgramId cannot be null!");
+                }
+                institution = (int)model.InstitutionId;
+                program = (int)model.AcademicProgramId;
+            }
+            else
+            {
+                institution = adminUser.InstitutionId;
+                program = adminUser.AcademicProgramId;
+            }
             var userStore = serviceProvider.GetRequiredService<IUserStore<User>>();
-            var emailStore = (IUserEmailStore<User>)userStore;
             
             if (string.IsNullOrEmpty(model.Email) || !EmailAddressAttribute.IsValid(model.Email))
             {
@@ -50,11 +61,13 @@ namespace DualJobDate.Api.Controllers
                 Email = model.Email,
                 UserType = UserTypeEnum.Admin,
                 IsNew = true,
+                InstitutionId = institution,
+                AcademicProgramId = program,
+                CompanyId = model.CompanyId
             };
 
             await userStore.SetUserNameAsync(user, model.Email, CancellationToken.None);
 
-            //TODO
             var password = "Password1!";
 
             var result = await userManager.CreateAsync(user, password);
@@ -65,13 +78,13 @@ namespace DualJobDate.Api.Controllers
             }
 
             await userManager.AddToRoleAsync(user, model.Role);
-
+            
             return Ok($"User '{user.Email}' created successfully");
         }
 
         [HttpPost]
         [Route("Login")]
-        public async Task<Results<Ok<AccessTokenResponse>, EmptyHttpResult, ProblemHttpResult>> Login([FromBody] LoginRequest login, [FromQuery] bool? useCookies, [FromQuery] bool? useSessionCookies)
+        public async Task<Results<Ok<AccessTokenResponse>, EmptyHttpResult, ProblemHttpResult>> Login([FromBody] LoginModel login, [FromQuery] bool? useCookies, [FromQuery] bool? useSessionCookies)
         {
 
             var useCookieScheme = (useCookies == true) || (useSessionCookies == true);

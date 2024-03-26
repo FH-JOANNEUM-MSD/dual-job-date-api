@@ -4,7 +4,8 @@ namespace DualJobDate.BusinessObjects.Entities.Enum
     {
         Student = 1,
         Company = 2,
-        Admin = 3
+        Institution = 3,
+        Admin = 0
     }
 
 }

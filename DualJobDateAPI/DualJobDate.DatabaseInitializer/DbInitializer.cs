@@ -3,6 +3,7 @@ using DualJobDate.BusinessObjects.Entities;
 using DualJobDate.BusinessObjects.Entities.Enum;
 using DualJobDate.BusinessObjects.Entities.Interface;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
@@ -53,10 +54,13 @@ namespace DualJobDate.DatabaseInitializer
             var uow = services.GetRequiredService<IUnitOfWork>();
             uow.BeginTransaction();
             await SeedRoles(services);
-            await SeedUser(services);
             await SeedInstitution(uow);
             await SeedDegreePrograms(uow);
             await SeedAcademicProgram(uow);
+            await SeedAdmin(services, uow);
+            await SeedInstitutionUser(services, uow);
+            await SeedStudent(services, uow);
+            await SeedCompanyUser(services, uow);
             await SeedActivities(uow);
             await SeedTestCompany(uow);
             uow.Commit();
@@ -66,7 +70,15 @@ namespace DualJobDate.DatabaseInitializer
 
         private static async Task SeedInstitution(IUnitOfWork unitOfWork)
         {
-
+            if (await unitOfWork.InstitutionRepository.GetByName("ADMIN") == null)
+            {
+                await unitOfWork.InstitutionRepository.AddAsync(new Institution
+                {
+                    KeyName = "ADMIN",
+                    Name = "Administrator",
+                    Website = ""
+                });
+            }
             if (await unitOfWork.InstitutionRepository.GetByName("IIT") == null)
             {
                 await unitOfWork.InstitutionRepository.AddAsync(new Institution
@@ -106,13 +118,26 @@ namespace DualJobDate.DatabaseInitializer
         }
 
         private static async Task SeedAcademicProgram(IUnitOfWork unitOfWork)
-        {
+        {            
+            var adminInstitution = await unitOfWork.InstitutionRepository.GetByName("ADMIN");
+            if (await unitOfWork.AcademicProgramRepository.GetByName("ADMIN") == null)
+            {
+                await unitOfWork.AcademicProgramRepository.AddAsync(new AcademicProgram
+                {
+                    KeyName = "ADMIN",
+                    Name = "Administrator",
+                    Year = 9999,
+                    AcademicDegreeEnum = AcademicDegreeEnum.Bachelor,
+                    Institution = adminInstitution,
+                    InstitutionId = adminInstitution.Id
+                });
+            }
+            
             var institution = await unitOfWork.InstitutionRepository.GetByName("IIT");
             if (await unitOfWork.AcademicProgramRepository.GetByName("MSD21") == null)
             {
                 await unitOfWork.AcademicProgramRepository.AddAsync(new AcademicProgram
                 {
-                    Id = 1,
                     KeyName = "MSD21",
                     Name = "Mobile Software Development",
                     Year = 2021,
@@ -213,19 +238,25 @@ namespace DualJobDate.DatabaseInitializer
             }
         }
 
-    private static async Task SeedUser(IServiceProvider services)
+        private static async Task SeedAdmin(IServiceProvider services, IUnitOfWork unitOfWork)
         {
+            var academicProgram = await unitOfWork.AcademicProgramRepository.GetByName("ADMIN");
+            var institution = await unitOfWork.InstitutionRepository.GetByName("ADMIN");
             var userManager = services.GetRequiredService<UserManager<User>>();
             var userStore = services.GetRequiredService<IUserStore<User>>();
-            var user = await userManager.FindByEmailAsync("dualjobdate@fh-joanneum.at");
+            var user = await userManager.FindByEmailAsync("admin@fh-joanneum.at");
             if (user == null)
             {
                 var user1 = new User
                 {
-                    Email = "dualjobdate@fh-joanneum.at",
+                    Email = "admin@fh-joanneum.at",
                     UserType = UserTypeEnum.Admin,
                     IsNew = false,
-                    IsActive = false
+                    IsActive = false,
+                    AcademicProgram = academicProgram,
+                    AcademicProgramId = academicProgram.Id,
+                    Institution = institution,
+                    InstitutionId = institution.Id
                 };
 
                 await userStore.SetUserNameAsync(user1, user1.Email, CancellationToken.None);
@@ -240,6 +271,109 @@ namespace DualJobDate.DatabaseInitializer
                 }
             }
         }
+        
+        private static async Task SeedStudent(IServiceProvider services, IUnitOfWork unitOfWork)
+        {
+            var academicProgram = await unitOfWork.AcademicProgramRepository.GetByName("MSD21");
+            var institution = await unitOfWork.InstitutionRepository.GetByName("IIT");
+            var userManager = services.GetRequiredService<UserManager<User>>();
+            var userStore = services.GetRequiredService<IUserStore<User>>();
+            var user = await userManager.FindByEmailAsync("student@fh-joanneum.at");
+            if (user == null)
+            {
+                var user1 = new User
+                {
+                    Email = "student@fh-joanneum.at",
+                    UserType = UserTypeEnum.Student,
+                    IsNew = false,
+                    IsActive = false,
+                    AcademicProgram = academicProgram,
+                    AcademicProgramId = academicProgram.Id,
+                    Institution = institution,
+                    InstitutionId = institution.Id
+                };
+
+                await userStore.SetUserNameAsync(user1, user1.Email, CancellationToken.None);
+
+                var password = "Student!1";
+
+                var result = await userManager.CreateAsync(user1, password);
+
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(user1, "Student");
+                }
+            }
+        }
+        
+        private static async Task SeedCompanyUser(IServiceProvider services, IUnitOfWork unitOfWork)
+        {
+            var academicProgram = await unitOfWork.AcademicProgramRepository.GetByName("MSD21");
+            var institution = await unitOfWork.InstitutionRepository.GetByName("IIT");
+            var userManager = services.GetRequiredService<UserManager<User>>();
+            var userStore = services.GetRequiredService<IUserStore<User>>();
+            var user = await userManager.FindByEmailAsync("company@fh-joanneum.at");
+            if (user == null)
+            {
+                var user1 = new User
+                {
+                    Email = "company@fh-joanneum.at",
+                    UserType = UserTypeEnum.Company,
+                    IsNew = false,
+                    IsActive = false,
+                    AcademicProgram = academicProgram,
+                    AcademicProgramId = academicProgram.Id,
+                    Institution = institution,
+                    InstitutionId = institution.Id
+                };
+
+                await userStore.SetUserNameAsync(user1, user1.Email, CancellationToken.None);
+
+                var password = "Company!1";
+
+                var result = await userManager.CreateAsync(user1, password);
+
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(user1, "Company");
+                }
+            }
+        }
+        
+        private static async Task SeedInstitutionUser(IServiceProvider services, IUnitOfWork unitOfWork)
+        {
+            var academicProgram = await unitOfWork.AcademicProgramRepository.GetByName("MSD21");
+            var institution = await unitOfWork.InstitutionRepository.GetByName("IIT");
+            var userManager = services.GetRequiredService<UserManager<User>>();
+            var userStore = services.GetRequiredService<IUserStore<User>>();
+            var user = await userManager.FindByEmailAsync("institution@fh-joanneum.at");
+            if (user == null)
+            {
+                var user1 = new User
+                {
+                    Email = "institution@fh-joanneum.at",
+                    UserType = UserTypeEnum.Institution,
+                    IsNew = false,
+                    IsActive = false,
+                    AcademicProgram = academicProgram,
+                    AcademicProgramId = academicProgram.Id,
+                    Institution = institution,
+                    InstitutionId = institution.Id
+                };
+
+                await userStore.SetUserNameAsync(user1, user1.Email, CancellationToken.None);
+
+                var password = "Institution!1";
+
+                var result = await userManager.CreateAsync(user1, password);
+
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(user1, "Institution");
+                }
+            }
+        }
+
 
         private static async Task SeedRoles(IServiceProvider services)
         {

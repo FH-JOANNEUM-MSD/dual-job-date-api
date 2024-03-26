@@ -88,7 +88,11 @@ namespace DualJobDate.API
                 {
                     policy.RequireRole("Company");
                 });
-            });        }
+                options.AddPolicy("AdminOrInstitution", policy =>
+                    policy.RequireAssertion(context =>
+                        context.User.IsInRole("Admin") || context.User.IsInRole("Institution")));          
+            });        
+        }
 
         private static void ConfigureSwagger(IServiceCollection services)
         {
