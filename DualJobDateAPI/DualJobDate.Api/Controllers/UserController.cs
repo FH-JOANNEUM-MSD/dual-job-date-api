@@ -65,7 +65,7 @@ namespace DualJobDate.Api.Controllers
                 return BadRequest(result.Errors);
             }
 
-            await userManager.AddToRoleAsync(user, "Admin");
+            await userManager.AddToRoleAsync(user, model.Role);
 
             return Ok($"User '{user.Email}' created successfully");
         }

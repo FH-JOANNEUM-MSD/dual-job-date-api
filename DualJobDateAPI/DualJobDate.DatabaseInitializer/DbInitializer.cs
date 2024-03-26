@@ -47,12 +47,12 @@ namespace DualJobDate.DatabaseInitializer
                 logger.LogInformation("Output: {Error}", error);
             }
         }
-        
+
         public static async Task SeedData(IServiceProvider services)
         {
             var uow = services.GetRequiredService<IUnitOfWork>();
             uow.BeginTransaction();
-            // await SeedRoles(services);
+            await SeedRoles(services);
             await SeedUser(services);
             await SeedInstitution(uow);
             await SeedDegreePrograms(uow);
@@ -61,11 +61,11 @@ namespace DualJobDate.DatabaseInitializer
             uow.Commit();
             await uow.SaveChanges();
         }
-        
-        
+
+
         private static async Task SeedInstitution(IUnitOfWork unitOfWork)
         {
-            
+
             if (await unitOfWork.InstitutionRepository.GetByName("IIT") == null)
             {
                 await unitOfWork.InstitutionRepository.AddAsync(new Institution
@@ -76,7 +76,7 @@ namespace DualJobDate.DatabaseInitializer
                 });
             }
         }
-        
+
         private static async Task SeedDegreePrograms(IUnitOfWork unitOfWork)
         {
             if (unitOfWork.AcademicDegreeRepository.GetAllAsync().Result.IsNullOrEmpty())
@@ -103,7 +103,7 @@ namespace DualJobDate.DatabaseInitializer
                 });
             }
         }
-        
+
         private static async Task SeedAcademicProgram(IUnitOfWork unitOfWork)
         {
             var institution = await unitOfWork.InstitutionRepository.GetByName("IIT");
@@ -121,6 +121,7 @@ namespace DualJobDate.DatabaseInitializer
                 });
             }
         }
+
         private static async Task SeedActivities(IUnitOfWork unitOfWork)
         {
 
@@ -165,21 +166,32 @@ namespace DualJobDate.DatabaseInitializer
                 );
             }
         }
-        
-        private static async Task SeedUser(IServiceProvider services)
+
+    private static async Task SeedUser(IServiceProvider services)
         {
             var userManager = services.GetRequiredService<UserManager<User>>();
-
+            var userStore = services.GetRequiredService<IUserStore<User>>();
             var user = await userManager.FindByEmailAsync("dualjobdate@fh-joanneum.at");
             if (user == null)
             {
-                await userManager.CreateAsync(new User
+                var user1 = new User
                 {
-                    Email = "dualjobdatze@fh-joanneum.at",
+                    Email = "dualjobdate@fh-joanneum.at",
                     UserType = UserTypeEnum.Admin,
                     IsNew = false,
                     IsActive = false
-                }, "Administrator!1");
+                };
+
+                await userStore.SetUserNameAsync(user1, user1.Email, CancellationToken.None);
+
+                var password = "Administrator!1";
+
+                var result = await userManager.CreateAsync(user1, password);
+
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(user1, "Admin");
+                }
             }
         }
 
