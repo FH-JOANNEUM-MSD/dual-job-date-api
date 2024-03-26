@@ -13,6 +13,7 @@ using System.Security.Cryptography;
 using System.Text;
 using DualJobDate.BusinessObjects.Resources;
 using DualJobDate.BusinessObjects.Entities.Interface.Helper;
+using Microsoft.AspNetCore.Authentication;
 
 namespace DualJobDate.Api.Controllers
 {
@@ -20,8 +21,8 @@ namespace DualJobDate.Api.Controllers
     [Route("[controller]")]
     [ApiController]
     public class UserController(
-    UserManager<ApplicationUser> userManager,
-    SignInManager<ApplicationUser> signInManager,
+    UserManager<User> userManager,
+    SignInManager<User> signInManager,
         IServiceProvider serviceProvider,
         IMapper mapper,
         IEmailHelper emailHelper,
@@ -34,8 +35,8 @@ namespace DualJobDate.Api.Controllers
         [Route("Register")]
         public async Task<IActionResult> RegisterUser([FromBody] RegisterUserModel model)
         {
-            var userStore = serviceProvider.GetRequiredService<IUserStore<ApplicationUser>>();
-            var emailStore = (IUserEmailStore<ApplicationUser>)userStore;
+            var userStore = serviceProvider.GetRequiredService<IUserStore<User>>();
+            var emailStore = (IUserEmailStore<User>)userStore;
             
 
             if (string.IsNullOrEmpty(model.Email) || !EmailAddressAttribute.IsValid(model.Email))
@@ -43,7 +44,7 @@ namespace DualJobDate.Api.Controllers
                 return BadRequest($"Email '{model.Email}' is invalid.");
             }
 
-            var user = new ApplicationUser
+            var user = new User
             {
                 Email = model.Email,
                 UserType = UserTypeEnum.Admin,
@@ -55,12 +56,8 @@ namespace DualJobDate.Api.Controllers
 
             await userStore.SetUserNameAsync(user, model.Email, CancellationToken.None);
 
-            var password = Encoding.UTF8.GetBytes(model.Email).Take(10).ToString();
-
-            if (password is null)
-            {
-                return BadRequest("Automatic Password could not be generated.");
-            }
+            //TODO
+            var password = "Password1!";
 
             var result = await userManager.CreateAsync(user, password);
 
@@ -82,14 +79,14 @@ namespace DualJobDate.Api.Controllers
             var user = await userManager.FindByEmailAsync(model.Email);
             const string unauthorizedMessage = "Wrong Email or Password";
 
-            if (user is null || user.Email is null)
+            if (user?.Email is null)
             {
                 return Unauthorized(unauthorizedMessage);
             }
 
-            var result = user.PasswordHash != null && user.PasswordHash.Equals(model.Password);
+            var result = await signInManager.CheckPasswordSignInAsync(user, model.Password, false);
 
-            if (!result)
+            if (!result.Succeeded)
             {
                 await userManager.AccessFailedAsync(user);
                 return Unauthorized(unauthorizedMessage);
@@ -97,6 +94,7 @@ namespace DualJobDate.Api.Controllers
 
             var token = jwtHelper.GenerateJwtToken(user.Id, user.UserType.ToString());
             await userManager.ResetAccessFailedCountAsync(user);
+
             return Ok(new { Token = token });
         }
 
@@ -182,7 +180,7 @@ namespace DualJobDate.Api.Controllers
         public Task<ActionResult<IEnumerable<UserResource>>> GetAllUsers()
         {
             var users = userManager.Users.ToList();
-            var userResources = mapper.Map<List<ApplicationUser>, List<UserResource>>(users);
+            var userResources = mapper.Map<List<User>, List<UserResource>>(users);
             return Task.FromResult<ActionResult<IEnumerable<UserResource>>>(Ok(userResources));
         }
 

@@ -18,7 +18,7 @@ namespace DualJobDate.DataAccess
         public DbSet<Company> Companies { get; set; }
         public DbSet<CompanyActivity> CompanyActivities { get; set; }
         public DbSet<CompanyDetails> CompanyDetailsEnumerable { get; set; }
-        public DbSet<ApplicationUser> ApplicationUsers { get; set; }
+        public DbSet<User> ApplicationUsers { get; set; }
         public DbSet<UserType> UserTypes { get; set; }
         
         public Task<int> SaveChangesAsync()
@@ -31,6 +31,9 @@ namespace DualJobDate.DataAccess
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<User>()
+                .HasKey(u => u.Id);
+
             modelBuilder.Entity<IdentityUserLogin<string>>()
                 .HasKey(l => l.UserId);
 

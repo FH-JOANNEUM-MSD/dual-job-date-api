@@ -9,6 +9,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using DualJobDate.Api.Extensions;
 using DualJobDate.Api.Mapping;
+using Microsoft.Extensions.Options;
 
 namespace DualJobDate.API
 {
@@ -30,6 +31,7 @@ namespace DualJobDate.API
             ConfigureDatabase(services, configuration);
             ConfigureIdentity(services);
             ConfigureJwtAuthentication(services, configuration);
+            ConfigureCookieAuthentication(services);
             ConfigureAuthorization(services);
             ConfigureSwagger(services);
             ConfigureMapper(services);
@@ -52,7 +54,7 @@ namespace DualJobDate.API
 
         private static void ConfigureIdentity(IServiceCollection services)
         {
-            services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+            services.AddIdentity<User, IdentityRole>(options =>
                 {
                     options.Password.RequiredLength = 8;
                     options.Password.RequireDigit = true;
@@ -61,7 +63,8 @@ namespace DualJobDate.API
                     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
                     options.User.RequireUniqueEmail = true;
                 })
-                .AddEntityFrameworkStores<AppDbContext>();
+                .AddEntityFrameworkStores<AppDbContext>()
+                .AddDefaultTokenProviders();
         }
 
         private static void ConfigureJwtAuthentication(IServiceCollection services, IConfiguration configuration)
@@ -86,6 +89,19 @@ namespace DualJobDate.API
                         ValidAudience = "localhost",
                     };
                 });
+        }
+
+        private static void ConfigureCookieAuthentication(IServiceCollection services)
+        {
+            services.ConfigureApplicationCookie(options =>
+            {
+                options.Cookie.HttpOnly = true;
+                options.ExpireTimeSpan = TimeSpan.FromDays(30);
+                options.LoginPath = "/User/Login";
+                options.LogoutPath = "/User/Logout";
+                options.AccessDeniedPath = "/User/AccessDenied";
+                options.SlidingExpiration = true;
+            });
         }
 
         private static void ConfigureAuthorization(IServiceCollection services)
@@ -123,7 +139,7 @@ namespace DualJobDate.API
             var loggerFactory = services.GetRequiredService<ILoggerFactory>();
             DbInitializer.InitializeDb(loggerFactory);
             DatabaseConnectionTester.TestDbConnection(app);
-            var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
+            var userManager = services.GetRequiredService<UserManager<User>>();
             var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
             DbInitializer.SeedData(userManager, roleManager);
 
