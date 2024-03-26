@@ -11,5 +11,5 @@ namespace DualJobDate.BusinessObjects.Entities
         public Company? Company { get; set; }
         public int ActivityId { get; set; }
         public Activity? Activity { get; set; }
-    } 
+    }
 }

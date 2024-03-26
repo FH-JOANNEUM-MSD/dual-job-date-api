@@ -13,7 +13,7 @@ namespace DualJobDate.BusinessObjects.Entities
     
         //navigation properties
         public User? User { get; set; }
-        public int CompanyDetailsId { get; set; }
+        public int? CompanyDetailsId { get; set; }
         public CompanyDetails? CompanyDetails { get; set; }
         public ICollection<Address> Addresses { get; set; } = [];
         public ICollection<Activity> Activities { get; set; } = [];

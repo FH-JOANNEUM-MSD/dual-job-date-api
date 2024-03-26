@@ -138,10 +138,8 @@ namespace DualJobDate.API
             var services = scope.ServiceProvider;
             var loggerFactory = services.GetRequiredService<ILoggerFactory>();
             DbInitializer.InitializeDb(loggerFactory);
-            DatabaseConnectionTester.TestDbConnection(app);
-            var userManager = services.GetRequiredService<UserManager<User>>();
-            var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-            DbInitializer.SeedData(userManager, roleManager);
+            DatabaseConnectionTester.TestDbConnection(app).Wait();
+            DbInitializer.SeedData(services).Wait();
 
             app.UseAuthentication();
             app.UseRouting();

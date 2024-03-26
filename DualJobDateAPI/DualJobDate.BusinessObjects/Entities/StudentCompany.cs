@@ -4,7 +4,7 @@ namespace DualJobDate.BusinessObjects.Entities
 {
     public class StudentCompany : BaseEntity
     {
-        public string StudentId { get; set; }
+        public int StudentId { get; set; }
         public User? Student { get; set; }
         public int CompanyId { get; set; }
         public Company? Company { get; set; }
