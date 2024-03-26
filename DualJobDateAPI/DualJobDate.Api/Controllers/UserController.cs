@@ -13,6 +13,7 @@ using System.Security.Cryptography;
 using System.Text;
 using DualJobDate.BusinessObjects.Resources;
 using DualJobDate.BusinessObjects.Entities.Interface.Helper;
+using Microsoft.AspNetCore.Authentication;
 
 namespace DualJobDate.Api.Controllers
 {
@@ -52,12 +53,8 @@ namespace DualJobDate.Api.Controllers
 
             await userStore.SetUserNameAsync(user, model.Email, CancellationToken.None);
 
-            var password = Encoding.UTF8.GetBytes(model.Email).Take(10).ToString();
-
-            if (password is null)
-            {
-                return BadRequest("Automatic Password could not be generated.");
-            }
+            //TODO
+            var password = "Password1!";
 
             var result = await userManager.CreateAsync(user, password);
 
@@ -78,14 +75,14 @@ namespace DualJobDate.Api.Controllers
             var user = await userManager.FindByEmailAsync(model.Email);
             const string unauthorizedMessage = "Wrong Email or Password";
 
-            if (user is null || user.Email is null)
+            if (user?.Email is null)
             {
                 return Unauthorized(unauthorizedMessage);
             }
 
-            var result = user.PasswordHash != null && user.PasswordHash.Equals(model.Password);
+            var result = await signInManager.CheckPasswordSignInAsync(user, model.Password, false);
 
-            if (!result)
+            if (!result.Succeeded)
             {
                 await userManager.AccessFailedAsync(user);
                 return Unauthorized(unauthorizedMessage);
@@ -93,6 +90,7 @@ namespace DualJobDate.Api.Controllers
 
             var token = jwtHelper.GenerateJwtToken(user.Id, user.UserType.ToString());
             await userManager.ResetAccessFailedCountAsync(user);
+
             return Ok(new { Token = token });
         }
 

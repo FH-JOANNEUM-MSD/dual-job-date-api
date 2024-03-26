@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DualJobDate.DataAccess
 {
-    public class AppDbContext : IdentityDbContext<User, Role, string>, IDbContext
+    public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbContext<User, IdentityRole<string>, string>(options), IDbContext
     {
         public DbSet<Institution> Institutions { get; set; }
         public DbSet<AcademicProgram> AcademicPrograms { get; set; }
@@ -17,31 +17,31 @@ namespace DualJobDate.DataAccess
         public DbSet<CompanyActivity> CompanyActivities { get; set; }
         public DbSet<CompanyDetails> CompanyDetails { get; set; }
         public DbSet<StudentCompany> StudentCompanies { get; set; }
-        public AppDbContext()
-        {
-        }
-    
-        public AppDbContext(DbContextOptions<AppDbContext> options)
-            : base(options)
-        {
-        }
+        public DbSet<User> Users { get; set; }
+        public DbSet<UserType> UserTypes { get; set; }
         
         public Task<int> SaveChangesAsync()
         {
             return base.SaveChangesAsync();
         }
 
+
         void IDisposable.Dispose() => base.Dispose();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Ignore<IdentityUserLogin<string>>();
+            modelBuilder.Entity<User>()
+                .HasKey(u => u.Id);
+
+            modelBuilder.Entity<IdentityUserLogin<string>>()
+                .HasKey(l => l.UserId);
 
 
             modelBuilder.Entity<IdentityUserRole<string>>()
                 .HasKey(ur => new { ur.UserId, ur.RoleId });
 
-            modelBuilder.Ignore<IdentityUserToken<string>>();
+            modelBuilder.Entity<IdentityUserToken<string>>()
+                .HasKey(t => new { t.UserId, t.LoginProvider, t.Name });
 
             modelBuilder.Entity<User>()
                 .HasMany(e => e.Likes)

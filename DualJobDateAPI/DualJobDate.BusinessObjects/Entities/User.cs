@@ -1,10 +1,12 @@
-﻿using DualJobDate.BusinessObjects.Entities.Enum;
+﻿using DualJobDate.BusinessObjects.Entities.Base.Interface;
+using DualJobDate.BusinessObjects.Entities.Enum;
 using Microsoft.AspNetCore.Identity;
 
 namespace DualJobDate.BusinessObjects.Entities
 {
-    public class User : IdentityUser<string>
+    public class User : IdentityUser<string>, IBaseEntity
     {
+        public int Id { get; set; }
         public bool IsActive { get; set; }
         public UserTypeEnum UserType { get; set; }
         public bool IsNew { get; set; }
