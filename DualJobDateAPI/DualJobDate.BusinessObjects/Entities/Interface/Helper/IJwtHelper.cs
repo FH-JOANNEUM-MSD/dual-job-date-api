@@ -10,6 +10,6 @@
         /// <param name="expiresInMinutes">Optional. The expiration time of the token in minutes. 
         /// If null, the default expiration time (24 hours) will be used.</param>
         /// <returns>The generated JWT token.</returns>
-        public string GenerateJwtToken(string userId, string userType, int? expiresInMinutes = null);
+        public string GenerateJwtToken(int userId, string userType, int? expiresInMinutes = null);
     }
 }

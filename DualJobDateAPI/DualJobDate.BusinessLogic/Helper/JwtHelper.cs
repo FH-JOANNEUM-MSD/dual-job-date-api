@@ -11,7 +11,7 @@ namespace DualJobDate.BusinessLogic.Helper
     {
         private readonly string _secretKey = secretKey;
 
-        public string GenerateJwtToken(string userId, string userType, int? expiresInMinute = null)
+        public string GenerateJwtToken(int userId, string userType, int? expiresInMinute = null)
         {
             var key = Encoding.ASCII.GetBytes(_secretKey);
             var tokenHandler = new JwtSecurityTokenHandler();
@@ -19,7 +19,7 @@ namespace DualJobDate.BusinessLogic.Helper
             {
                 Subject = new ClaimsIdentity(new[]
                 {
-                    new Claim(ClaimTypes.NameIdentifier, userId),
+                    new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
                     new Claim(ClaimTypes.Role, userType),
                 }),
                 Expires = DateTime.UtcNow.AddMinutes(expiresInMinute ?? Constants.JwtConstants.ExpiresInMinutes),
