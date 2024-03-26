@@ -18,6 +18,8 @@ namespace DualJobDate.DataAccess
             services.AddScoped<IAcademicProgramRepository, AcademicProgramRepository>();
             services.AddScoped<IAcademicDegreeRepository, AcademicDegreeRepository>();
             services.AddScoped<IActivityRepository, ActivityRepository>();
+            services.AddScoped<ICompanyRepository, CompanyRepository>();
+            services.AddScoped<ICompanyDetailsRepository, CompanyDetailsRepository>();
         }
     }
 }

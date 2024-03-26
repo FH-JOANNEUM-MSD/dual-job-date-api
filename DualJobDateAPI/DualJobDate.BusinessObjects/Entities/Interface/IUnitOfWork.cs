@@ -8,6 +8,10 @@ namespace DualJobDate.BusinessObjects.Entities.Interface
         IAcademicProgramRepository AcademicProgramRepository { get; }
         IAcademicDegreeRepository AcademicDegreeRepository { get; }
         IActivityRepository ActivityRepository { get; }
+        ICompanyRepository CompanyRepository { get; }
+        ICompanyDetailsRepository CompanyDetailsRepository { get; }
+
+
         Task SaveChanges();
         void BeginTransaction();
         void Commit();

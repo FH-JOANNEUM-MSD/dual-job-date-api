@@ -12,7 +12,7 @@ namespace DualJobDate.BusinessObjects.Entities
         public AcademicDegreeEnum AcademicDegreeEnum { get; set; } = AcademicDegreeEnum.Default;
         
         //navigation properties
-        public int? InstitutionId { get; set; }
+        public int InstitutionId { get; set; }
         public Institution? Institution { get; set; }
         public ICollection<User> Users { get; set; } = [];
         public ICollection<Activity> Activities { get; set; } = [];

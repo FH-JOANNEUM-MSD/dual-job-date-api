@@ -58,6 +58,7 @@ namespace DualJobDate.DatabaseInitializer
             await SeedDegreePrograms(uow);
             await SeedAcademicProgram(uow);
             await SeedActivities(uow);
+            await SeedTestCompany(uow);
             uow.Commit();
             await uow.SaveChanges();
         }
@@ -125,6 +126,7 @@ namespace DualJobDate.DatabaseInitializer
         {
 
             var academicProgram = await unitOfWork.AcademicProgramRepository.GetByName("MSD21");
+            var institution = await unitOfWork.InstitutionRepository.GetByName("IIT");
 
             if (academicProgram.Activities.IsNullOrEmpty())
             {
@@ -132,37 +134,81 @@ namespace DualJobDate.DatabaseInitializer
                     {
                         Name = "Informatik",
                         AcademicProgram = academicProgram,
-                        AcademicProgramId = academicProgram.Id
+                        AcademicProgramId = academicProgram.Id,
+                        Institution = institution,
+                        InstitutionId = institution.Id
                     }
                 );
                 await unitOfWork.ActivityRepository.AddAsync(new Activity
                     {
                         Name = "Betriebssysteme & Datenmanagement",
                         AcademicProgram = academicProgram,
-                        AcademicProgramId = academicProgram.Id
+                        AcademicProgramId = academicProgram.Id,
+                        Institution = institution,
+                        InstitutionId = institution.Id
                     }
                 );
                 await unitOfWork.ActivityRepository.AddAsync(new Activity
                     {
                         Name = "Web Engineering",
                         AcademicProgram = academicProgram,
-                        AcademicProgramId = academicProgram.Id
+                        AcademicProgramId = academicProgram.Id,
+                        Institution = institution,
+                        InstitutionId = institution.Id
                     }
                 );
                 await unitOfWork.ActivityRepository.AddAsync(new Activity
                     {
                         Name = "Datenbanken",
                         AcademicProgram = academicProgram,
-                        AcademicProgramId = academicProgram.Id
+                        AcademicProgramId = academicProgram.Id,
+                        Institution = institution,
+                        InstitutionId = institution.Id
                     }
                 );
                 await unitOfWork.ActivityRepository.AddAsync(new Activity
                     {
                         Name = "Objektorientierte Programmierung",
                         AcademicProgram = academicProgram,
-                        AcademicProgramId = academicProgram.Id
+                        AcademicProgramId = academicProgram.Id,
+                        Institution = institution,
+                        InstitutionId = institution.Id
                     }
                 );
+            }
+        }
+        
+        private static async Task SeedTestCompany(IUnitOfWork unitOfWork)
+        {
+            var institution = await unitOfWork.InstitutionRepository.GetByName("IIT");
+            var academicProgram = await unitOfWork.AcademicProgramRepository.GetByName("MSD21");
+            
+            if (unitOfWork.CompanyRepository.GetAllAsync().Result.IsNullOrEmpty())
+            {
+                await unitOfWork.CompanyRepository.AddAsync(new Company
+                {
+                    Name = "Test AG",
+                    Industry = "IT",
+                    LogoBase64 = "teststring",
+                    Website = "https://www.fh-joanneum.at",
+                    IsActive = true,
+                    Institution = institution,
+                    InstitutionId = institution.Id,
+                    AcademicProgram = academicProgram,
+                    AcademicProgramId = academicProgram.Id
+                });
+                await unitOfWork.CompanyRepository.AddAsync(new Company
+                {
+                    Name = "Test2 AG",
+                    Industry = "IT",
+                    LogoBase64 = "teststring",
+                    Website = "https://www.fh-joanneum.at",
+                    IsActive = false,
+                    Institution = institution,
+                    InstitutionId = institution.Id,
+                    AcademicProgram = academicProgram,
+                    AcademicProgramId = academicProgram.Id
+                });
             }
         }
         

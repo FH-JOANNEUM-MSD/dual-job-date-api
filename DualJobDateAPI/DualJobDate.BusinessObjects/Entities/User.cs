@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace DualJobDate.BusinessObjects.Entities
 {
-    public class User : IdentityUser<string>, IBaseEntity
+    public class User : IdentityUser<string>, IBaseAcademicProgramEntity
     {
         public int Id { get; set; }
         public bool IsActive { get; set; }
@@ -12,9 +12,9 @@ namespace DualJobDate.BusinessObjects.Entities
         public bool IsNew { get; set; }
         
         //navigation properties
-        public int? AcademicProgramId { get; set; }
+        public int AcademicProgramId { get; set; }
         public AcademicProgram? AcademicProgram { get; set; }
-        public int? InstitutionId { get; set; }
+        public int InstitutionId { get; set; }
         public Institution? Institution { get; set; }
         public int? CompanyId { get; set; }
         public Company? Company { get; set; }

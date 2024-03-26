@@ -38,7 +38,6 @@ namespace DualJobDate.Api.Controllers
             var userStore = serviceProvider.GetRequiredService<IUserStore<User>>();
             var emailStore = (IUserEmailStore<User>)userStore;
             
-
             if (string.IsNullOrEmpty(model.Email) || !EmailAddressAttribute.IsValid(model.Email))
             {
                 return BadRequest($"Email '{model.Email}' is invalid.");

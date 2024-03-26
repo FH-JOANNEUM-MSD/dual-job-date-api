@@ -1,6 +1,7 @@
 ﻿using DualJobDate.BusinessObjects.Entities.Base.Interface;
 using DualJobDate.BusinessObjects.Entities.Interface.Repository;
 using DualJobDate.DataAccess;
+using Microsoft.EntityFrameworkCore;
 
 namespace DualJobDate.DataAccess.Repositories
 {
@@ -19,7 +20,7 @@ namespace DualJobDate.DataAccess.Repositories
         {
             return await Task.FromResult(_dbContext.Set<T>().AsQueryable());
         }
-
+        
         public async Task AddAsync(T entity)
         {
             _dbContext.Set<T>().Add(entity);
