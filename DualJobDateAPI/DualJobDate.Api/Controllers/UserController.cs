@@ -181,7 +181,7 @@ namespace DualJobDate.Api.Controllers
             return BadRequest(result.Errors);
         }
 
-        [Authorize(Policy = "Admin")]
+        [Authorize(Policy = "AdminOrInstitution")]
         [HttpGet]
         [Route("GetAllUsers")]
         public Task<ActionResult<IEnumerable<UserResource>>> GetAllUsers()
@@ -191,7 +191,7 @@ namespace DualJobDate.Api.Controllers
             return Task.FromResult<ActionResult<IEnumerable<UserResource>>>(Ok(userResources));
         }
         
-        [Authorize(Policy = "Admin")]
+        [Authorize(Policy = "AdminOrInstitution")]
         [HttpGet]
         [Route("GetUser/{UserId}")]
         public async Task<ActionResult<IEnumerable<UserResource>>> GetAllUsers(string UserId)
