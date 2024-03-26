@@ -12,7 +12,7 @@ namespace DualJobDate.DataAccess
             services.AddScoped<IDbContext, AppDbContext>();
             services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
             services.AddScoped<IUnitOfWork, UnitOfWork>();
-            services.AddScoped<IUserRepository, UserRepository>();
+            // services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IInstitutionRepository, InstitutionRepository>();
         }
     }

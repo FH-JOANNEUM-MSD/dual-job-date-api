@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using DualJobDate.BusinessLogic;
 using DualJobDate.BusinessObjects.Entities;
 using DualJobDate.DataAccess;
@@ -7,9 +8,13 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Text.Encodings.Web;
 using DualJobDate.Api.Extensions;
 using DualJobDate.Api.Mapping;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Options;
+using Microsoft.OpenApi.Models;
+using Swashbuckle.AspNetCore.Filters;
 
 namespace DualJobDate.API
 {
@@ -31,7 +36,6 @@ namespace DualJobDate.API
             ConfigureDatabase(services, configuration);
             ConfigureIdentity(services);
             ConfigureJwtAuthentication(services, configuration);
-            ConfigureCookieAuthentication(services);
             ConfigureAuthorization(services);
             ConfigureSwagger(services);
             ConfigureMapper(services);
@@ -54,69 +58,51 @@ namespace DualJobDate.API
 
         private static void ConfigureIdentity(IServiceCollection services)
         {
-            services.AddIdentity<User, IdentityRole>(options =>
-                {
-                    options.Password.RequiredLength = 8;
-                    options.Password.RequireDigit = true;
-                    options.Password.RequireNonAlphanumeric = true;
-                    options.Lockout.MaxFailedAccessAttempts = 5;
-                    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
-                    options.User.RequireUniqueEmail = true;
-                })
-                .AddEntityFrameworkStores<AppDbContext>()
-                .AddDefaultTokenProviders();
+            services.AddIdentityApiEndpoints<User>()
+                .AddRoles<IdentityRole>()
+                .AddEntityFrameworkStores<AppDbContext>();
         }
 
         private static void ConfigureJwtAuthentication(IServiceCollection services, IConfiguration configuration)
         {
-            var jwtSecretKey = configuration["JwtSecret"];
-            var bytes = Encoding.UTF8.GetBytes(jwtSecretKey);
-            services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-            }).AddJwtBearer(options =>
-                {
-                    options.TokenValidationParameters = new TokenValidationParameters
-                    {
-                        ValidateIssuer = true,
-                        ValidateAudience = true,
-                        ValidateLifetime = true,
-                        ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = new SymmetricSecurityKey(bytes),
-                        ValidIssuer = "localhost",
-                        ValidAudience = "localhost",
-                    };
-                });
-        }
-
-        private static void ConfigureCookieAuthentication(IServiceCollection services)
-        {
-            services.ConfigureApplicationCookie(options =>
-            {
-                options.Cookie.HttpOnly = true;
-                options.ExpireTimeSpan = TimeSpan.FromDays(30);
-                options.LoginPath = "/User/Login";
-                options.LogoutPath = "/User/Logout";
-                options.AccessDeniedPath = "/User/AccessDenied";
-                options.SlidingExpiration = true;
-            });
+            services
+                .AddAuthentication();
         }
 
         private static void ConfigureAuthorization(IServiceCollection services)
         {
             services.AddAuthorization(options =>
             {
-                options.AddPolicy("Admin", policy => policy.RequireRole("Admin"));
-            });
-        }
+                options.AddPolicy("Admin", policy =>
+                {
+                    policy.RequireRole("Admin");
+                });
+                options.AddPolicy("Institution", policy =>
+                {
+                    policy.RequireRole("Institution");
+                });
+                options.AddPolicy("Student", policy =>
+                {
+                    policy.RequireRole("Student");
+                });
+                options.AddPolicy("Company", policy =>
+                {
+                    policy.RequireRole("Company");
+                });
+            });        }
 
         private static void ConfigureSwagger(IServiceCollection services)
         {
-            services.AddSwaggerGen(c =>
+            services.AddSwaggerGen(option =>
             {
-                c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "DualJobDate API", Version = "v1" });
+                option.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme()
+                    {
+                        In = ParameterLocation.Header,
+                        Name = "Authorization",
+                        Type = SecuritySchemeType.ApiKey
+                    }
+                );
+                option.OperationFilter<SecurityRequirementsOperationFilter>();
             });
         }
 
@@ -141,9 +127,10 @@ namespace DualJobDate.API
             DatabaseConnectionTester.TestDbConnection(app);
             var userManager = services.GetRequiredService<UserManager<User>>();
             var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-            DbInitializer.SeedData(userManager, roleManager);
+            DbInitializer.SeedData(userManager, roleManager).Wait();
 
             app.UseAuthentication();
+            app.UseAuthorization();
             app.UseRouting();
             app.UseAuthorization(); 
 
@@ -152,9 +139,11 @@ namespace DualJobDate.API
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "DualJobDate API v1"));
             }
-
+            
             app.MapControllers();
             app.MapGet("/", () => "DualJobDate API. Following Endpoints are accessible:");
         }
+
     }
+    
 }

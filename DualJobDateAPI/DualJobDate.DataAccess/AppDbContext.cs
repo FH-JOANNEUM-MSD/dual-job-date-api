@@ -8,7 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace DualJobDate.DataAccess
 {
-    public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbContext<User, IdentityRole<string>, string>(options), IDbContext
+    public class AppDbContext: IdentityDbContext<User, IdentityRole, string>, IDbContext
     {
         public DbSet<Institution> Institutions { get; set; }
         public DbSet<AcademicProgram> AcademicPrograms { get; set; }
@@ -18,16 +18,22 @@ namespace DualJobDate.DataAccess
         public DbSet<Company> Companies { get; set; }
         public DbSet<CompanyActivity> CompanyActivities { get; set; }
         public DbSet<CompanyDetails> CompanyDetailsEnumerable { get; set; }
-        public DbSet<User> Users { get; set; }
         public DbSet<UserType> UserTypes { get; set; }
         
         public Task<int> SaveChangesAsync()
         {
             return base.SaveChangesAsync();
         }
-
-
-        void IDisposable.Dispose() => base.Dispose();
+        
+        public AppDbContext()
+        {
+        }
+    
+        public AppDbContext(DbContextOptions<AppDbContext> options)
+            : base(options)
+        {
+        }
+        
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
