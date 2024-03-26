@@ -2,8 +2,8 @@
 
 namespace DualJobDate.BusinessObjects.Entities.Interface
 {
-    public interface IUserRepository : IBaseRepository<User>
-    {
-        Task<IEnumerable<User>> GetUsersByAcademicProgramIdAsync(int academicProgramId);
-    }
+    // public interface IUserRepository : IBaseRepository<User>
+    // {
+    //     // Task<IEnumerable<User>> GetUsersByAcademicProgramIdAsync(int academicProgramId);
+    // }
 }

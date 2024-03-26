@@ -190,6 +190,18 @@ namespace DualJobDate.DatabaseInitializer
             if (!await roleManager.RoleExistsAsync("Admin"))
             {
                 await roleManager.CreateAsync(new IdentityRole("Admin"));
+            }            
+            if (!await roleManager.RoleExistsAsync("Institution"))
+            {
+                await roleManager.CreateAsync(new IdentityRole("Institution"));
+            }
+            if (!await roleManager.RoleExistsAsync("Student"))
+            {
+                await roleManager.CreateAsync(new IdentityRole("Student"));
+            }            
+            if (!await roleManager.RoleExistsAsync("Company"))
+            {
+                await roleManager.CreateAsync(new IdentityRole("Company"));
             }
         }
     }
