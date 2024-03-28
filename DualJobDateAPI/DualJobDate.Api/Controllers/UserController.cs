@@ -142,7 +142,12 @@ namespace DualJobDate.Api.Controllers
 
             if (result.Succeeded)
             {
-                return Ok();
+                user.IsNew = false;
+                var userResult = await userManager.UpdateAsync(user);
+                if (userResult.Succeeded)
+                {
+                    return Ok();
+                }
             }
 
             return BadRequest(result.Errors);
@@ -150,8 +155,8 @@ namespace DualJobDate.Api.Controllers
 
         [HttpPost]
         [Authorize("AdminOrInstitution")]
-        [Route("ResetPassword/{userId}")]
-        public async Task<IActionResult> ResetPassword(string userId)
+        [Route("ResetPassword")]
+        public async Task<ActionResult<CredentialsResource>> ResetPassword([FromQuery] string userId)
         {
             var user = await userManager.FindByIdAsync(userId);
             if (user is null)
@@ -165,7 +170,17 @@ namespace DualJobDate.Api.Controllers
             var result = await userManager.ResetPasswordAsync(user, code, password);
             if (result.Succeeded)
             {
-                return Ok($"User: {user.Email}, Password:{password}");
+                user.IsNew = false;
+                var userResult = await userManager.UpdateAsync(user);
+                if (userResult.Succeeded)
+                {
+                    var credentials = new CredentialsResource
+                    {
+                        Email = user.Email,
+                        Password = password
+                    };
+                    return Ok(credentials);
+                }
             }
 
             return BadRequest(result.Errors);
@@ -196,7 +211,6 @@ namespace DualJobDate.Api.Controllers
                 return BadRequest("Invalid request parameters or insufficient permissions.");
             }
 
-            // UserType-Filterung, wenn nicht "All" ausgewählt wurde
             if (userType != UserTypeEnum.Default)
             {
                 query = query.Where(u => u.UserType == userType);
@@ -216,8 +230,8 @@ namespace DualJobDate.Api.Controllers
         
         [Authorize(Policy = "AdminOrInstitution")]
         [HttpGet]
-        [Route("GetUser/{UserId}")]
-        public async Task<ActionResult<IEnumerable<UserResource>>> GetUser(string userId)
+        [Route("GetUser")]
+        public async Task<ActionResult<IEnumerable<UserResource>>> GetUser([FromQuery] string userId)
         {
             var user = await userManager.FindByIdAsync(userId);
             if (user == null)
@@ -231,8 +245,8 @@ namespace DualJobDate.Api.Controllers
 
         [Authorize(Policy = "Admin")]
         [HttpDelete]
-        [Route("DeleteUser/{userId}")]
-        public async Task<IActionResult> DeleteUser(string userId)
+        [Route("DeleteUser")]
+        public async Task<IActionResult> DeleteUser([FromQuery] string userId)
         {
             var user = await userManager.FindByIdAsync(userId);
             if (user is null)
