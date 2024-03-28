@@ -8,12 +8,12 @@ namespace DualJobDate.API.Controllers
 {
     [ApiController]
     [Authorize("Admin")]
-    public class DataController(ITestService myService, UserManager<User> userManager) : ControllerBase
+    public class TestController(UserManager<User> userManager) : ControllerBase
     {
         [HttpGet("/test")]
         public async Task<ActionResult<User>> GetData()
         {
-            return await userManager.GetUserAsync(User);
+            return Ok(await userManager.GetUserAsync(User));
         }
     }
 }
