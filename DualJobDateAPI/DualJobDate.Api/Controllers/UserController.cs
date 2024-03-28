@@ -12,6 +12,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Security.Cryptography;
 using DualJobDate.BusinessObjects.Resources;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 namespace DualJobDate.Api.Controllers
@@ -148,54 +149,70 @@ namespace DualJobDate.Api.Controllers
         }
 
         [HttpPost]
-        [Route("ForgotPassword")]
-        public async Task<IActionResult> ForgotPassword([FromBody] RegisterUserModel model)
+        [Authorize("AdminOrInstitution")]
+        [Route("ResetPassword/{userId}")]
+        public async Task<IActionResult> ResetPassword(string userId)
         {
-            var user = await userManager.FindByEmailAsync(model.Email);
-            if (user is null || !(await userManager.IsEmailConfirmedAsync(user)))
-            {
-                return NotFound();
-            }
-
-            var code = await userManager.GeneratePasswordResetTokenAsync(user);
-            var callbackUrl = Url.Action("ResetPassword", "User",
-                new { userId = user.Id, code }, protocol: HttpContext.Request.Scheme);
-            return Ok();
-        }
-
-        [HttpPost]
-        [Authorize("Admin")]
-        [Route("ResetPassword")]
-        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordModel model)
-        {
-            var user = await userManager.FindByEmailAsync(model.Email);
+            var user = await userManager.FindByIdAsync(userId);
             if (user is null)
             {
                 return NotFound();
             }
 
-            var result = await userManager.ResetPasswordAsync(user, model.ResetCode, model.NewPassword);
+            var code = await userManager.GeneratePasswordResetTokenAsync(user);
+
+            var password = GeneratePassword(12);
+            var result = await userManager.ResetPasswordAsync(user, code, password);
             if (result.Succeeded)
             {
-                return Ok();
+                return Ok($"User: {user.Email}, Password:{password}");
             }
 
             return BadRequest(result.Errors);
         }
-
+        
         [Authorize(Policy = "AdminOrInstitution")]
         [HttpGet]
         [Route("GetAllUsers")]
-        public async Task<ActionResult<IEnumerable<UserResource>>> GetAllUsers()
+        public async Task<ActionResult<IEnumerable<UserResource>>> GetAllUsers(
+            [FromQuery] int? institutionId, 
+            [FromQuery] int? academicProgramId,
+            [FromQuery] UserTypeEnum userType)
         {
-            var users = userManager.Users.ToList();
-            if (users.IsNullOrEmpty())
+            var users = new List<User>();
+
+            IQueryable<User> query = userManager.Users.AsQueryable();
+
+            if (User.IsInRole("Admin") && institutionId.HasValue)
+            {
+                query = query.Where(u => u.InstitutionId == institutionId);
+            }
+            else if (User.IsInRole("Institution") && academicProgramId.HasValue)
+            {
+                query = query.Where(u => u.AcademicProgramId == academicProgramId);
+            }
+            else
+            {
+                return BadRequest("Invalid request parameters or insufficient permissions.");
+            }
+
+            // UserType-Filterung, wenn nicht "All" ausgewählt wurde
+            if (userType != UserTypeEnum.Default)
+            {
+                query = query.Where(u => u.UserType == userType);
+            }
+
+            var usersList = await query.ToListAsync();
+
+            if (usersList.IsNullOrEmpty())
             {
                 return NotFound("No user found!");
             }
-            var userResources = mapper.Map<IEnumerable<User>, IEnumerable<UserResource>>(users);
+    
+            var userResources = mapper.Map<IEnumerable<User>, IEnumerable<UserResource>>(usersList);
             return Ok(userResources);
         }
+
         
         [Authorize(Policy = "AdminOrInstitution")]
         [HttpGet]
