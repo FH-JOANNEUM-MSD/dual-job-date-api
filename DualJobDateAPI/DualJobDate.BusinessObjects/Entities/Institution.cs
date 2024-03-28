@@ -4,12 +4,12 @@ namespace DualJobDate.BusinessObjects.Entities
 {
     public class Institution : BaseEntity
     {
-        public string Name { get; set; }
-        public string KeyName { get; set; }
+        public string Name { get; set; }  = string.Empty;
+        public string KeyName { get; set; } = string.Empty;
         public string? Website { get; set; }
         
         //navigation properties
-        public List<Address> Addresses { get; set; } = new();
-        public List<User> Users { get; set; } = new();
+        public ICollection<Address> Addresses { get; set; } = [];
+        public ICollection<User> Users { get; set; } = [];
     }
 }

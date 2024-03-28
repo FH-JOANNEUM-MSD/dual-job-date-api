@@ -10,10 +10,6 @@ namespace DualJobDate.BusinessObjects.Resources
         public Institution? Institution { get; set; }
         public bool IsActive { get; set; }
         public UserTypeEnum UserType { get; set; }
-        public string FirstName { get; set; }
-        public string LastName { get; set; }
-        public string? ProfilePicture { get; set; }
-        public DateTime BirthDate { get; set; }
         public bool IsNew { get; set; }
         public string Email { get; set; }
     }

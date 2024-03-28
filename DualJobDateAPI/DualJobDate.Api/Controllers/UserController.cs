@@ -10,10 +10,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Cryptography;
-using System.Text;
 using DualJobDate.BusinessObjects.Resources;
-using DualJobDate.BusinessObjects.Entities.Interface.Helper;
-using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.IdentityModel.Tokens;
 
 namespace DualJobDate.Api.Controllers
 {
@@ -24,19 +23,17 @@ namespace DualJobDate.Api.Controllers
     UserManager<User> userManager,
     SignInManager<User> signInManager,
         IServiceProvider serviceProvider,
-        IMapper mapper,
-        IEmailHelper emailHelper,
-        IJwtHelper jwtHelper)
+        IMapper mapper)
         : ControllerBase
     {
         private static readonly EmailAddressAttribute EmailAddressAttribute = new();
 
+        [Authorize(Policy = "Admin")]
         [HttpPut]
         [Route("Register")]
         public async Task<IActionResult> RegisterUser([FromBody] RegisterUserModel model)
         {
             var userStore = serviceProvider.GetRequiredService<IUserStore<User>>();
-            var emailStore = (IUserEmailStore<User>)userStore;
             
 
             if (string.IsNullOrEmpty(model.Email) || !EmailAddressAttribute.IsValid(model.Email))
@@ -48,10 +45,7 @@ namespace DualJobDate.Api.Controllers
             {
                 Email = model.Email,
                 UserType = UserTypeEnum.Admin,
-                BirthDate = new DateTime(),
                 IsNew = true,
-                FirstName = "root",
-                LastName = "root",
             };
 
             await userStore.SetUserNameAsync(user, model.Email, CancellationToken.None);
@@ -66,56 +60,52 @@ namespace DualJobDate.Api.Controllers
                 return BadRequest(result.Errors);
             }
 
-            await userManager.AddToRoleAsync(user, "Admin");
+            await userManager.AddToRoleAsync(user, model.Role);
 
-            emailHelper.SendEmailAsync(user.Email, password);
-            return Ok($"ApplicationUser '{user.Email}' created successfully");
+            return Ok($"User '{user.Email}' created successfully");
         }
 
         [HttpPost]
         [Route("Login")]
-        public async Task<IActionResult> Login([FromBody] LoginModel model)
+        public async Task<Results<Ok<AccessTokenResponse>, EmptyHttpResult, ProblemHttpResult>> Login([FromBody] LoginRequest login, [FromQuery] bool? useCookies, [FromQuery] bool? useSessionCookies)
         {
-            var user = await userManager.FindByEmailAsync(model.Email);
-            const string unauthorizedMessage = "Wrong Email or Password";
 
-            if (user?.Email is null)
-            {
-                return Unauthorized(unauthorizedMessage);
-            }
+            var useCookieScheme = (useCookies == true) || (useSessionCookies == true);
+            var isPersistent = (useCookies == true) && (useSessionCookies != true);
+            signInManager.AuthenticationScheme = useCookieScheme ? IdentityConstants.ApplicationScheme : IdentityConstants.BearerScheme;
 
-            var result = await signInManager.CheckPasswordSignInAsync(user, model.Password, false);
+            var result = await signInManager.PasswordSignInAsync(login.Email, login.Password, isPersistent, lockoutOnFailure: true);
 
             if (!result.Succeeded)
             {
-                await userManager.AccessFailedAsync(user);
-                return Unauthorized(unauthorizedMessage);
+                return TypedResults.Problem(result.ToString(), statusCode: StatusCodes.Status401Unauthorized);
             }
 
-            var token = jwtHelper.GenerateJwtToken(user.Id, user.UserType.ToString());
-            await userManager.ResetAccessFailedCountAsync(user);
-
-            return Ok(new { Token = token });
+            // The signInManager already produced the needed response in the form of a cookie or bearer token.
+            return TypedResults.Empty;
         }
 
         [HttpPost]
-        [Authorize(Policy = "Admin")]
         [Route("Refresh")]
-        public async Task<IActionResult> RefreshToken([FromBody] RefreshRequest refreshRequest)
+        public async Task<Results<Ok<AccessTokenResponse>, UnauthorizedHttpResult, SignInHttpResult, ChallengeHttpResult>> RefreshToken
+        ([FromBody] RefreshRequest refreshRequest)
         {
             var optionsMonitor = serviceProvider.GetRequiredService<IOptionsMonitor<BearerTokenOptions>>();
             var refreshTokenProtector = optionsMonitor.Get(IdentityConstants.BearerScheme).RefreshTokenProtector;
             var refreshTicket = refreshTokenProtector.Unprotect(refreshRequest.RefreshToken);
 
-            if (refreshTicket?.Properties.ExpiresUtc is not { } expiresUtc ||
+            // Reject the /refresh attempt with a 401 if the token expired or the security stamp validation fails
+            if (refreshTicket?.Properties?.ExpiresUtc is not { } expiresUtc ||
                 DateTime.Now >= expiresUtc ||
-                await signInManager.ValidateSecurityStampAsync(refreshTicket.Principal) is not { } user)
+                await signInManager.ValidateSecurityStampAsync(refreshTicket.Principal) is not User user)
+
             {
-                return Unauthorized();
+                return TypedResults.Challenge();
             }
 
             var newPrincipal = await signInManager.CreateUserPrincipalAsync(user);
-            return Ok(newPrincipal);
+            return TypedResults.SignIn(newPrincipal, authenticationScheme: IdentityConstants.BearerScheme);
+
         }
 
         [HttpPost]
@@ -125,7 +115,7 @@ namespace DualJobDate.Api.Controllers
             var user = await userManager.GetUserAsync(User);
             if (user is null)
             {
-                return BadRequest();
+                return Unauthorized();
             }
 
             //TODO Create own ChangePassword Method
@@ -146,7 +136,7 @@ namespace DualJobDate.Api.Controllers
             var user = await userManager.FindByEmailAsync(model.Email);
             if (user is null || !(await userManager.IsEmailConfirmedAsync(user)))
             {
-                return Ok();
+                return NotFound();
             }
 
             var code = await userManager.GeneratePasswordResetTokenAsync(user);
@@ -156,13 +146,14 @@ namespace DualJobDate.Api.Controllers
         }
 
         [HttpPost]
+        [Authorize("Admin")]
         [Route("ResetPassword")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordModel model)
         {
             var user = await userManager.FindByEmailAsync(model.Email);
             if (user is null)
             {
-                return BadRequest();
+                return NotFound();
             }
 
             var result = await userManager.ResetPasswordAsync(user, model.ResetCode, model.NewPassword);
@@ -177,11 +168,29 @@ namespace DualJobDate.Api.Controllers
         [Authorize(Policy = "Admin")]
         [HttpGet]
         [Route("GetAllUsers")]
-        public Task<ActionResult<IEnumerable<UserResource>>> GetAllUsers()
+        public async Task<ActionResult<IEnumerable<UserResource>>> GetAllUsers()
         {
             var users = userManager.Users.ToList();
-            var userResources = mapper.Map<List<User>, List<UserResource>>(users);
-            return Task.FromResult<ActionResult<IEnumerable<UserResource>>>(Ok(userResources));
+            if (users.IsNullOrEmpty())
+            {
+                return NotFound("No user found!");
+            }
+            var userResources = mapper.Map<IEnumerable<User>, IEnumerable<UserResource>>(users);
+            return Ok(userResources);
+        }
+        
+        [Authorize(Policy = "Admin")]
+        [HttpGet]
+        [Route("GetUser/{UserId}")]
+        public async Task<ActionResult<IEnumerable<UserResource>>> GetUser(string userId)
+        {
+            var user = await userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                return NotFound("User not found");
+            }
+            var userResource = mapper.Map<User, UserResource>(user);
+            return Ok(userResource);
         }
 
 
@@ -199,7 +208,7 @@ namespace DualJobDate.Api.Controllers
             var result = await userManager.DeleteAsync(user);
             if (result.Succeeded)
             {
-                return Ok();
+                return Ok("User deleted successfully!");
             }
 
             return BadRequest(result.Errors);
@@ -212,19 +221,19 @@ namespace DualJobDate.Api.Controllers
             var user = await userManager.GetUserAsync(User);
             if (user == null)
             {
-                return NotFound();
+                return Unauthorized("Wrong Credentials!");
             }
 
             var checkPasswordResult = await signInManager.CheckPasswordSignInAsync(user, model.Password, lockoutOnFailure: false);
             if (!checkPasswordResult.Succeeded)
             {
-                return BadRequest();
+                return Unauthorized("Wrong Credentials!");
             }
 
             var result = await userManager.DeleteAsync(user);
             if (result.Succeeded)
             {
-                return Ok();
+                return Ok("User deleted successfully!");
             }
             else
             {
@@ -242,7 +251,7 @@ namespace DualJobDate.Api.Controllers
         {
             if (length < 4) throw new ArgumentException("Min 4 sign", nameof(length));
 
-            var charCategories = new string[]
+            var charCategories = new []
             {
                 LowerCase,
                 UpperCase,
