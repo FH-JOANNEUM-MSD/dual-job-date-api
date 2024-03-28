@@ -11,6 +11,8 @@ namespace DualJobDate.Api.Mapping
         {
             CreateMap<User, UserResource>();
             CreateMap<CompanyDetails, CompanyDetailsResource>();
+            CreateMap<Company, CompanyResource>();
+            CreateMap<CompanyActivity, ActivityResource>();
         }
     }
 }

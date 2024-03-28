@@ -3,6 +3,7 @@ using DualJobDate.BusinessObjects.Entities;
 using DualJobDate.BusinessObjects.Entities.Enum;
 using DualJobDate.BusinessObjects.Entities.Interface;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -60,9 +61,9 @@ namespace DualJobDate.DatabaseInitializer
             await SeedAdmin(services, uow);
             await SeedInstitutionUser(services, uow);
             await SeedStudent(services, uow);
+            await SeedTestCompany(uow);
             await SeedCompanyUser(services, uow);
             await SeedActivities(uow);
-            await SeedTestCompany(uow);
             uow.Commit();
             await uow.SaveChanges();
         }
@@ -120,13 +121,13 @@ namespace DualJobDate.DatabaseInitializer
         private static async Task SeedAcademicProgram(IUnitOfWork unitOfWork)
         {            
             var adminInstitution = await unitOfWork.InstitutionRepository.GetByName("ADMIN");
-            if (await unitOfWork.AcademicProgramRepository.GetByName("ADMIN") == null)
+            if (await unitOfWork.AcademicProgramRepository.GetByNameAndYear("ADMIN", 0) == null)
             {
                 await unitOfWork.AcademicProgramRepository.AddAsync(new AcademicProgram
                 {
                     KeyName = "ADMIN",
                     Name = "Administrator",
-                    Year = 9999,
+                    Year = 0,
                     AcademicDegreeEnum = AcademicDegreeEnum.Bachelor,
                     Institution = adminInstitution,
                     InstitutionId = adminInstitution.Id
@@ -134,11 +135,11 @@ namespace DualJobDate.DatabaseInitializer
             }
             
             var institution = await unitOfWork.InstitutionRepository.GetByName("IIT");
-            if (await unitOfWork.AcademicProgramRepository.GetByName("MSD21") == null)
+            if (await unitOfWork.AcademicProgramRepository.GetByNameAndYear("MSD", 2021) == null)
             {
                 await unitOfWork.AcademicProgramRepository.AddAsync(new AcademicProgram
                 {
-                    KeyName = "MSD21",
+                    KeyName = "MSD",
                     Name = "Mobile Software Development",
                     Year = 2021,
                     AcademicDegreeEnum = AcademicDegreeEnum.Bachelor,
@@ -151,7 +152,7 @@ namespace DualJobDate.DatabaseInitializer
         private static async Task SeedActivities(IUnitOfWork unitOfWork)
         {
 
-            var academicProgram = await unitOfWork.AcademicProgramRepository.GetByName("MSD21");
+            var academicProgram = await unitOfWork.AcademicProgramRepository.GetByNameAndYear("MSD", 2021);
             var institution = await unitOfWork.InstitutionRepository.GetByName("IIT");
 
             if (academicProgram.Activities.IsNullOrEmpty())
@@ -207,8 +208,9 @@ namespace DualJobDate.DatabaseInitializer
         private static async Task SeedTestCompany(IUnitOfWork unitOfWork)
         {
             var institution = await unitOfWork.InstitutionRepository.GetByName("IIT");
-            var academicProgram = await unitOfWork.AcademicProgramRepository.GetByName("MSD21");
-            
+            var academicProgram = await unitOfWork.AcademicProgramRepository.GetByNameAndYear("MSD", 2021);
+            var activities = await unitOfWork.ActivityRepository.GetAllAsync().Result
+                .Where(a => a.AcademicProgramId == academicProgram.Id).ToListAsync();
             if (unitOfWork.CompanyRepository.GetAllAsync().Result.IsNullOrEmpty())
             {
                 await unitOfWork.CompanyRepository.AddAsync(new Company
@@ -221,7 +223,8 @@ namespace DualJobDate.DatabaseInitializer
                     Institution = institution,
                     InstitutionId = institution.Id,
                     AcademicProgram = academicProgram,
-                    AcademicProgramId = academicProgram.Id
+                    AcademicProgramId = academicProgram.Id,
+                    Activities = activities
                 });
                 await unitOfWork.CompanyRepository.AddAsync(new Company
                 {
@@ -233,14 +236,15 @@ namespace DualJobDate.DatabaseInitializer
                     Institution = institution,
                     InstitutionId = institution.Id,
                     AcademicProgram = academicProgram,
-                    AcademicProgramId = academicProgram.Id
+                    AcademicProgramId = academicProgram.Id,
+                    Activities = activities
                 });
             }
         }
 
         private static async Task SeedAdmin(IServiceProvider services, IUnitOfWork unitOfWork)
         {
-            var academicProgram = await unitOfWork.AcademicProgramRepository.GetByName("ADMIN");
+            var academicProgram = await unitOfWork.AcademicProgramRepository.GetByNameAndYear("ADMIN", 0);
             var institution = await unitOfWork.InstitutionRepository.GetByName("ADMIN");
             var userManager = services.GetRequiredService<UserManager<User>>();
             var userStore = services.GetRequiredService<IUserStore<User>>();
@@ -274,7 +278,7 @@ namespace DualJobDate.DatabaseInitializer
         
         private static async Task SeedStudent(IServiceProvider services, IUnitOfWork unitOfWork)
         {
-            var academicProgram = await unitOfWork.AcademicProgramRepository.GetByName("MSD21");
+            var academicProgram = await unitOfWork.AcademicProgramRepository.GetByNameAndYear("MSD", 2021);
             var institution = await unitOfWork.InstitutionRepository.GetByName("IIT");
             var userManager = services.GetRequiredService<UserManager<User>>();
             var userStore = services.GetRequiredService<IUserStore<User>>();
@@ -308,8 +312,9 @@ namespace DualJobDate.DatabaseInitializer
         
         private static async Task SeedCompanyUser(IServiceProvider services, IUnitOfWork unitOfWork)
         {
-            var academicProgram = await unitOfWork.AcademicProgramRepository.GetByName("MSD21");
+            var academicProgram = await unitOfWork.AcademicProgramRepository.GetByNameAndYear("MSD", 2021);
             var institution = await unitOfWork.InstitutionRepository.GetByName("IIT");
+            var company = await unitOfWork.CompanyRepository.GetAllAsync().Result.FirstOrDefaultAsync();
             var userManager = services.GetRequiredService<UserManager<User>>();
             var userStore = services.GetRequiredService<IUserStore<User>>();
             var user = await userManager.FindByEmailAsync("company@fh-joanneum.at");
@@ -324,7 +329,8 @@ namespace DualJobDate.DatabaseInitializer
                     AcademicProgram = academicProgram,
                     AcademicProgramId = academicProgram.Id,
                     Institution = institution,
-                    InstitutionId = institution.Id
+                    InstitutionId = institution.Id,
+                    Company = company
                 };
 
                 await userStore.SetUserNameAsync(user1, user1.Email, CancellationToken.None);
@@ -342,7 +348,7 @@ namespace DualJobDate.DatabaseInitializer
         
         private static async Task SeedInstitutionUser(IServiceProvider services, IUnitOfWork unitOfWork)
         {
-            var academicProgram = await unitOfWork.AcademicProgramRepository.GetByName("MSD21");
+            var academicProgram = await unitOfWork.AcademicProgramRepository.GetByNameAndYear("ADMIN", 0);
             var institution = await unitOfWork.InstitutionRepository.GetByName("IIT");
             var userManager = services.GetRequiredService<UserManager<User>>();
             var userStore = services.GetRequiredService<IUserStore<User>>();

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 namespace DualJobDate.DataAccess
 {
     public class UnitOfWork(AppDbContext dbContext,
-        IInstitutionRepository institutionRepository, IAcademicProgramRepository academicProgramRepository, IAcademicDegreeRepository academicDegreeRepository, IActivityRepository activityRepository, ICompanyRepository companyRepository, ICompanyDetailsRepository companyDetailsRepository) : IUnitOfWork, IDisposable
+        IInstitutionRepository institutionRepository, IAcademicProgramRepository academicProgramRepository, IAcademicDegreeRepository academicDegreeRepository, IActivityRepository activityRepository, ICompanyRepository companyRepository, ICompanyDetailsRepository companyDetailsRepository, ICompanyActivityRepository companyActivityRepository) : IUnitOfWork, IDisposable
     {
         private readonly AppDbContext _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         public IInstitutionRepository InstitutionRepository => institutionRepository ?? throw new ArgumentNullException(nameof(institutionRepository));
@@ -15,6 +15,7 @@ namespace DualJobDate.DataAccess
         public IActivityRepository ActivityRepository => activityRepository ?? throw new ArgumentNullException(nameof(activityRepository));
         public ICompanyRepository CompanyRepository => companyRepository ?? throw new ArgumentNullException(nameof(companyRepository));
         public ICompanyDetailsRepository CompanyDetailsRepository => companyDetailsRepository ?? throw new ArgumentNullException(nameof(companyDetailsRepository));
+        public ICompanyActivityRepository CompanyActivityRepository => companyActivityRepository ?? throw new ArgumentNullException(nameof(companyActivityRepository));
 
 
         

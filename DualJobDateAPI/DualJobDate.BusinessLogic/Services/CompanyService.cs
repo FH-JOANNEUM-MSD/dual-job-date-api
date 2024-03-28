@@ -5,6 +5,7 @@ using System.Text.Json;
 using DualJobDate.BusinessObjects.Entities;
 using DualJobDate.BusinessObjects.Entities.Interface;
 using DualJobDate.BusinessObjects.Entities.Models;
+using DualJobDate.BusinessObjects.Resources;
 using Microsoft.EntityFrameworkCore;
 
 namespace DualJobDate.BusinessLogic.Services
@@ -16,14 +17,20 @@ namespace DualJobDate.BusinessLogic.Services
             var result = unitOfWork.CompanyRepository.GetByIdAsync(id);
             return result;
         }
-        
-        public Task<List<Company>> GetCompaniesByInstitution(int institutionId)
+
+        public Task<List<Company>> GetActiveCompaniesAsync(int academicProgramId)
+        {
+            var result = unitOfWork.CompanyRepository.GetAllAsync();
+            return result.Result.Where(c => c.AcademicProgramId == academicProgramId && c.IsActive == true)
+                .ToListAsync();
+        }
+        public Task<List<Company>> GetCompaniesByInstitutionAsync(int institutionId)
         {
             var result = unitOfWork.CompanyRepository.GetAllAsync();
             return result.Result.Where(c => c.InstitutionId == institutionId).ToListAsync();
         }
         
-        public Task<List<Company>> GetCompaniesByAcademicProgram(int academicProgramId)
+        public Task<List<Company>> GetCompaniesByAcademicProgramAsync(int academicProgramId)
         {
             var result = unitOfWork.CompanyRepository.GetAllAsync();
             return result.Result.Where(c => c.AcademicProgramId == academicProgramId).ToListAsync();
@@ -47,15 +54,22 @@ namespace DualJobDate.BusinessLogic.Services
             unitOfWork.Commit();
             await unitOfWork.SaveChanges();
         }
+
+        public async Task<CompanyDetails?> GetCompanyDetailsAsync(Company company)
+        {
+            if (company.CompanyDetailsId == null)
+                return null;
+            return await unitOfWork.CompanyDetailsRepository.GetByIdAsync((int)company.CompanyDetailsId);
+        }
         
-        public async Task UpdateCompanyDetails(CompanyDetails details,Company company)
+        public async Task UpdateCompanyDetails(CompanyDetails details, Company company)
         {
             unitOfWork.BeginTransaction();
             if (company.CompanyDetailsId == null)
             {
                 company.CompanyDetails = details;
                 await unitOfWork.CompanyDetailsRepository.AddAsync(company.CompanyDetails);
-                var result = unitOfWork.CompanyRepository.UpdateAsync(company);
+                await unitOfWork.CompanyRepository.UpdateAsync(company);
             }
             else
             {
@@ -73,6 +87,56 @@ namespace DualJobDate.BusinessLogic.Services
             }
             unitOfWork.Commit();
             await unitOfWork.SaveChanges();
+        }
+
+        public async Task<IEnumerable<ActivityResource>> GetCompanyActivitiesAsync(Company company)
+        {
+            return await unitOfWork.CompanyActivityRepository.GetAllAsync().Result
+                .Where(ca => ca.CompanyId == company.Id)
+                .Include(a => a.Activity)
+                .Select(a => new ActivityResource
+                {
+                    Id = a.Id,
+                    Name = a.Activity.Name,
+                    Value = a.Value
+                }).ToListAsync();
+        }
+
+        public async Task UpdateCompanyActivities(IEnumerable<CompanyActivity> updatedActivities, Company company)
+        {
+            unitOfWork.BeginTransaction();
+            foreach (var updatedActivity in updatedActivities)
+            {
+                var existingActivity = await unitOfWork.CompanyActivityRepository.GetByIdAsync(updatedActivity.Id);
+                if (existingActivity != null)
+                {
+                    existingActivity.Value = updatedActivity.Value;
+                    existingActivity.Company = company;
+                    await unitOfWork.CompanyActivityRepository.UpdateAsync(existingActivity);
+                }
+            }
+            await unitOfWork.SaveChanges();
+            unitOfWork.Commit();
+        }
+
+        public async Task<Company?> AddCompany(int programId, string companyName)
+        {
+            var program = await unitOfWork.AcademicProgramRepository.GetByIdAsync(programId);
+            if (program == null)
+            {
+                return null;
+            }
+            unitOfWork.BeginTransaction();
+            var company = new Company
+            {
+                Name = companyName,
+                InstitutionId = program.InstitutionId,
+                AcademicProgramId = program.Id
+            };
+            await unitOfWork.CompanyRepository.AddAsync(company);
+            unitOfWork.Commit();
+            await unitOfWork.SaveChanges();
+            return company;
         }
     }
 }

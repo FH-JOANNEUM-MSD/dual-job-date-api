@@ -28,6 +28,7 @@ namespace DualJobDate.Api.Controllers
         : ControllerBase
     {
         private static readonly EmailAddressAttribute EmailAddressAttribute = new();
+        
 
         [Authorize("AdminOrInstitution")]
         [HttpPut]
@@ -70,7 +71,7 @@ namespace DualJobDate.Api.Controllers
 
             await userStore.SetUserNameAsync(user, model.Email, CancellationToken.None);
 
-            var password = "Password1!";
+            var password = GeneratePassword(12);
 
             var result = await userManager.CreateAsync(user, password);
 
@@ -137,7 +138,6 @@ namespace DualJobDate.Api.Controllers
                 return Unauthorized();
             }
 
-            //TODO Create own ChangePassword Method
             var result = await userManager.ChangePasswordAsync(user, model.OldPassword, model.NewPassword);
 
             if (result.Succeeded)
@@ -194,6 +194,11 @@ namespace DualJobDate.Api.Controllers
             [FromQuery] int? academicProgramId,
             [FromQuery] UserTypeEnum userType)
         {
+            var user = await userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return Unauthorized();
+            }
             var users = new List<User>();
 
             IQueryable<User> query = userManager.Users.AsQueryable();
@@ -202,7 +207,7 @@ namespace DualJobDate.Api.Controllers
             {
                 query = query.Where(u => u.InstitutionId == institutionId);
             }
-            else if (User.IsInRole("Institution") && academicProgramId.HasValue)
+            else if (academicProgramId.HasValue)
             {
                 query = query.Where(u => u.AcademicProgramId == academicProgramId);
             }
