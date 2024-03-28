@@ -8,7 +8,7 @@ public class AcademicProgramRepository(AppDbContext dbContext) : BaseRepository<
 {
     public async Task<AcademicProgram> GetByName(string KeyName)
     {
-        var result = await dbContext.Set<AcademicProgram>().Include(ap => ap.Activities).Include(co => co.Companies)
+        var result = await dbContext.Set<AcademicProgram>().Include(ap => ap.Activities).Include(ap => ap.Companies)
             .SingleOrDefaultAsync(i => i.KeyName == KeyName);
         return result;
     }

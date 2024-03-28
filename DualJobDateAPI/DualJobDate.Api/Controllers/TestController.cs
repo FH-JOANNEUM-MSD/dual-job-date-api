@@ -13,7 +13,7 @@ namespace DualJobDate.API.Controllers
         [HttpGet("/test")]
         public async Task<ActionResult<User>> GetData()
         {
-            return await userManager.GetUserAsync(User);
+            return Ok(await userManager.GetUserAsync(User));
         }
     }
 }

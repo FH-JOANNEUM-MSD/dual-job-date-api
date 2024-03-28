@@ -135,7 +135,6 @@ namespace DualJobDate.API
             app.UseAuthentication();
             app.UseAuthorization();
             app.UseRouting();
-            app.UseAuthorization(); 
 
             if (app.Environment.IsDevelopment())
             {

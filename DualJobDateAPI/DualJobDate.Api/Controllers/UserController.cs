@@ -12,6 +12,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Security.Cryptography;
 using DualJobDate.BusinessObjects.Resources;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.IdentityModel.Tokens;
 
 namespace DualJobDate.Api.Controllers
 {
@@ -132,7 +133,7 @@ namespace DualJobDate.Api.Controllers
             var user = await userManager.GetUserAsync(User);
             if (user is null)
             {
-                return BadRequest();
+                return Unauthorized();
             }
 
             //TODO Create own ChangePassword Method
@@ -153,7 +154,7 @@ namespace DualJobDate.Api.Controllers
             var user = await userManager.FindByEmailAsync(model.Email);
             if (user is null || !(await userManager.IsEmailConfirmedAsync(user)))
             {
-                return Ok();
+                return NotFound();
             }
 
             var code = await userManager.GeneratePasswordResetTokenAsync(user);
@@ -163,13 +164,14 @@ namespace DualJobDate.Api.Controllers
         }
 
         [HttpPost]
+        [Authorize("Admin")]
         [Route("ResetPassword")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordModel model)
         {
             var user = await userManager.FindByEmailAsync(model.Email);
             if (user is null)
             {
-                return BadRequest();
+                return NotFound();
             }
 
             var result = await userManager.ResetPasswordAsync(user, model.ResetCode, model.NewPassword);
@@ -184,19 +186,27 @@ namespace DualJobDate.Api.Controllers
         [Authorize(Policy = "AdminOrInstitution")]
         [HttpGet]
         [Route("GetAllUsers")]
-        public Task<ActionResult<IEnumerable<UserResource>>> GetAllUsers()
+        public async Task<ActionResult<IEnumerable<UserResource>>> GetAllUsers()
         {
             var users = userManager.Users.ToList();
-            var userResources = mapper.Map<List<User>, List<UserResource>>(users);
-            return Task.FromResult<ActionResult<IEnumerable<UserResource>>>(Ok(userResources));
+            if (users.IsNullOrEmpty())
+            {
+                return NotFound("No user found!");
+            }
+            var userResources = mapper.Map<IEnumerable<User>, IEnumerable<UserResource>>(users);
+            return Ok(userResources);
         }
         
         [Authorize(Policy = "AdminOrInstitution")]
         [HttpGet]
         [Route("GetUser/{UserId}")]
-        public async Task<ActionResult<IEnumerable<UserResource>>> GetAllUsers(string UserId)
+        public async Task<ActionResult<IEnumerable<UserResource>>> GetUser(string userId)
         {
-            var user = await userManager.FindByIdAsync(UserId);
+            var user = await userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                return NotFound("User not found");
+            }
             var userResource = mapper.Map<User, UserResource>(user);
             return Ok(userResource);
         }
@@ -229,13 +239,13 @@ namespace DualJobDate.Api.Controllers
             var user = await userManager.GetUserAsync(User);
             if (user == null)
             {
-                return NotFound("Wrong Credentials!");
+                return Unauthorized("Wrong Credentials!");
             }
 
             var checkPasswordResult = await signInManager.CheckPasswordSignInAsync(user, model.Password, lockoutOnFailure: false);
             if (!checkPasswordResult.Succeeded)
             {
-                return NotFound("Wrong Credentials!");
+                return Unauthorized("Wrong Credentials!");
             }
 
             var result = await userManager.DeleteAsync(user);
@@ -259,7 +269,7 @@ namespace DualJobDate.Api.Controllers
         {
             if (length < 4) throw new ArgumentException("Min 4 sign", nameof(length));
 
-            var charCategories = new string[]
+            var charCategories = new []
             {
                 LowerCase,
                 UpperCase,
