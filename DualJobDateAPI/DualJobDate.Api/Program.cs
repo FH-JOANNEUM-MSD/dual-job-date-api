@@ -132,9 +132,10 @@ namespace DualJobDate.API
             DatabaseConnectionTester.TestDbConnection(app).Wait();
             DbInitializer.SeedData(services).Wait();
 
-            app.UseAuthentication();
             app.UseRouting();
+            app.UseAuthentication();
             app.UseAuthorization();
+
 
             if (app.Environment.IsDevelopment())
             {
