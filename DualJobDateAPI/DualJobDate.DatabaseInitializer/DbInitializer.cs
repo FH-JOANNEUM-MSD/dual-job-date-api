@@ -10,6 +10,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Activity = DualJobDate.BusinessObjects.Entities.Activity;
 
+
+
+
 namespace DualJobDate.DatabaseInitializer
 {
     public static class DbInitializer
