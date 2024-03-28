@@ -17,7 +17,7 @@ namespace DualJobDate.DataAccess
         public DbSet<Address> Addresses { get; set; }
         public DbSet<Company> Companies { get; set; }
         public DbSet<CompanyActivity> CompanyActivities { get; set; }
-        public DbSet<CompanyDetails> CompanyDetails { get; set; }
+        public DbSet<CompanyDetails> CompanyDetailsEnumerable { get; set; }
         public DbSet<StudentCompany> StudentCompanies { get; set; }
         public DbSet<UserType> UserTypes { get; set; }
         
