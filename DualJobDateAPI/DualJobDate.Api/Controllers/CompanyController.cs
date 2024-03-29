@@ -86,9 +86,14 @@ namespace DualJobDate.API.Controllers
                 return Unauthorized();
             }
 
+            var company = await companyService.GetCompanyByUser(user);
+            if (company == null)
+            {
+                return NotFound("Company not found");
+            }
             try
             {
-                await companyService.UpdateCompany(model, user.Company);
+                await companyService.UpdateCompany(model, company);
                 return Ok();
             }
             catch (Exception ex)
@@ -107,9 +112,10 @@ namespace DualJobDate.API.Controllers
                 return Unauthorized();
             }
 
-            if (user.Company != null)
+            var userCompany = await companyService.GetCompanyByUser(user);
+            if (userCompany != null)
             {
-                companyId = user.Company.Id;
+                companyId = userCompany.Id;
             }
 
             try
@@ -159,7 +165,8 @@ namespace DualJobDate.API.Controllers
             try
             {
                 var companyDetails = mapper.Map<CompanyDetailsResource, CompanyDetails>(resource);
-                if (user.Company != null)
+                var userCompany = await companyService.GetCompanyByUser(user);
+                if (userCompany != null)
                 {
                     var company = await companyService.GetCompanyByIdAsync(user.Company.Id);
                     await companyService.UpdateCompanyDetails(companyDetails, company);

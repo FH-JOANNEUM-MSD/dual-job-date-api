@@ -37,7 +37,7 @@ namespace DualJobDate.BusinessLogic.Services
             return result.Result.Where(c => c.AcademicProgramId == academicProgramId).ToListAsync();
         }
         
-        public async Task UpdateCompany(UpdateCompanyModel model,Company company)
+        public async Task UpdateCompany(UpdateCompanyModel model, Company company)
         {
             unitOfWork.BeginTransaction();
             company.Industry = model.Industry;
@@ -148,5 +148,11 @@ namespace DualJobDate.BusinessLogic.Services
                 .SingleOrDefaultAsync();
             return company;
         }
+
+        public async Task DeleteCompany(int id)
+        {
+            await unitOfWork.CompanyRepository.DeleteAsync(id);
+        }
+
     }
 }

@@ -17,5 +17,6 @@ namespace DualJobDate.BusinessObjects.Entities.Interface.Service
         Task UpdateCompanyActivities(IEnumerable<CompanyActivity> activities, Company company);
         Task<Company?> AddCompany(int programId, string companyName, User companyUser);
         Task<Company?> GetCompanyByUser(User user);
+        Task DeleteCompany(int id);
     }
 }

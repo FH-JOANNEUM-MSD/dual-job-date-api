@@ -47,7 +47,7 @@ namespace DualJobDate.API
             var connectionString = configuration.GetConnectionString("AppDebugConnection");
 #else
             var connectionString =
-                builder.Configuration.GetConnectionString("AppReleaseConnection");
+                configuration.GetConnectionString("AppReleaseConnection");
 #endif
             services.AddDbContext<AppDbContext>(options =>
             {
@@ -128,7 +128,10 @@ namespace DualJobDate.API
             using var scope = app.Services.CreateScope();
             var services = scope.ServiceProvider;
             var loggerFactory = services.GetRequiredService<ILoggerFactory>();
-            DbInitializer.InitializeDb(loggerFactory);
+            if (app.Environment.IsDevelopment())
+            {
+                DbInitializer.InitializeDb(loggerFactory);
+            }
             DatabaseConnectionTester.TestDbConnection(app).Wait();
             DbInitializer.SeedData(services).Wait();
 
@@ -142,7 +145,6 @@ namespace DualJobDate.API
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "DualJobDate API v1"));
             }
-
             app.MapControllers();
             app.MapGet("/", () => "DualJobDate API. Following Endpoints are accessible:");
         }
