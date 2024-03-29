@@ -15,6 +15,7 @@ namespace DualJobDate.BusinessObjects.Entities.Interface.Service
         Task<CompanyDetails?> GetCompanyDetailsAsync(Company company);
         Task<IEnumerable<ActivityResource>> GetCompanyActivitiesAsync(Company company);
         Task UpdateCompanyActivities(IEnumerable<CompanyActivity> activities, Company company);
-        Task<Company?> AddCompany(int programId, string companyName);
+        Task<Company?> AddCompany(int programId, string companyName, User companyUser);
+        Task<Company?> GetCompanyByUser(User user);
     }
 }

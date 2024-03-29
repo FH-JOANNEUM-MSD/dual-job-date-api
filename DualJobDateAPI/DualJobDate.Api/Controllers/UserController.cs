@@ -10,6 +10,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Cryptography;
+using DualJobDate.BusinessObjects.Entities.Interface;
+using DualJobDate.BusinessObjects.Entities.Interface.Service;
 using DualJobDate.BusinessObjects.Resources;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
@@ -24,7 +26,7 @@ namespace DualJobDate.Api.Controllers
     UserManager<User> userManager,
     SignInManager<User> signInManager,
         IServiceProvider serviceProvider,
-        IMapper mapper)
+        IMapper mapper, RoleManager<Role> roleManager)
         : ControllerBase
     {
         private static readonly EmailAddressAttribute EmailAddressAttribute = new();
@@ -51,6 +53,10 @@ namespace DualJobDate.Api.Controllers
             {
                 institution = adminUser.InstitutionId;
                 program = adminUser.AcademicProgramId;
+                if (model.Role == UserTypeEnum.Admin || model.Role == UserTypeEnum.Company)
+                {
+                    return Unauthorized("You're not authorized to register an Admin or Company");
+                }
             }
             var userStore = serviceProvider.GetRequiredService<IUserStore<User>>();
             
@@ -65,10 +71,9 @@ namespace DualJobDate.Api.Controllers
                 UserType = UserTypeEnum.Admin,
                 IsNew = true,
                 InstitutionId = institution,
-                AcademicProgramId = program,
-                CompanyId = model.CompanyId
+                AcademicProgramId = program
             };
-
+            
             await userStore.SetUserNameAsync(user, model.Email, CancellationToken.None);
 
             var password = GeneratePassword(12);
@@ -79,8 +84,12 @@ namespace DualJobDate.Api.Controllers
             {
                 return BadRequest(result.Errors);
             }
-
-            await userManager.AddToRoleAsync(user, model.Role);
+            var role = await roleManager.Roles.Where(r => r.UserTypeEnum == model.Role).SingleOrDefaultAsync();
+            if (role == null)
+            {
+                return NotFound("Role doesn't exist");
+            }
+            await userManager.AddToRoleAsync(user, role.Name);
             
             return Ok($"User '{user.Email}' created successfully");
         }
@@ -201,7 +210,7 @@ namespace DualJobDate.Api.Controllers
             }
             var users = new List<User>();
 
-            IQueryable<User> query = userManager.Users.AsQueryable();
+            IQueryable<User> query = userManager.Users.Include(u => u.Company).AsQueryable();
 
             if (User.IsInRole("Admin") && institutionId.HasValue)
             {
@@ -238,7 +247,7 @@ namespace DualJobDate.Api.Controllers
         [Route("GetUser")]
         public async Task<ActionResult<IEnumerable<UserResource>>> GetUser([FromQuery] string userId)
         {
-            var user = await userManager.FindByIdAsync(userId);
+            var user = await userManager.Users.Where(u => u.Id == userId).Include(u => u.Company).SingleOrDefaultAsync();
             if (user == null)
             {
                 return NotFound("User not found");

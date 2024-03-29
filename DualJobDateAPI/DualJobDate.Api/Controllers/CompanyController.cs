@@ -62,7 +62,7 @@ namespace DualJobDate.API.Controllers
         }
 
         [Authorize(Policy = "Student")]
-        [HttpGet("GetActiveCompanies")]
+        [HttpGet("/GetActiveCompanies")]
         public async Task<ActionResult<IEnumerable<CompanyResource>>> GetActiveCompanies()
         {
             var user = await userManager.GetUserAsync(User);
@@ -99,7 +99,7 @@ namespace DualJobDate.API.Controllers
 
         [Authorize(Policy = "Company")]
         [HttpPost("/IsActive")]
-        public async Task<IActionResult> UpdateCompanyActivity([FromQuery] int? companyId, [FromQuery] bool isActive)
+        public async Task<IActionResult> UpdateCompanyActivity([FromQuery] int companyId, [FromQuery] bool isActive)
         {
             var user = await userManager.GetUserAsync(User);
             if (user == null)
@@ -107,9 +107,9 @@ namespace DualJobDate.API.Controllers
                 return Unauthorized();
             }
 
-            if (user.CompanyId != null)
+            if (user.Company != null)
             {
-                companyId = user.CompanyId;
+                companyId = user.Company.Id;
             }
 
             try
@@ -127,22 +127,15 @@ namespace DualJobDate.API.Controllers
         }
 
         [HttpGet("/Details")]
-        public async Task<ActionResult<CompanyDetailsResource>> GetCompanyDetails([FromQuery] int? companyId)
+        public async Task<ActionResult<CompanyDetailsResource>> GetCompanyDetails([FromQuery] int companyId)
         {
             var user = await userManager.GetUserAsync(User);
             if (user == null)
             {
                 return Unauthorized();
             }
-
-            if (user.CompanyId != null)
-            {
-                companyId = user.CompanyId;
-            }
-
-            if (companyId == null)
-                throw new Exception("CompanyId is null");
-            var company = await companyService.GetCompanyByIdAsync((int)companyId);
+            
+            var company = await companyService.GetCompanyByIdAsync(companyId);
             if (company == null)
             {
                 return NotFound("Company not found");
@@ -166,15 +159,15 @@ namespace DualJobDate.API.Controllers
             try
             {
                 var companyDetails = mapper.Map<CompanyDetailsResource, CompanyDetails>(resource);
-                if (user.CompanyId != null)
+                if (user.Company != null)
                 {
-                    var company = await companyService.GetCompanyByIdAsync((int)user.CompanyId);
+                    var company = await companyService.GetCompanyByIdAsync(user.Company.Id);
                     await companyService.UpdateCompanyDetails(companyDetails, company);
                     return Ok();
                 }
                 else
                 {
-                    return NotFound("Company not found");
+                    return Unauthorized();
                 }
             }
             catch (Exception ex)
@@ -184,22 +177,14 @@ namespace DualJobDate.API.Controllers
         }
 
         [HttpGet("/Activities")]
-        public async Task<ActionResult<IEnumerable<ActivityResource>>> GetCompanyActivities([FromQuery] int? companyId)
+        public async Task<ActionResult<IEnumerable<ActivityResource>>> GetCompanyActivities([FromQuery] int companyId)
         {
             var user = await userManager.GetUserAsync(User);
             if (user == null)
             {
                 return Unauthorized();
             }
-
-            if (user.CompanyId != null)
-            {
-                companyId = user.CompanyId;
-            }
-
-            if (companyId == null)
-                throw new Exception("CompanyId is null");
-            var company = await companyService.GetCompanyByIdAsync((int)companyId);
+            var company = await companyService.GetCompanyByIdAsync(companyId);
             if (company == null)
             {
                 return NotFound("Company not found");
@@ -220,14 +205,13 @@ namespace DualJobDate.API.Controllers
             }
 
             try
-            {
-                if (user.CompanyId == null)
+            {   
+                if (user.Company == null)
                 {
-                    return NotFound("Company not found");
-
+                    return Unauthorized();
                 }
 
-                var company = await companyService.GetCompanyByIdAsync((int)user.CompanyId);
+                var company = await companyService.GetCompanyByIdAsync(user.Company.Id);
                 if (company == null)
                 {
                     return NotFound("Company not found");
@@ -254,9 +238,14 @@ namespace DualJobDate.API.Controllers
                 return Unauthorized();
             }
 
+            var companyUser = await userManager.FindByEmailAsync(model.UserEmail);
+            if (companyUser == null)
+            {
+                return NotFound("User not found");
+            }
             try
             {
-                var company = await companyService.AddCompany(model.AcademicProgramId, model.CompanyName);
+                var company = await companyService.AddCompany(model.AcademicProgramId, model.CompanyName, companyUser);
                 var companyResource = mapper.Map<Company, CompanyResource>(company);
                 return Ok(companyResource);
             }

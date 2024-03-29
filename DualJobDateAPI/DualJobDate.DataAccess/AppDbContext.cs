@@ -8,7 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace DualJobDate.DataAccess
 {
-    public class AppDbContext: IdentityDbContext<User, IdentityRole, string>, IDbContext
+    public class AppDbContext: IdentityDbContext<User, Role, string>, IDbContext
     {
         public DbSet<Institution> Institutions { get; set; }
         public DbSet<AcademicProgram> AcademicPrograms { get; set; }
@@ -56,11 +56,6 @@ namespace DualJobDate.DataAccess
                 .UsingEntity<StudentCompany>();
             
             modelBuilder.Entity<Company>()
-                .HasOne(c => c.User)
-                .WithOne(u => u.Company)
-                .HasForeignKey<User>(u => u.CompanyId);
-                
-            modelBuilder.Entity<Company>()
                 .HasMany(e => e.Activities)
                 .WithMany(e => e.Companies)
                 .UsingEntity<CompanyActivity>();
@@ -70,6 +65,17 @@ namespace DualJobDate.DataAccess
                 .Property(x => x.AcademicDegreeEnum)
                 .HasConversion<int>();
 
+            modelBuilder
+                .Entity<Role>()
+                .Property(x => x.UserTypeEnum)
+                .HasConversion<int>();
+
+            modelBuilder.Entity<User>()
+                .HasOne(u => u.Company)
+                .WithOne(c => c.User)
+                .HasForeignKey<Company>(c => c.UserId)
+                .IsRequired();
+            
             modelBuilder.Entity<AcademicProgram>(builder =>
             {
                 builder.HasIndex(x => new { x.Year, x.KeyName })

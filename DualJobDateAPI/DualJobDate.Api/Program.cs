@@ -58,7 +58,7 @@ namespace DualJobDate.API
         private static void ConfigureIdentity(IServiceCollection services)
         {
             services.AddIdentityApiEndpoints<User>(options => options.SignIn.RequireConfirmedAccount = false)
-                .AddRoles<IdentityRole>()
+                .AddRoles<Role>()
                 .AddEntityFrameworkStores<AppDbContext>();
         }
 

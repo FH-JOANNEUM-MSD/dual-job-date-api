@@ -6,11 +6,12 @@ using DualJobDate.BusinessObjects.Entities;
 using DualJobDate.BusinessObjects.Entities.Interface;
 using DualJobDate.BusinessObjects.Entities.Models;
 using DualJobDate.BusinessObjects.Resources;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace DualJobDate.BusinessLogic.Services
 {
-    public class CompanyService(IUnitOfWork unitOfWork) : ICompanyService
+    public class CompanyService(IUnitOfWork unitOfWork, UserManager<User> userManager) : ICompanyService
     {
         public Task<Company?> GetCompanyByIdAsync(int id)
         {
@@ -119,23 +120,32 @@ namespace DualJobDate.BusinessLogic.Services
             unitOfWork.Commit();
         }
 
-        public async Task<Company?> AddCompany(int programId, string companyName)
+        public async Task<Company?> AddCompany(int programId, string companyName, User companyUser)
         {
             var program = await unitOfWork.AcademicProgramRepository.GetByIdAsync(programId);
             if (program == null)
             {
                 return null;
             }
+
             unitOfWork.BeginTransaction();
             var company = new Company
             {
                 Name = companyName,
                 InstitutionId = program.InstitutionId,
-                AcademicProgramId = program.Id
+                AcademicProgramId = program.Id,
+                User = companyUser
             };
             await unitOfWork.CompanyRepository.AddAsync(company);
             unitOfWork.Commit();
             await unitOfWork.SaveChanges();
+            return company;
+        }
+
+        public async Task<Company?> GetCompanyByUser(User user)
+        {
+            var company = await unitOfWork.CompanyRepository.GetAllAsync().Result.Where(c => c.UserId == user.Id)
+                .SingleOrDefaultAsync();
             return company;
         }
     }
