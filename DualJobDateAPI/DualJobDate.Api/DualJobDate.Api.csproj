@@ -34,4 +34,8 @@
       <None Remove="email.html" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Compile Remove="Controllers\InstitutionController.cs" />
+    </ItemGroup>
+
 </Project>
