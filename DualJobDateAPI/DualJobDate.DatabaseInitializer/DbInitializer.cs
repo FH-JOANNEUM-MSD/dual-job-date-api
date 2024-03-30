@@ -19,7 +19,6 @@ namespace DualJobDate.DatabaseInitializer
     {
         public static void InitializeDb(ILoggerFactory loggerFactory)
         {
-
             var logger = loggerFactory.CreateLogger("DbInitializer");
             logger.LogInformation("Starting container using Docker Compose...");
 

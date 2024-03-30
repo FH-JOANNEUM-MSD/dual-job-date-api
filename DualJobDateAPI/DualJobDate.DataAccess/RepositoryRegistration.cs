@@ -21,6 +21,7 @@ namespace DualJobDate.DataAccess
             services.AddScoped<ICompanyRepository, CompanyRepository>();
             services.AddScoped<ICompanyDetailsRepository, CompanyDetailsRepository>();
             services.AddScoped<ICompanyActivityRepository, CompanyActivityRepository>();
+            services.AddScoped<IAdressRepository, AddressRepository>();
         }
     }
 }

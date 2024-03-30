@@ -11,6 +11,8 @@ namespace DualJobDate.BusinessObjects.Entities.Interface
         ICompanyRepository CompanyRepository { get; }
         ICompanyDetailsRepository CompanyDetailsRepository { get; }
         ICompanyActivityRepository CompanyActivityRepository { get; }
+        IAdressRepository AdressRepository { get; }
+
 
 
         Task SaveChanges();
