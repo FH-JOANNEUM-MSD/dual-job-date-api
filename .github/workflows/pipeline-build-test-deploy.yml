@@ -3,10 +3,10 @@ name: .NET CI/CD Pipeline
 on:
   push:
     branches: 
-      - feature/cicd #change to main before merge
+      - dev #change to main before merge
   pull_request:
     branches:
-      - feature/cicd #change to main before merge
+      - dev #change to main before merge
 
 env:
   REGISTRY: ghcr.io
