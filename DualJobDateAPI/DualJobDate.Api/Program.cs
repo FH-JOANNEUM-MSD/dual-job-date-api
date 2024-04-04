@@ -57,8 +57,8 @@ namespace DualJobDate.API
 
         private static void ConfigureIdentity(IServiceCollection services)
         {
-            services.AddIdentityApiEndpoints<User>()
-                .AddRoles<IdentityRole>()
+            services.AddIdentityApiEndpoints<User>(options => options.SignIn.RequireConfirmedAccount = false)
+                .AddRoles<Role>()
                 .AddEntityFrameworkStores<AppDbContext>();
         }
 
@@ -88,19 +88,25 @@ namespace DualJobDate.API
                 {
                     policy.RequireRole("Company");
                 });
-            });        }
+                options.AddPolicy("AdminOrInstitution", policy =>
+                    policy.RequireAssertion(context =>
+                        context.User.IsInRole("Admin") || context.User.IsInRole("Institution")));          
+            });        
+        }
 
         private static void ConfigureSwagger(IServiceCollection services)
         {
             services.AddSwaggerGen(option =>
             {
-                option.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme()
-                    {
-                        In = ParameterLocation.Header,
-                        Name = "Authorization",
-                        Type = SecuritySchemeType.ApiKey
-                    }
-                );
+                option.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
+                {
+                    Description = "JWT Authorization header using the Bearer scheme",
+                    Name = "Authorization",
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "Bearer"
+                });
+
                 option.OperationFilter<SecurityRequirementsOperationFilter>();
             });
         }
@@ -122,7 +128,6 @@ namespace DualJobDate.API
             using var scope = app.Services.CreateScope();
             var services = scope.ServiceProvider;
             var loggerFactory = services.GetRequiredService<ILoggerFactory>();
-          
             if (app.Environment.IsDevelopment())
             {
                 DbInitializer.InitializeDb(loggerFactory);
@@ -140,7 +145,6 @@ namespace DualJobDate.API
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "DualJobDate API v1"));
             }
-
             app.MapControllers();
             app.MapGet("/", () => "DualJobDate API. Following Endpoints are accessible:");
         }

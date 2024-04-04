@@ -5,4 +5,5 @@ namespace DualJobDate.BusinessObjects.Entities;
 
 public class Role : IdentityRole
 {
+    public UserTypeEnum UserTypeEnum { get; set; }
 }

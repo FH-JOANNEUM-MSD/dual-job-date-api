@@ -6,10 +6,10 @@ namespace DualJobDate.DataAccess.Repositories;
 
 public class AcademicProgramRepository(AppDbContext dbContext) : BaseRepository<AcademicProgram>(dbContext), IAcademicProgramRepository
 {
-    public async Task<AcademicProgram> GetByName(string KeyName)
+    public async Task<AcademicProgram> GetByNameAndYear(string KeyName, int Year)
     {
-        var result = await dbContext.Set<AcademicProgram>().Include(ap => ap.Activities).Include(ap => ap.Companies)
-            .SingleOrDefaultAsync(i => i.KeyName == KeyName);
+        var result = await dbContext.Set<AcademicProgram>().Include(ap => ap.Activities)
+            .SingleOrDefaultAsync(ap => ap.KeyName == KeyName && ap.Year == Year);
         return result;
     }
 }

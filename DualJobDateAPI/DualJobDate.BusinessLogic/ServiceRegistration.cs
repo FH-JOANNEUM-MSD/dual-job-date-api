@@ -1,5 +1,6 @@
 ﻿using DualJobDate.BusinessLogic.Helper;
 using DualJobDate.BusinessLogic.Services;
+using DualJobDate.BusinessObjects.Entities;
 using DualJobDate.BusinessObjects.Entities.Interface.Helper;
 using DualJobDate.BusinessObjects.Entities.Interface.Service;
 using Microsoft.Extensions.Configuration;
@@ -12,6 +13,7 @@ namespace DualJobDate.BusinessLogic
         public static void RegisterServices(IServiceCollection services)
         {
             services.AddTransient<ITestService, TestService>();
+            services.AddTransient<ICompanyService, CompanyService>();
             services.AddTransient<IEmailHelper, EmailHelper>();
             _ = services.AddTransient<IJwtHelper, JwtHelper>(x =>
             {

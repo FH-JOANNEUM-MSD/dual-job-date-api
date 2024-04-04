@@ -2,9 +2,11 @@ namespace DualJobDate.BusinessObjects.Entities.Enum
 {
     public enum UserTypeEnum
     {
-        Student = 1,
-        Company = 2,
-        Admin = 3
+        Student = 4,
+        Company = 3,
+        Institution = 2,
+        Admin = 1,
+        Default = 0
     }
 
 }

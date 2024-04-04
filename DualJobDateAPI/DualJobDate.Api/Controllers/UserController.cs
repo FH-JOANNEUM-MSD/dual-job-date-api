@@ -10,8 +10,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Cryptography;
+using DualJobDate.BusinessObjects.Entities.Interface;
+using DualJobDate.BusinessObjects.Entities.Interface.Service;
 using DualJobDate.BusinessObjects.Resources;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 namespace DualJobDate.Api.Controllers
@@ -23,19 +26,40 @@ namespace DualJobDate.Api.Controllers
     UserManager<User> userManager,
     SignInManager<User> signInManager,
         IServiceProvider serviceProvider,
-        IMapper mapper)
+        IMapper mapper, RoleManager<Role> roleManager)
         : ControllerBase
     {
         private static readonly EmailAddressAttribute EmailAddressAttribute = new();
+        
 
-        [Authorize(Policy = "Admin")]
+        [Authorize("AdminOrInstitution")]
         [HttpPut]
         [Route("Register")]
         public async Task<IActionResult> RegisterUser([FromBody] RegisterUserModel model)
         {
+            var adminUser = await userManager.GetUserAsync(User);
+            int institution;
+            int program;
+            if (User.IsInRole("Admin"))
+            {
+                if (model.InstitutionId == null || model.AcademicProgramId == null)
+                {
+                    return BadRequest("InstitutionId or AcademicProgramId cannot be null!");
+                }
+                institution = (int)model.InstitutionId;
+                program = (int)model.AcademicProgramId;
+            }
+            else
+            {
+                institution = adminUser.InstitutionId;
+                program = adminUser.AcademicProgramId;
+                if (model.Role == UserTypeEnum.Admin || model.Role == UserTypeEnum.Company)
+                {
+                    return Unauthorized("You're not authorized to register an Admin or Company");
+                }
+            }
             var userStore = serviceProvider.GetRequiredService<IUserStore<User>>();
             
-
             if (string.IsNullOrEmpty(model.Email) || !EmailAddressAttribute.IsValid(model.Email))
             {
                 return BadRequest($"Email '{model.Email}' is invalid.");
@@ -46,12 +70,13 @@ namespace DualJobDate.Api.Controllers
                 Email = model.Email,
                 UserType = UserTypeEnum.Admin,
                 IsNew = true,
+                InstitutionId = institution,
+                AcademicProgramId = program
             };
-
+            
             await userStore.SetUserNameAsync(user, model.Email, CancellationToken.None);
 
-            //TODO
-            var password = "Password1!";
+            var password = GeneratePassword(12);
 
             var result = await userManager.CreateAsync(user, password);
 
@@ -59,15 +84,19 @@ namespace DualJobDate.Api.Controllers
             {
                 return BadRequest(result.Errors);
             }
-
-            await userManager.AddToRoleAsync(user, model.Role);
-
+            var role = await roleManager.Roles.Where(r => r.UserTypeEnum == model.Role).SingleOrDefaultAsync();
+            if (role == null)
+            {
+                return NotFound("Role doesn't exist");
+            }
+            await userManager.AddToRoleAsync(user, role.Name);
+            
             return Ok($"User '{user.Email}' created successfully");
         }
 
         [HttpPost]
         [Route("Login")]
-        public async Task<Results<Ok<AccessTokenResponse>, EmptyHttpResult, ProblemHttpResult>> Login([FromBody] LoginRequest login, [FromQuery] bool? useCookies, [FromQuery] bool? useSessionCookies)
+        public async Task<Results<Ok<AccessTokenResponse>, EmptyHttpResult, ProblemHttpResult>> Login([FromBody] LoginModel login, [FromQuery] bool? useCookies, [FromQuery] bool? useSessionCookies)
         {
 
             var useCookieScheme = (useCookies == true) || (useSessionCookies == true);
@@ -118,73 +147,107 @@ namespace DualJobDate.Api.Controllers
                 return Unauthorized();
             }
 
-            //TODO Create own ChangePassword Method
             var result = await userManager.ChangePasswordAsync(user, model.OldPassword, model.NewPassword);
 
             if (result.Succeeded)
             {
-                return Ok();
+                user.IsNew = false;
+                var userResult = await userManager.UpdateAsync(user);
+                if (userResult.Succeeded)
+                {
+                    return Ok();
+                }
             }
 
             return BadRequest(result.Errors);
         }
 
         [HttpPost]
-        [Route("ForgotPassword")]
-        public async Task<IActionResult> ForgotPassword([FromBody] RegisterUserModel model)
-        {
-            var user = await userManager.FindByEmailAsync(model.Email);
-            if (user is null || !(await userManager.IsEmailConfirmedAsync(user)))
-            {
-                return NotFound();
-            }
-
-            var code = await userManager.GeneratePasswordResetTokenAsync(user);
-            var callbackUrl = Url.Action("ResetPassword", "User",
-                new { userId = user.Id, code }, protocol: HttpContext.Request.Scheme);
-            return Ok();
-        }
-
-        [HttpPost]
-        [Authorize("Admin")]
+        [Authorize("AdminOrInstitution")]
         [Route("ResetPassword")]
-        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordModel model)
+        public async Task<ActionResult<CredentialsResource>> ResetPassword([FromQuery] string userId)
         {
-            var user = await userManager.FindByEmailAsync(model.Email);
+            var user = await userManager.FindByIdAsync(userId);
             if (user is null)
             {
                 return NotFound();
             }
 
-            var result = await userManager.ResetPasswordAsync(user, model.ResetCode, model.NewPassword);
+            var code = await userManager.GeneratePasswordResetTokenAsync(user);
+
+            var password = GeneratePassword(12);
+            var result = await userManager.ResetPasswordAsync(user, code, password);
             if (result.Succeeded)
             {
-                return Ok();
+                user.IsNew = false;
+                var userResult = await userManager.UpdateAsync(user);
+                if (userResult.Succeeded)
+                {
+                    var credentials = new CredentialsResource
+                    {
+                        Email = user.Email,
+                        Password = password
+                    };
+                    return Ok(credentials);
+                }
             }
 
             return BadRequest(result.Errors);
         }
-
-        [Authorize(Policy = "Admin")]
+        
+        [Authorize(Policy = "AdminOrInstitution")]
         [HttpGet]
         [Route("GetAllUsers")]
-        public async Task<ActionResult<IEnumerable<UserResource>>> GetAllUsers()
+        public async Task<ActionResult<IEnumerable<UserResource>>> GetAllUsers(
+            [FromQuery] int? institutionId, 
+            [FromQuery] int? academicProgramId,
+            [FromQuery] UserTypeEnum userType)
         {
-            var users = userManager.Users.ToList();
-            if (users.IsNullOrEmpty())
+            var user = await userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+            var users = new List<User>();
+
+            IQueryable<User> query = userManager.Users.Include(u => u.Company).AsQueryable();
+
+            if (User.IsInRole("Admin") && institutionId.HasValue)
+            {
+                query = query.Where(u => u.InstitutionId == institutionId);
+            }
+            else if (academicProgramId.HasValue)
+            {
+                query = query.Where(u => u.AcademicProgramId == academicProgramId);
+            }
+            else
+            {
+                return BadRequest("Invalid request parameters or insufficient permissions.");
+            }
+
+            if (userType != UserTypeEnum.Default)
+            {
+                query = query.Where(u => u.UserType == userType);
+            }
+
+            var usersList = await query.ToListAsync();
+
+            if (usersList.IsNullOrEmpty())
             {
                 return NotFound("No user found!");
             }
-            var userResources = mapper.Map<IEnumerable<User>, IEnumerable<UserResource>>(users);
+    
+            var userResources = mapper.Map<IEnumerable<User>, IEnumerable<UserResource>>(usersList);
             return Ok(userResources);
         }
+
         
-        [Authorize(Policy = "Admin")]
+        [Authorize(Policy = "AdminOrInstitution")]
         [HttpGet]
-        [Route("GetUser/{UserId}")]
-        public async Task<ActionResult<IEnumerable<UserResource>>> GetUser(string userId)
+        [Route("GetUser")]
+        public async Task<ActionResult<IEnumerable<UserResource>>> GetUser([FromQuery] string userId)
         {
-            var user = await userManager.FindByIdAsync(userId);
+            var user = await userManager.Users.Where(u => u.Id == userId).Include(u => u.Company).SingleOrDefaultAsync();
             if (user == null)
             {
                 return NotFound("User not found");
@@ -196,8 +259,8 @@ namespace DualJobDate.Api.Controllers
 
         [Authorize(Policy = "Admin")]
         [HttpDelete]
-        [Route("DeleteUser/{userId}")]
-        public async Task<IActionResult> DeleteUser(string userId)
+        [Route("DeleteUser")]
+        public async Task<IActionResult> DeleteUser([FromQuery] string userId)
         {
             var user = await userManager.FindByIdAsync(userId);
             if (user is null)

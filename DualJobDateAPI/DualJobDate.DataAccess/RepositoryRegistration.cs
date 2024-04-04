@@ -1,5 +1,7 @@
-﻿using DualJobDate.BusinessObjects.Entities.Interface;
+﻿using DualJobDate.BusinessObjects.Entities;
+using DualJobDate.BusinessObjects.Entities.Interface;
 using DualJobDate.BusinessObjects.Entities.Interface.Repository;
+using DualJobDate.BusinessObjects.Entities.Models;
 using DualJobDate.DataAccess.Repositories;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -16,6 +18,10 @@ namespace DualJobDate.DataAccess
             services.AddScoped<IAcademicProgramRepository, AcademicProgramRepository>();
             services.AddScoped<IAcademicDegreeRepository, AcademicDegreeRepository>();
             services.AddScoped<IActivityRepository, ActivityRepository>();
+            services.AddScoped<ICompanyRepository, CompanyRepository>();
+            services.AddScoped<ICompanyDetailsRepository, CompanyDetailsRepository>();
+            services.AddScoped<ICompanyActivityRepository, CompanyActivityRepository>();
+            services.AddScoped<IAdressRepository, AddressRepository>();
         }
     }
 }
