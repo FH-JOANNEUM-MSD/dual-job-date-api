@@ -4,11 +4,12 @@ namespace DualJobDate.BusinessObjects.Entities
 {
     public class Activity : BaseEntity
     {
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
     
         //navigation properties
         public int AcademicProgramId { get; set; }
         public AcademicProgram? AcademicProgram { get; set; }
-        public List<CompanyActivity> CompanyActivities { get; set; } = new();
+        public ICollection<Company> Companies { get; set; } = [];
+        public ICollection<CompanyActivity> CompanyActivities { get; set; } = [];
     }
 }

@@ -8,7 +8,7 @@ namespace DualJobDate.Api.Mapping
     {
         public ResourceToModelProfile()
         {
-            CreateMap<UserResource, ApplicationUser>();
+            CreateMap<UserResource, User>();
         }
     }
 }

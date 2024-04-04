@@ -5,13 +5,15 @@ using Microsoft.EntityFrameworkCore.Storage;
 
 namespace DualJobDate.DataAccess
 {
-    public class UnitOfWork(AppDbContext dbContext, IUserRepository userRepository,
-        IInstitutionRepository institutionRepository) : IUnitOfWork, IDisposable
+    public class UnitOfWork(AppDbContext dbContext,
+        IInstitutionRepository institutionRepository, IAcademicProgramRepository academicProgramRepository, IAcademicDegreeRepository academicDegreeRepository, IActivityRepository activityRepository) : IUnitOfWork, IDisposable
     {
         private readonly AppDbContext _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
-        public IUserRepository UserRepository => userRepository ?? throw new ArgumentNullException(nameof(userRepository));
         public IInstitutionRepository InstitutionRepository => institutionRepository ?? throw new ArgumentNullException(nameof(institutionRepository));
-
+        public IAcademicProgramRepository AcademicProgramRepository => academicProgramRepository ?? throw new ArgumentNullException(nameof(academicProgramRepository));
+        public IAcademicDegreeRepository AcademicDegreeRepository => academicDegreeRepository ?? throw new ArgumentNullException(nameof(academicDegreeRepository));
+        public IActivityRepository ActivityRepository => activityRepository ?? throw new ArgumentNullException(nameof(activityRepository));
+        
         private IDbContextTransaction? _transaction;
 
         public void BeginTransaction()
@@ -32,7 +34,7 @@ namespace DualJobDate.DataAccess
             }
             finally
             {
-                Dispose();
+                // Dispose();
             }
         }
 

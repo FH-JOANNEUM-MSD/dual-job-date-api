@@ -5,6 +5,7 @@ namespace DualJobDate.BusinessObjects.Entities
     public class CompanyDetails : BaseEntity
     {
         public string? ShortDescription { get; set; }
+        public string? TeamPictureBase64 { get; set; }
         public string? JobDescription { get; set; }
         public string? ContactPersonInCompany { get; set; }
         public string? ContactPersonHRM { get; set; }
