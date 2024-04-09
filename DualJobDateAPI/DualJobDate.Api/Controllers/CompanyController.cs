@@ -51,7 +51,7 @@ public class CompanyController(ICompanyService companyService, IMapper mapper, U
     }
 
     [Authorize(Policy = "Student")]
-    [HttpGet("GetActiveCompanies")]
+    [HttpGet("ActiveCompanies")]
     public async Task<ActionResult<IEnumerable<CompanyResource>>> GetActiveCompanies()
     {
         var user = await userManager.GetUserAsync(User);
