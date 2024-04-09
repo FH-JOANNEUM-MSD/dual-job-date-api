@@ -84,19 +84,19 @@ public class CompanyController(ICompanyService companyService, IMapper mapper, U
 
     [Authorize(Policy = "Company")]
     [HttpPut("IsActive")]
-    public async Task<IActionResult> UpdateCompanyActivity([FromQuery] int companyId, [FromQuery] bool isActive)
+    public async Task<IActionResult> UpdateCompanyActivity([FromQuery] int id, [FromQuery] bool isActive)
     {
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Unauthorized();
 
         var userCompany = await companyService.GetCompanyByUser(user);
-        if (userCompany != null) companyId = userCompany.Id;
+        if (userCompany != null) id = userCompany.Id;
 
         try
         {
-            if (companyId == null)
+            if (id == null)
                 throw new Exception("CompanyId is null");
-            var company = await companyService.GetCompanyByIdAsync(companyId);
+            var company = await companyService.GetCompanyByIdAsync(id);
             await companyService.UpdateCompanyActivity(isActive, company);
             return Ok();
         }
@@ -107,12 +107,12 @@ public class CompanyController(ICompanyService companyService, IMapper mapper, U
     }
 
     [HttpGet("Details")]
-    public async Task<ActionResult<CompanyDetailsResource>> GetCompanyDetails([FromQuery] int companyId)
+    public async Task<ActionResult<CompanyDetailsResource>> GetCompanyDetails([FromQuery] int id)
     {
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Unauthorized();
 
-        var company = await companyService.GetCompanyByIdAsync(companyId);
+        var company = await companyService.GetCompanyByIdAsync(id);
         if (company == null) return NotFound("Company not found");
 
         var companyDetail = await companyService.GetCompanyDetailsAsync(company);
@@ -147,11 +147,11 @@ public class CompanyController(ICompanyService companyService, IMapper mapper, U
     }
 
     [HttpGet("Activities")]
-    public async Task<ActionResult<IEnumerable<ActivityResource>>> GetCompanyActivities([FromQuery] int companyId)
+    public async Task<ActionResult<IEnumerable<ActivityResource>>> GetCompanyActivities([FromQuery] int id)
     {
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Unauthorized();
-        var company = await companyService.GetCompanyByIdAsync(companyId);
+        var company = await companyService.GetCompanyByIdAsync(id);
         if (company == null) return NotFound("Company not found");
 
         var companyActivities = await companyService.GetCompanyActivitiesAsync(company);

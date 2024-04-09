@@ -308,11 +308,11 @@ public static class DbInitializer
             if (result.Succeeded) await userManager.AddToRoleAsync(user1, "Student");
         }
 
-        if (await userManager.FindByEmailAsync("student1@fh-joanneum.at") == null)
+        if (await userManager.FindByEmailAsync("student2@fh-joanneum.at") == null)
         {
             var user2 = new User
             {
-                Email = "student1@fh-joanneum.at",
+                Email = "student2@fh-joanneum.at",
                 UserType = UserTypeEnum.Student,
                 IsNew = false,
                 IsActive = false,

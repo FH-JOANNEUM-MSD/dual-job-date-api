@@ -147,9 +147,9 @@ public class UserController(
     [HttpPost]
     [Authorize("AdminOrInstitution")]
     [Route("ResetPassword")]
-    public async Task<ActionResult<CredentialsResource>> ResetPassword([FromQuery] string userId)
+    public async Task<ActionResult<CredentialsResource>> ResetPassword([FromQuery] string id)
     {
-        var user = await userManager.FindByIdAsync(userId);
+        var user = await userManager.FindByIdAsync(id);
         if (user is null) return NotFound();
 
         var code = await userManager.GeneratePasswordResetTokenAsync(user);
@@ -209,9 +209,9 @@ public class UserController(
     [Authorize(Policy = "AdminOrInstitution")]
     [HttpGet]
     [Route("GetUser")]
-    public async Task<ActionResult<IEnumerable<UserResource>>> GetUser([FromQuery] string userId)
+    public async Task<ActionResult<IEnumerable<UserResource>>> GetUser([FromQuery] string id)
     {
-        var user = await userManager.Users.Where(u => u.Id == userId).Include(u => u.Company).SingleOrDefaultAsync();
+        var user = await userManager.Users.Where(u => u.Id == id).Include(u => u.Company).SingleOrDefaultAsync();
         if (user == null) return NotFound("User not found");
         var userResource = mapper.Map<User, UserResource>(user);
         return Ok(userResource);
@@ -221,9 +221,9 @@ public class UserController(
     [Authorize(Policy = "Admin")]
     [HttpDelete]
     [Route("DeleteUser")]
-    public async Task<IActionResult> DeleteUser([FromQuery] string userId)
+    public async Task<IActionResult> DeleteUser([FromQuery] string id)
     {
-        var user = await userManager.FindByIdAsync(userId);
+        var user = await userManager.FindByIdAsync(id);
         if (user is null) return NotFound();
 
         var result = await userManager.DeleteAsync(user);
