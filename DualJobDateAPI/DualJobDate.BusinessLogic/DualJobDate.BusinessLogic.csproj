@@ -1,32 +1,32 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <Folder Include="Utilities\" />
-  </ItemGroup>
+    <ItemGroup>
+        <Folder Include="Utilities\"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="AutoMapper" Version="13.0.1" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.3" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.3" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.1" />
-    <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="7.4.1" />
-    <PackageReference Include="MySql.EntityFrameworkCore" Version="8.0.0" />
-    <PackageReference Include="Swashbuckle.AspNetCore.Filters" Version="8.0.1" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.4.1" />
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="AutoMapper" Version="13.0.1"/>
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.3"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.3"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.1"/>
+        <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="7.4.1"/>
+        <PackageReference Include="MySql.EntityFrameworkCore" Version="8.0.0"/>
+        <PackageReference Include="Swashbuckle.AspNetCore.Filters" Version="8.0.1"/>
+        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.4.1"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\DualJobDate.BusinessObjects\DualJobDate.BusinessObjects.csproj" />
-  </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\DualJobDate.BusinessObjects\DualJobDate.BusinessObjects.csproj"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <EmbeddedResource Include="Templates\email.html" />
-  </ItemGroup>
+    <ItemGroup>
+        <EmbeddedResource Include="Templates\email.html"/>
+    </ItemGroup>
 
 </Project>

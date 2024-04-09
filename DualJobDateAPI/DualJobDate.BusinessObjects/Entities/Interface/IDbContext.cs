@@ -1,7 +1,6 @@
-﻿namespace DualJobDate.BusinessObjects.Entities.Interface
+﻿namespace DualJobDate.BusinessObjects.Entities.Interface;
+
+public interface IDbContext : IDisposable
 {
-    public interface IDbContext : IDisposable
-    {
-        Task<int> SaveChangesAsync();
-    }
+    Task<int> SaveChangesAsync();
 }

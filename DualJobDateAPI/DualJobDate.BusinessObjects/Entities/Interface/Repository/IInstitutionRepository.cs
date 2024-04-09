@@ -1,7 +1,6 @@
-﻿namespace DualJobDate.BusinessObjects.Entities.Interface.Repository
+﻿namespace DualJobDate.BusinessObjects.Entities.Interface.Repository;
+
+public interface IInstitutionRepository : IBaseRepository<Institution>
 {
-    public interface IInstitutionRepository : IBaseRepository<Institution>
-    {
-        Task<Institution> GetByName(string KeyName);
-    }
+    Task<Institution> GetByName(string KeyName);
 }

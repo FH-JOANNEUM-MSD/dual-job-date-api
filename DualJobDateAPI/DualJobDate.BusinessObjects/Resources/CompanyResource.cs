@@ -1,6 +1,3 @@
-using DualJobDate.BusinessObjects.Entities;
-using DualJobDate.BusinessObjects.Entities.Models;
-
 namespace DualJobDate.BusinessObjects.Resources;
 
 public class CompanyResource

@@ -1,6 +1,5 @@
 namespace DualJobDate.BusinessObjects.Entities.Interface.Repository;
 
-public interface ICompanyDetailsRepository: IBaseRepository<CompanyDetails>
+public interface ICompanyDetailsRepository : IBaseRepository<CompanyDetails>
 {
-    
 }

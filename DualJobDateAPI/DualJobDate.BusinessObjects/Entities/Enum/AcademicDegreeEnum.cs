@@ -1,10 +1,9 @@
-﻿namespace DualJobDate.BusinessObjects.Entities.Enum
+﻿namespace DualJobDate.BusinessObjects.Entities.Enum;
+
+public enum AcademicDegreeEnum
 {
-    public enum AcademicDegreeEnum
-    {
-        Bachelor = 1,
-        Master = 2,
-        PhD = 3,
-        Default = 4
-    }
+    Bachelor = 1,
+    Master = 2,
+    PhD = 3,
+    Default = 4
 }

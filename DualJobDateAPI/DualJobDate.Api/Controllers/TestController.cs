@@ -4,16 +4,15 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
-namespace DualJobDate.API.Controllers
+namespace DualJobDate.API.Controllers;
+
+[ApiController]
+[Authorize("AdminOrInstitution")]
+public class DataController(ITestService myService, UserManager<User> userManager) : ControllerBase
 {
-    [ApiController]
-    [Authorize("AdminOrInstitution")]
-    public class DataController(ITestService myService, UserManager<User> userManager) : ControllerBase
+    [HttpGet("/test")]
+    public async Task<ActionResult<User>> GetData()
     {
-        [HttpGet("/test")]
-        public async Task<ActionResult<User>> GetData()
-        {
-            return Ok(await userManager.GetUserAsync(User));
-        }
+        return Ok(await userManager.GetUserAsync(User));
     }
 }

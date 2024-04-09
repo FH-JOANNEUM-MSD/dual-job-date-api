@@ -4,7 +4,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DualJobDate.DataAccess.Repositories;
 
-public class AcademicProgramRepository(AppDbContext dbContext) : BaseRepository<AcademicProgram>(dbContext), IAcademicProgramRepository
+public class AcademicProgramRepository(AppDbContext dbContext)
+    : BaseRepository<AcademicProgram>(dbContext), IAcademicProgramRepository
 {
     public async Task<AcademicProgram> GetByNameAndYear(string KeyName, int Year)
     {

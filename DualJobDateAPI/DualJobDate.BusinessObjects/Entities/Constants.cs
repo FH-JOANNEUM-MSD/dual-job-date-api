@@ -1,13 +1,12 @@
-﻿namespace DualJobDate.BusinessObjects.Entities
+﻿namespace DualJobDate.BusinessObjects.Entities;
+
+public static class Constants
 {
-    public static class Constants
+    public static class JwtConstants
     {
-        public static class JwtConstants
-        {
-            /// <summary>
-            /// expires in 24 hours
-            /// </summary>
-            public static int ExpiresInMinutes = 1400;
-        }
+        /// <summary>
+        ///     expires in 24 hours
+        /// </summary>
+        public static int ExpiresInMinutes = 1400;
     }
 }
