@@ -26,6 +26,7 @@ internal class Program
     {
         RepositoryRegistration.RegisterRepository(services);
         ServiceRegistration.RegisterServices(services);
+        ConfigureCores(services);
         ConfigureDatabase(services, configuration);
         ConfigureIdentity(services);
         ConfigureJwtAuthentication(services, configuration);
@@ -102,6 +103,19 @@ internal class Program
         services.AddSingleton(mapper);
     }
 
+    private static void ConfigureCores(IServiceCollection services)
+    {
+        services.AddCors(options =>
+        {
+            options.AddDefaultPolicy(builder =>
+            {
+                builder.AllowAnyOrigin()
+                    .AllowAnyMethod()
+                    .AllowAnyHeader();
+            });
+        });
+    }
+
     private static void Configure(WebApplication app)
     {
         using var scope = app.Services.CreateScope();
@@ -110,6 +124,7 @@ internal class Program
         if (app.Environment.IsDevelopment()) DbInitializer.InitializeDb(loggerFactory);
         DatabaseConnectionTester.TestDbConnection(app).Wait();
         DbInitializer.SeedData(services).Wait();
+        app.UseCors();
 
         app.UseRouting();
         app.UseAuthentication();
