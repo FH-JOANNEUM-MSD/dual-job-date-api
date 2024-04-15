@@ -3,5 +3,5 @@
 public interface IUtilService
 {
     Task<IQueryable<Institution>> GetInstitutionsAsync();
-
+    Task<IQueryable<AcademicProgram>> GetAcademicProgramsAsync();
 }

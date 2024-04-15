@@ -20,4 +20,13 @@ public class UtilController(IUtilService utilService, IMapper mapper) : Controll
         var institutionResources = mapper.Map<IEnumerable<Institution>, IEnumerable<InstitutionResource>>(institutions);
         return Ok(institutionResources);
     }
+    
+    [Authorize("AdminOrInstitution")]
+    [HttpGet("AcademicPrograms")]
+    public async Task<ActionResult<IEnumerable<AcademicProgramResource>>> GetAcademicPrograms()
+    {
+        var academicPrograms = await utilService.GetAcademicProgramsAsync();
+        var academicProgramResources = mapper.Map<IEnumerable<AcademicProgram>, IEnumerable<AcademicProgramResource>>(academicPrograms);
+        return Ok(academicProgramResources);
+    }
 }
