@@ -21,5 +21,6 @@ public static class ServiceRegistration
             return new JwtHelper(secretKey);
         });
         services.AddTransient<ICompanyService, CompanyService>();
+        services.AddTransient<IStudentCompanyService, StudentCompanyService>();
     }
 }

@@ -12,6 +12,7 @@ public interface IUnitOfWork : IDisposable
     ICompanyDetailsRepository CompanyDetailsRepository { get; }
     ICompanyActivityRepository CompanyActivityRepository { get; }
     IAdressRepository AdressRepository { get; }
+    IStudentCompanyRepository StudentCompanyRepository { get; }
 
 
     Task SaveChanges();
