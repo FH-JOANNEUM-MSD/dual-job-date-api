@@ -124,6 +124,7 @@ internal class Program
         if (app.Environment.IsDevelopment()) DbInitializer.InitializeDb(loggerFactory);
         DatabaseConnectionTester.TestDbConnection(app).Wait();
         DbInitializer.SeedData(services).Wait();
+        app.UseCors();
 
         app.UseRouting();
         app.UseAuthentication();
