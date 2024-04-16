@@ -2,13 +2,20 @@
 using DualJobDate.BusinessObjects.Entities.Interface;
 using DualJobDate.BusinessObjects.Entities.Interface.Service;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Mysqlx;
 
 namespace DualJobDate.BusinessLogic.Services;
 
 public class StudentCompanyService(IUnitOfWork unitOfWork) : IStudentCompanyService
 {
-    public async Task<StudentCompany?> CreateStudentCompany(bool like, int companyId, string studentId)
+    public async Task<List<StudentCompany>> GetStudentCompaniesByStudentIdAsync(string studentId)
+    {
+        var result = (await unitOfWork.StudentCompanyRepository.GetAllAsync()).Where(x => x.StudentId == studentId);
+        return await result.ToListAsync();
+    }
+    
+    public async Task<StudentCompany?> CreateStudentCompanyAsync(bool like, int companyId, string studentId)
     {
         var studentCompany = (await unitOfWork.StudentCompanyRepository.GetAllAsync()).FirstOrDefault(x => x.StudentId == studentId && x.CompanyId == companyId);
 
@@ -43,7 +50,7 @@ public class StudentCompanyService(IUnitOfWork unitOfWork) : IStudentCompanyServ
         
     }
     
-    public async Task<bool> DeleteStudentCompany(int id)
+    public async Task<bool> DeleteStudentCompanyAsync(int id)
     {
         try
         {

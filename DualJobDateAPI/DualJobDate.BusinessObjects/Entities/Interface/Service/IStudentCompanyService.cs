@@ -2,6 +2,7 @@
 
 public interface IStudentCompanyService
 {
-    Task<StudentCompany?> CreateStudentCompany(bool like, int companyId, string studentId);
-    Task<bool> DeleteStudentCompany(int id);
+    Task<List<StudentCompany>> GetStudentCompaniesByStudentIdAsync(string studentId);
+    Task<StudentCompany?> CreateStudentCompanyAsync(bool like, int companyId, string studentId);
+    Task<bool> DeleteStudentCompanyAsync(int id);
 }
