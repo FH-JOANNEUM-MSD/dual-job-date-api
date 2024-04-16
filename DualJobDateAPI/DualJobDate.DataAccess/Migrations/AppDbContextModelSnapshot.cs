@@ -19,24 +19,6 @@ namespace DualJobDate.DataAccess.Migrations
                 .HasAnnotation("ProductVersion", "8.0.3")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
-            modelBuilder.Entity("DualJobDate.BusinessObjects.Entities.AcademicDegree", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    b.Property<int>("AcademicDegreeEnum")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("AcademicDegrees");
-                });
-
             modelBuilder.Entity("DualJobDate.BusinessObjects.Entities.AcademicProgram", b =>
                 {
                     b.Property<int>("Id")

@@ -7,27 +7,12 @@ using MySql.EntityFrameworkCore.Metadata;
 namespace DualJobDate.DataAccess.Migrations
 {
     /// <inheritdoc />
-    public partial class Migration_20240404 : Migration
+    public partial class InitialMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AlterDatabase()
-                .Annotation("MySQL:Charset", "utf8mb4");
-
-            migrationBuilder.CreateTable(
-                name: "AcademicDegrees",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySQL:ValueGenerationStrategy", MySQLValueGenerationStrategy.IdentityColumn),
-                    Name = table.Column<string>(type: "longtext", nullable: false),
-                    AcademicDegreeEnum = table.Column<int>(type: "int", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_AcademicDegrees", x => x.Id);
-                })
                 .Annotation("MySQL:Charset", "utf8mb4");
 
             migrationBuilder.CreateTable(
@@ -280,10 +265,10 @@ namespace DualJobDate.DataAccess.Migrations
                     LogoBase64 = table.Column<string>(type: "longtext", nullable: true),
                     Website = table.Column<string>(type: "longtext", nullable: true),
                     IsActive = table.Column<bool>(type: "tinyint(1)", nullable: false),
-                    AcademicProgramId = table.Column<int>(type: "int", nullable: false),
-                    InstitutionId = table.Column<int>(type: "int", nullable: false),
                     UserId = table.Column<string>(type: "varchar(255)", nullable: false),
-                    CompanyDetailsId = table.Column<int>(type: "int", nullable: true)
+                    CompanyDetailsId = table.Column<int>(type: "int", nullable: true),
+                    AcademicProgramId = table.Column<int>(type: "int", nullable: false),
+                    InstitutionId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -488,9 +473,6 @@ namespace DualJobDate.DataAccess.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "AcademicDegrees");
-
             migrationBuilder.DropTable(
                 name: "Addresses");
 
