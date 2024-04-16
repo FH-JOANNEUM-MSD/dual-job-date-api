@@ -14,12 +14,12 @@ public class StudentCompanyController(UserManager<User> userManager, ICompanySer
 {
     [Authorize(Policy = "Student")]
     [HttpPost("AddLikeOrDislike")]
-    public async Task<ActionResult> AddStudentCompany([FromQuery] bool like, int companyId)
+    public async Task<ActionResult> CreateStudentCompany([FromQuery] bool like, int companyId)
     {
         var company = await companyService.GetCompanyByIdAsync(companyId);
         if (company == null)
         {
-            return NotFound();
+            return NotFound("Company not found.");
         }
         
         var user = await userManager.GetUserAsync(User);
@@ -28,11 +28,23 @@ public class StudentCompanyController(UserManager<User> userManager, ICompanySer
             return Unauthorized();
         }
 
-        if (studentCompanyService.AddStudentCompany(like, companyId, user.Id) == null)
+        if (studentCompanyService.CreateStudentCompany(like, companyId, user.Id) == null)
         {
-            return BadRequest();
+            return BadRequest("Adding like or dislike failed.");
         }
 
-        return Ok();
+        return Ok("Adding like or dislike succeeded.");
+    }
+    
+    [Authorize(Policy = "Student")]
+    [HttpDelete("RemoveLikeOrDislike")]
+    public async Task<ActionResult> DeleteStudentCompany([FromQuery] int id)
+    {
+        if (await studentCompanyService.DeleteStudentCompany(id))
+        {
+            return Ok("Removing like or dislike succeeded.");
+        }
+
+        return BadRequest("Removing like or dislike failed.");
     }
 }
