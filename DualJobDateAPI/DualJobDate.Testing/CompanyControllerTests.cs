@@ -221,7 +221,42 @@ public async Task UpdateCompanyActivity_ValidRequest_ReturnsOkResult()
     Assert.IsType<OkResult>(result);
 }
 
+// Tests for AddOrUpdateCompanyDetails
 
+        [Fact]
+        public async Task AddOrUpdateCompanyDetails_ValidDetails_ReturnsOkResult()
+        {
+            // Arrange
+            var user = new User { /* Benutzerinformationen setzen */ };
+            var resource = new CompanyDetailsResource { ShortDescription = "Kurze Beschreibung des Unternehmens"/* weitere Unternehmensdetails setzen */ };
+            var company = new Company {Name = "Magna", Id = 1 };
+            user.Company = company;
+    
+            _userManagerMock.Setup(manager => manager.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+            _companyServiceMock.Setup(service => service.GetCompanyByUser(user)).ReturnsAsync(company);
+            _companyServiceMock.Setup(service => service.GetCompanyByIdAsync(user.Company.Id)).ReturnsAsync(company);
+            _companyServiceMock.Setup(service => service.UpdateCompanyDetails(It.IsAny<CompanyDetails>(), It.IsAny<Company>())).Verifiable();
+            _mapperMock.Setup(mapper => mapper.Map<CompanyDetailsResource, CompanyDetails>(It.IsAny<CompanyDetailsResource>()))
+                .Returns((CompanyDetailsResource resource) =>
+                {
+                    // new CompanyDetails-Objekt 
+                    return new CompanyDetails
+                    {
+                        ShortDescription = resource.ShortDescription,
+                        TeamPictureBase64 = resource.TeamPictureBase64,
+                        JobDescription = resource.JobDescription,
+                        ContactPersonInCompany = resource.ContactPersonInCompany,
+                    };
+                });
+
+            // Act
+            var result = await _controller.AddOrUpdateCompanyDetails(resource);
+
+            // Assert
+            Assert.IsType<OkResult>(result);
+            
+            _companyServiceMock.Verify(service => service.UpdateCompanyDetails(It.IsAny<CompanyDetails>(), It.IsAny<Company>()), Times.Once);
+        }
 
 
 
