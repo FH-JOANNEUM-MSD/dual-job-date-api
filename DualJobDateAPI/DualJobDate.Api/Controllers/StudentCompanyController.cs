@@ -14,6 +14,21 @@ namespace DualJobDate.Api.Controllers;
 [Route("[controller]")]
 public class StudentCompanyController(UserManager<User> userManager, ICompanyService companyService, IStudentCompanyService studentCompanyService, IMapper mapper) : ControllerBase
 {
+    [Authorize(Policy = "AdminOrInstitution")]
+    [HttpGet("GetLikesAndDislikes")]
+    public async Task<ActionResult<List<StudentCompanyDto>>> GetStudentCompanies()
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null)
+        {
+            return Unauthorized();
+        }
+        
+        var studentCompanies = await studentCompanyService.GetStudentCompaniesAsync();
+        var studentCompanyDtoList = mapper.Map<List<StudentCompany>, List<StudentCompanyDto>>(studentCompanies);
+        return Ok(studentCompanyDtoList);
+    }
+    
     [Authorize(Policy = "AdminOrInstitutionOrStudent")]
     [HttpGet("GetLikesAndDislikesByStudentId")]
     public async Task<ActionResult<List<StudentCompanyDto>>> GetStudentCompaniesByStudentId([FromQuery] string studentId)
