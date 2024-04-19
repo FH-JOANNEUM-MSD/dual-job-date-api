@@ -17,4 +17,10 @@ public class UtilService(IUnitOfWork unitOfWork) : IUtilService
         var ret = unitOfWork.AcademicProgramRepository.GetAllAsync();
         return ret;
     }
+
+    public Task PostAcademicProgramAsync(AcademicProgram academicProgram)
+    {
+        var ret = unitOfWork.AcademicProgramRepository.AddAsync(academicProgram);
+        return ret;
+    }
 }
