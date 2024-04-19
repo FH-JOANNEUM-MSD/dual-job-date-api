@@ -12,6 +12,7 @@ public class CompanyResource
     public string? Website { get; set; }
     public bool IsActive { get; set; }
     public AcademicProgramResource AcademicProgram{ get; set; }
+    public CompanyUserResource User { get; set; }
     public InstitutionResource Institution { get; set; }
     public CompanyDetailsResource CompanyDetails { get; set; }
     public List<ActivityResource> Activities { get; set; }
