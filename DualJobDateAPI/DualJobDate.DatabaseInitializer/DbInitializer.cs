@@ -88,7 +88,7 @@ public static class DbInitializer
                 KeyName = "ADMIN",
                 Name = "Administrator",
                 Year = 0,
-                AcademicDegreeEnum = AcademicDegreeEnum.Bachelor,
+                AcademicDegreeEnum = AcademicDegreeEnum.Default,
                 Institution = adminInstitution,
                 InstitutionId = adminInstitution.Id
             });

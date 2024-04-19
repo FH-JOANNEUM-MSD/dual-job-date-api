@@ -1,11 +1,18 @@
+using System.Security.Claims;
+using System.Text;
 using AutoMapper;
 using DualJobDate.Api.Extensions;
 using DualJobDate.Api.Mapping;
 using DualJobDate.BusinessLogic;
+using DualJobDate.BusinessLogic.Helper;
 using DualJobDate.BusinessObjects.Entities;
 using DualJobDate.DataAccess;
 using DualJobDate.DatabaseInitializer;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Filters;
 
@@ -25,7 +32,7 @@ internal class Program
     private static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
         RepositoryRegistration.RegisterRepository(services);
-        ServiceRegistration.RegisterServices(services);
+        ServiceRegistration.RegisterServices(services, configuration);
         ConfigureCores(services);
         ConfigureDatabase(services, configuration);
         ConfigureIdentity(services);
@@ -44,20 +51,52 @@ internal class Program
             var connectionString =
                 configuration.GetConnectionString("AppReleaseConnection");
 #endif
-        services.AddDbContext<AppDbContext>(options => { options.UseMySQL(connectionString); });
+        services.AddDbContext<AppDbContext>(options =>
+        {
+            options.UseMySQL(connectionString); 
+        });
     }
 
     private static void ConfigureIdentity(IServiceCollection services)
     {
-        services.AddIdentityApiEndpoints<User>(options => options.SignIn.RequireConfirmedAccount = false)
-            .AddRoles<Role>()
-            .AddEntityFrameworkStores<AppDbContext>();
+        services.AddIdentity<User, Role>()
+            .AddEntityFrameworkStores<AppDbContext>()
+            .AddDefaultTokenProviders();
     }
 
-    private static void ConfigureJwtAuthentication(IServiceCollection services, IConfiguration configuration)
+    public static void ConfigureJwtAuthentication(IServiceCollection services, IConfiguration configuration)
     {
-        services
-            .AddAuthentication();
+#if DEBUG
+        string Jwt = "JwtDebug";
+#else
+        string Jwt = "JwtRelease";
+#endif
+        services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                var secretKey = configuration[$"{Jwt}:JwtSecret"];
+                if (string.IsNullOrEmpty(secretKey))
+                {
+                    throw new InvalidOperationException("JwtSecret is not defined");
+                }
+
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidIssuer = configuration[$"{Jwt}:Audience"],
+                    ValidAudience = configuration[$"{Jwt}:Issuer"],
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.Zero,
+                    NameClaimType = ClaimTypes.NameIdentifier
+                };
+            });
     }
 
     private static void ConfigureAuthorization(IServiceCollection services)

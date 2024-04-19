@@ -11,5 +11,5 @@ public class UserResource
     public UserTypeEnum UserType { get; set; }
     public bool IsNew { get; set; }
     public string Email { get; set; }
-    public CompanyResource Company { get; set; }
+    public UserCompanyResource Company { get; set; }
 }

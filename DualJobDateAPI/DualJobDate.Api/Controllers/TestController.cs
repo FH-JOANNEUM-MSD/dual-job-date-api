@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace DualJobDate.API.Controllers;
 
 [ApiController]
-[Authorize("AdminOrInstitution")]
+[Authorize]
 public class DataController(ITestService myService, UserManager<User> userManager) : ControllerBase
 {
     [HttpGet("/test")]
