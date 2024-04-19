@@ -165,17 +165,17 @@ namespace DualJobDate.Testing;
         // Tests for Update Company Activity
         
         [Fact]
-public async Task UpdateCompanyActivity_UnauthorizedUser_ReturnsUnauthorizedResult()
-{
-    // Arrange
-    _userManagerMock.Setup(manager => manager.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync((User)null);
+        public async Task UpdateCompanyActivity_UnauthorizedUser_ReturnsUnauthorizedResult()
+        {
+            // Arrange
+            _userManagerMock.Setup(manager => manager.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync((User)null);
 
-    // Act
-    var result = await _controller.UpdateCompanyActivity(id: 1, isActive: true);
+            // Act
+            var result = await _controller.UpdateCompanyActivity(id: 1, isActive: true);
 
-    // Assert
-    Assert.IsType<UnauthorizedResult>(result);
-}
+            // Assert
+            Assert.IsType<UnauthorizedResult>(result);
+        }
 
         [Fact]
         public async Task UpdateCompanyActivity_CompanyNotFound_ReturnsBadRequestResult() 
@@ -203,32 +203,32 @@ public async Task UpdateCompanyActivity_UnauthorizedUser_ReturnsUnauthorizedResu
 
 
 
-[Fact]
-public async Task UpdateCompanyActivity_ValidRequest_ReturnsOkResult()
-{
-    // Arrange
-    var user = new User { /* Benutzerinformationen setzen */ };
-    _userManagerMock.Setup(manager => manager.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+        [Fact]
+        public async Task UpdateCompanyActivity_ValidRequest_ReturnsOkResult()
+        {
+            // Arrange
+            var user = new User { /* Benutzerinformationen setzen */ };
+            _userManagerMock.Setup(manager => manager.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
 
-    var company = new Company { Id = 1 };
-    _companyServiceMock.Setup(service => service.GetCompanyByUser(user)).ReturnsAsync(company);
-    _companyServiceMock.Setup(service => service.GetCompanyByIdAsync(1)).ReturnsAsync(company);
+            var company = new Company { Id = 1 };
+            _companyServiceMock.Setup(service => service.GetCompanyByUser(user)).ReturnsAsync(company);
+            _companyServiceMock.Setup(service => service.GetCompanyByIdAsync(1)).ReturnsAsync(company);
 
-    // Act
-    var result = await _controller.UpdateCompanyActivity(id: 1, isActive: true);
+            // Act
+            var result = await _controller.UpdateCompanyActivity(id: 1, isActive: true);
 
-    // Assert
-    Assert.IsType<OkResult>(result);
-}
+            // Assert
+            Assert.IsType<OkResult>(result);
+        }
 
-// Tests for AddOrUpdateCompanyDetails
+        // Tests for AddOrUpdateCompanyDetails
 
         [Fact]
         public async Task AddOrUpdateCompanyDetails_ValidDetails_ReturnsOkResult()
         {
             // Arrange
             var user = new User { /* Benutzerinformationen setzen */ };
-            var resource = new CompanyDetailsResource { ShortDescription = "Kurze Beschreibung des Unternehmens"/* weitere Unternehmensdetails setzen */ };
+            var resource = new CompanyDetailsResource { ShortDescription = "Kurze Beschreibung des Unternehmens"/* weitere Unternehmensdetails */ };
             var company = new Company {Name = "Magna", Id = 1 };
             user.Company = company;
     
@@ -258,6 +258,110 @@ public async Task UpdateCompanyActivity_ValidRequest_ReturnsOkResult()
             _companyServiceMock.Verify(service => service.UpdateCompanyDetails(It.IsAny<CompanyDetails>(), It.IsAny<Company>()), Times.Once);
         }
 
+        [Fact]
+        public async Task AddOrUpdateCompanyDetails_UpdateFailed_ReturnsNotFoundResult()
+        {
+            // Arrange
+            var user = new User { /* Benutzerinformationen setzen */ };
+            var resource = new CompanyDetailsResource { ShortDescription = "Kurze Beschreibung des Unternehmens" /* Weitere Unternehmensdetails setzen */ };
+            var company = new Company { Name = "Magna", Id = 1 };
+            user.Company = company;
+
+            _userManagerMock.Setup(manager => manager.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+            _companyServiceMock.Setup(service => service.GetCompanyByUser(user)).ReturnsAsync(company);
+            _companyServiceMock.Setup(service => service.UpdateCompanyDetails(It.IsAny<CompanyDetails>(), It.IsAny<Company>()))
+                .ThrowsAsync(new Exception("Update failed"));
+            _mapperMock.Setup(mapper => mapper.Map<CompanyDetailsResource, CompanyDetails>(It.IsAny<CompanyDetailsResource>()))
+                .Returns((CompanyDetailsResource resource) =>
+                {
+                    return new CompanyDetails
+                    {
+                        ShortDescription = resource.ShortDescription,
+                        TeamPictureBase64 = resource.TeamPictureBase64,
+                        JobDescription = resource.JobDescription,
+                        ContactPersonInCompany = resource.ContactPersonInCompany,
+                    };
+                });
+
+            // Act
+            var result = await _controller.AddOrUpdateCompanyDetails(resource);
+
+            // Assert
+            Assert.IsType<NotFoundObjectResult>(result);
+        }
+        
+        //GetCompany Activities
+        
+        [Fact]
+        public async Task GetCompanyActivities_ValidId_ReturnsOkResult()
+        {
+            // Arrange
+            var userId = "user1";
+            var companyId = 1;
+            var user = new User { Id = userId, /* Weitere Benutzerinformationen */ };
+            var company = new Company { Id = companyId, /* Weitere Unternehmensdetails */ };
+            
+            var activities = new List<Activity>
+            {
+                new Activity { Id = 1, Name = "Activity 1", /* Weitere Eigenschaften */ },
+                new Activity { Id = 2, Name = "Activity 2", /* Weitere Eigenschaften */ },
+            };
+            
+            // converts the Activity List into ActivityResource-Objects
+            var activityResources = activities.Select(activity => new ActivityResource
+            {
+                Id = activity.Id,
+                Name = activity.Name,
+                
+            }).ToList();
+            
+            _userManagerMock.Setup(manager => manager.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+            _companyServiceMock.Setup(service => service.GetCompanyByIdAsync(companyId)).ReturnsAsync(company);
+            _companyServiceMock.Setup(service => service.GetCompanyActivitiesAsync(company)).ReturnsAsync(activityResources);
+
+            // Act
+            var result = await _controller.GetCompanyActivities(companyId);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result.Result);
+            var returnedActivities = Assert.IsAssignableFrom<IEnumerable<ActivityResource>>(okResult.Value);
+            Assert.Equal(activityResources.Count, returnedActivities.Count());
+        }
+    
+        [Fact]
+        public async Task GetCompanyActivities_InvalidId_ReturnsBadRequestResult()
+        {
+            // Arrange
+            var invalidCompanyId = -1; // ungültige Unternehmens-ID
+            var user = new User { /* Benutzerinformationen */ };
+            var company = new Company { Id = invalidCompanyId, /* Weitere Unternehmensdetails */ };
+
+            var activities = new List<Activity>
+            {
+                new Activity { Id = 1, Name = "Activity 1", /* Weitere Eigenschaften */ },
+                new Activity { Id = 2, Name = "Activity 2", /* Weitere Eigenschaften */ },
+            };
+
+            // converts the Activity List into ActivityResource-Objects
+            var activityResources = activities.Select(activity => new ActivityResource
+            {
+                Id = activity.Id,
+                Name = activity.Name,
+            }).ToList();
+
+            _userManagerMock.Setup(manager => manager.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+            _companyServiceMock.Setup(service => service.GetCompanyByIdAsync(invalidCompanyId)).ReturnsAsync((Company)null);
+            _companyServiceMock.Setup(service => service.GetCompanyActivitiesAsync(company)).ReturnsAsync(activityResources);
+
+            // Act
+            var result = await _controller.GetCompanyActivities(invalidCompanyId);
+
+            // Assert
+            var notFoundResult = Assert.IsType<NotFoundObjectResult>(result.Result);
+            Assert.Equal("Company not found", notFoundResult.Value);
+        }
+
+        
 
 
 
