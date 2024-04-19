@@ -15,9 +15,9 @@ public static class ServiceRegistration
     public static void RegisterServices(IServiceCollection services, IConfiguration configuration)
     {
 #if DEBUG
-        string Jwt = "JwtDebug";
+        const string jwt = "JwtDebug";
 #else
-        string Jwt = "JwtRelease";
+        const string jwt = "JwtRelease";
 #endif
         services.AddTransient<ITestService, TestService>();
         services.AddTransient<ICompanyService, CompanyService>();
@@ -25,10 +25,12 @@ public static class ServiceRegistration
         _ = services.AddTransient<IJwtAuthManager, JwtAuthManager>(x =>
         {
             var userManager = x.GetRequiredService<UserManager<User>>();
-            var secret = Encoding.ASCII.GetBytes(configuration[$"{Jwt}:JwtSecret"]) ?? throw new NotImplementedException("JwtSecret is not defined");
-            var issuer = configuration[$"{Jwt}:Audience"] ?? throw new NotImplementedException("Audience is not defined");
-            var  audience = configuration[$"{Jwt}:Issuer"] ?? throw new NotImplementedException("Issuer is not defined");
-            return new JwtAuthManager(userManager, secret, issuer, audience);
+            var secret = Encoding.ASCII.GetBytes(configuration[$"{jwt}:JwtSecret"]) ?? throw new NotImplementedException("JwtSecret is not defined");
+            var issuer = configuration[$"{jwt}:Audience"] ?? throw new NotImplementedException("Audience is not defined");
+            var  audience = configuration[$"{jwt}:Issuer"] ?? throw new NotImplementedException("Issuer is not defined");
+            var expireDate1 = short.Parse(configuration[$"{jwt}:AccessTokenExpiration"] ?? throw new NotImplementedException("AccessTokenExpiration is not defined"));
+            var expireDate2 = short.Parse(configuration[$"{jwt}:RefreshTokenExpiration"] ?? throw new NotImplementedException("RefreshTokenExpiration is not defined"));
+            return new JwtAuthManager(userManager, secret, issuer, audience, expireDate1, expireDate2);
         });
         services.AddTransient<ICompanyService, CompanyService>();
         services.AddTransient<IUtilService, UtilService>();

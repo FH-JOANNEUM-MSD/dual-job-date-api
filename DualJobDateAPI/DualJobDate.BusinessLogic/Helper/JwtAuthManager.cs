@@ -8,23 +8,22 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace DualJobDate.BusinessLogic.Helper
 {
-    public class JwtAuthManager(UserManager<User> userManager,byte[] secret,  string issuer, string audience) : IJwtAuthManager
+    public class JwtAuthManager(UserManager<User> userManager,byte[] secret,  string issuer, string audience, int expireDate1, int expireDate2) : IJwtAuthManager
     {
-        
-
         public async Task<JwtAuthResultViewModel> GenerateTokens(User user, DateTime now)
         {
             var accessToken = await CreateAccessToken(user, now);
             var refreshToken = CreateRefreshToken(user, now);
 
-            return new JwtAuthResultViewModel
+            var jwtResult = new JwtAuthResultViewModel
             {
                 TokenType = "Bearer",
                 AccessToken = new JwtSecurityTokenHandler().WriteToken(accessToken),
-                ExpiresIn = 3600,
+                ExpiresIn = expireDate1,
                 RefreshToken = new JwtSecurityTokenHandler().WriteToken(refreshToken),
                 IsNew = user.IsNew
             };
+            return jwtResult;
         }
 
         private async Task<JwtSecurityToken> CreateAccessToken(User user, DateTime now)
@@ -41,7 +40,7 @@ namespace DualJobDate.BusinessLogic.Helper
                 issuer: issuer,
                 audience: audience,
                 claims: userClaims,
-                expires: now.AddSeconds(3600),
+                expires: now.AddSeconds(expireDate1),
                 signingCredentials: new SigningCredentials(new SymmetricSecurityKey(secret),
                     SecurityAlgorithms.HmacSha256)
             );
@@ -86,13 +85,10 @@ namespace DualJobDate.BusinessLogic.Helper
             }
             catch (SecurityTokenExpiredException)
             {
-                if (!checkExpired)
-                {
-                    tokenValidationParameters.ValidateLifetime = false;
-                    var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out SecurityToken validatedToken);
-                    return principal;
-                }
-                throw;
+                if (checkExpired) throw;
+                tokenValidationParameters.ValidateLifetime = false;
+                var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out SecurityToken validatedToken);
+                return principal;
             }
             catch (Exception ex)
             {

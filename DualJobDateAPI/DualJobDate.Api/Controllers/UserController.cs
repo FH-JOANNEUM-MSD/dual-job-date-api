@@ -23,7 +23,8 @@ public class UserController(
     SignInManager<User> signInManager,
     IServiceProvider serviceProvider,
     IMapper mapper,
-    RoleManager<Role> roleManager, IJwtAuthManager jwtAuthManager)
+    RoleManager<Role> roleManager, 
+    IJwtAuthManager jwtAuthManager)
     : ControllerBase
 {
     private const string LowerCase = "abcdefghijklmnopqrstuvwxyz";
@@ -99,24 +100,14 @@ public class UserController(
             return null;
         }
         var jwtResult = await jwtAuthManager.GenerateTokens(user, DateTime.Now);
-        await userManager.SetAuthenticationTokenAsync(
-            user,
-            "localhost",
-            "localhost",
-            jwtResult.RefreshToken);
         return jwtResult;
     }
-
 
     [HttpPost]
     [Route("Refresh")]
     public async Task<IActionResult> Refresh([FromBody] RefreshRequest model)
     {
         var principal = jwtAuthManager.GetPrincipalFromToken(model.RefreshToken, true);
-        if (principal == null)
-        {
-            return Unauthorized("Invalid token");
-        }
 
         var userId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (string.IsNullOrEmpty(userId))

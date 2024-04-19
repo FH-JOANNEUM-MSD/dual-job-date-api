@@ -5,6 +5,7 @@ namespace DualJobDate.BusinessObjects.Resources;
 
 public class CompanyResource
 {
+    //CompanyID
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public string? Industry { get; set; }
