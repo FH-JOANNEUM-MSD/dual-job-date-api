@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using DualJobDate.BusinessObjects.Entities;
 using DualJobDate.BusinessObjects.Entities.Interface.Service;
+using DualJobDate.BusinessObjects.Entities.Models;
 using DualJobDate.BusinessObjects.Resources;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -32,21 +33,42 @@ public class UtilController(IUtilService utilService, IMapper mapper) : Controll
     
     [Authorize("AdminOrInstitution")]
     [HttpPost("AcademicProgram")]
-    public async Task<ActionResult<AcademicProgramResource>> PostAcademicProgram([FromBody] AcademicProgramResource academicProgramResource)
+    public async Task<ActionResult<AcademicProgramResource>> PostAcademicProgram([FromQuery] int id, [FromBody] AcademicProgramModel model)
     {
-        var academicProgram = mapper.Map<AcademicProgramResource, AcademicProgram>(academicProgramResource);
-        await utilService.PostAcademicProgramAsync(academicProgram);
-        academicProgramResource = mapper.Map<AcademicProgram, AcademicProgramResource>(academicProgram);
-        return Ok(academicProgramResource);
+        try
+        {
+            var academicProgram = await utilService.PostAcademicProgramAsync(id, model);
+            var academicProgramResource = mapper.Map<AcademicProgram, AcademicProgramResource>(academicProgram);
+            return Ok(academicProgramResource);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, "An unexpected error occurred");
+        }
     }
+
     
     [Authorize("Admin")]
     [HttpPost("Institution")]
-    public async Task<ActionResult<InstitutionResource>> PostInstitution([FromBody] InstitutionResource institutionResource)
+    public async Task<ActionResult<InstitutionResource>> PostInstitution([FromBody] InstitutionModel model)
     {
-        var institution = mapper.Map<InstitutionResource, Institution>(institutionResource);
-        await utilService.PostInstitutionAsync(institution);
-        institutionResource = mapper.Map<Institution, InstitutionResource>(institution);
-        return Ok(institutionResource);
+        try
+        {
+            var institution = await utilService.PostInstitutionAsync(model);
+            var institutionResource = mapper.Map<Institution, InstitutionResource>(institution);
+            return Ok(institutionResource);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, "An unexpected error occurred");
+        }
     }
 }

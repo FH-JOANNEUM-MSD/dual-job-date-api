@@ -116,9 +116,8 @@ public class CompanyService(IUnitOfWork unitOfWork, UserManager<User> userManage
                 await unitOfWork.CompanyActivityRepository.UpdateAsync(existingActivity);
             }
         }
-
-        await unitOfWork.SaveChanges();
         unitOfWork.Commit();
+        await unitOfWork.SaveChanges();
     }
 
     public async Task<Company?> AddCompany(int programId, string companyName, User companyUser)
