@@ -18,6 +18,7 @@ public class CompanyService(IUnitOfWork unitOfWork, UserManager<User> userManage
             Include(x => x.User).
             Include(x => x.CompanyDetails).
             Include(x => x.Activities).
+            Include(x => x.Addresses).
             Where(x => x.Id == id).SingleOrDefaultAsync();
         return result;
     }

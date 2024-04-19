@@ -16,4 +16,5 @@ public class CompanyResource
     public InstitutionResource Institution { get; set; }
     public CompanyDetailsResource CompanyDetails { get; set; }
     public List<ActivityResource> Activities { get; set; }
+    public List<AdressResource> Addresses { get; set; }
 }

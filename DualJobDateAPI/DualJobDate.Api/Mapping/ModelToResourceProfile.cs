@@ -18,5 +18,6 @@ public class ModelToResourceProfile : Profile
         CreateMap<User, CompanyUserResource>();
         CreateMap<Company, UserCompanyResource>();
         CreateMap<Activity, ActivityResource>();
+        CreateMap<Address, AdressResource>();
     }
 }
