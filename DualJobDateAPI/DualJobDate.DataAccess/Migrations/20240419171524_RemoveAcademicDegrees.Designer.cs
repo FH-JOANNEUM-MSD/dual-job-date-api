@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DualJobDate.DataAccess.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20240416074322_InitialMigration")]
-    partial class InitialMigration
+    [Migration("20240419171524_RemoveAcademicDegrees")]
+    partial class RemoveAcademicDegrees
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
