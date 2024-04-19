@@ -39,4 +39,14 @@ public class UtilController(IUtilService utilService, IMapper mapper) : Controll
         academicProgramResource = mapper.Map<AcademicProgram, AcademicProgramResource>(academicProgram);
         return Ok(academicProgramResource);
     }
+    
+    [Authorize("Admin")]
+    [HttpPost("Institution")]
+    public async Task<ActionResult<InstitutionResource>> PostInstitution([FromBody] InstitutionResource institutionResource)
+    {
+        var institution = mapper.Map<InstitutionResource, Institution>(institutionResource);
+        await utilService.PostInstitutionAsync(institution);
+        institutionResource = mapper.Map<Institution, InstitutionResource>(institution);
+        return Ok(institutionResource);
+    }
 }
