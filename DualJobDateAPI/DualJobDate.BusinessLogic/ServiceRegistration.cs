@@ -14,6 +14,7 @@ public static class ServiceRegistration
         services.AddTransient<ITestService, TestService>();
         services.AddTransient<ICompanyService, CompanyService>();
         services.AddTransient<IEmailHelper, EmailHelper>();
+        services.AddTransient<JwtAuthManager>();
         _ = services.AddTransient<IJwtHelper, JwtHelper>(x =>
         {
             var configuration = x.GetRequiredService<IConfiguration>();

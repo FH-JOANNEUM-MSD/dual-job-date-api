@@ -8,7 +8,7 @@ public class CompanyResource
     public string? LogoBase64 { get; set; }
     public string? Website { get; set; }
     public bool IsActive { get; set; }
-    public int AcademicProgramId { get; set; }
+    public string AcademicProgramResource { get; set; }
     public int InstitutionId { get; set; }
     public string UserId { get; set; }
 }
