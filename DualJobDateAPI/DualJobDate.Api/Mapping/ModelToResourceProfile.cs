@@ -17,5 +17,6 @@ public class ModelToResourceProfile : Profile
         CreateMap<AcademicProgram, AcademicProgramResource>();
         CreateMap<User, CompanyUserResource>();
         CreateMap<Company, UserCompanyResource>();
+        CreateMap<Activity, ActivityResource>();
     }
 }
