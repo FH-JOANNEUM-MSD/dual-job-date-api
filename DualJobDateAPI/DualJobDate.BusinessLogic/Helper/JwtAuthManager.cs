@@ -57,7 +57,7 @@ namespace DualJobDate.BusinessLogic.Helper
                 issuer: issuer,
                 audience: audience,
                 claims: claims,
-                expires: now.AddDays(7),
+                expires: now.AddDays(expireDate2),
                 signingCredentials: new SigningCredentials(new SymmetricSecurityKey(secret),
                     SecurityAlgorithms.HmacSha256)
             );
