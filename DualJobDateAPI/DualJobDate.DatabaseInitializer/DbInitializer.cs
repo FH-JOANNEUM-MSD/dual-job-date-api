@@ -49,7 +49,6 @@ public static class DbInitializer
         uow.BeginTransaction();
         await SeedRoles(services);
         await SeedInstitution(uow);
-        await SeedDegreePrograms(uow);
         await SeedAcademicProgram(uow);
         await SeedAdmin(services, uow);
         await SeedInstitutionUser(services, uow);
@@ -78,33 +77,6 @@ public static class DbInitializer
                 Name = "Software Design und Security",
                 Website = "https://www.fh-joanneum.at/institut/software-design-und-security/"
             });
-    }
-
-    private static async Task SeedDegreePrograms(IUnitOfWork unitOfWork)
-    {
-        if (unitOfWork.AcademicDegreeRepository.GetAllAsync().Result.IsNullOrEmpty())
-        {
-            await unitOfWork.AcademicDegreeRepository.AddAsync(new AcademicDegree
-            {
-                Name = "Bachelor",
-                AcademicDegreeEnum = AcademicDegreeEnum.Bachelor
-            });
-            await unitOfWork.AcademicDegreeRepository.AddAsync(new AcademicDegree
-            {
-                Name = "Master",
-                AcademicDegreeEnum = AcademicDegreeEnum.Master
-            });
-            await unitOfWork.AcademicDegreeRepository.AddAsync(new AcademicDegree
-            {
-                Name = "PhD",
-                AcademicDegreeEnum = AcademicDegreeEnum.PhD
-            });
-            await unitOfWork.AcademicDegreeRepository.AddAsync(new AcademicDegree
-            {
-                Name = "",
-                AcademicDegreeEnum = AcademicDegreeEnum.Default
-            });
-        }
     }
 
     private static async Task SeedAcademicProgram(IUnitOfWork unitOfWork)

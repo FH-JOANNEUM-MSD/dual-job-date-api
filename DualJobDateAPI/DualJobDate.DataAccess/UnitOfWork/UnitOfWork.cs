@@ -9,7 +9,6 @@ public class UnitOfWork(
     AppDbContext dbContext,
     IInstitutionRepository institutionRepository,
     IAcademicProgramRepository academicProgramRepository,
-    IAcademicDegreeRepository academicDegreeRepository,
     IActivityRepository activityRepository,
     ICompanyRepository companyRepository,
     ICompanyDetailsRepository companyDetailsRepository,
@@ -26,10 +25,6 @@ public class UnitOfWork(
     public IAcademicProgramRepository AcademicProgramRepository => academicProgramRepository ??
                                                                    throw new ArgumentNullException(
                                                                        nameof(academicProgramRepository));
-
-    public IAcademicDegreeRepository AcademicDegreeRepository => academicDegreeRepository ??
-                                                                 throw new ArgumentNullException(
-                                                                     nameof(academicDegreeRepository));
 
     public IActivityRepository ActivityRepository =>
         activityRepository ?? throw new ArgumentNullException(nameof(activityRepository));
