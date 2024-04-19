@@ -31,5 +31,6 @@ public static class ServiceRegistration
             return new JwtAuthManager(userManager, secret, issuer, audience);
         });
         services.AddTransient<ICompanyService, CompanyService>();
+        services.AddTransient<IUtilService, UtilService>();
     }
 }
