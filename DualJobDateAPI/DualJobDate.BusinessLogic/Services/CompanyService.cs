@@ -12,7 +12,7 @@ public class CompanyService(IUnitOfWork unitOfWork, UserManager<User> userManage
 {
     public Task<Company?> GetCompanyByIdAsync(int id)
     {
-        var result = unitOfWork.CompanyRepository.GetAllAsync().Result.Include(x => x.AcademicProgram).ThenInclude(x => x.Institution).Where(x => x.Id == id).SingleOrDefaultAsync();
+        var result = unitOfWork.CompanyRepository.GetAllAsync().Result.Include(x => x.AcademicProgram).Include(x => x.Institution).Include(x => x.User).Include(x => x.CompanyDetails).Where(x => x.Id == id).SingleOrDefaultAsync();
         return result;
     }
 

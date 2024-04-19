@@ -1,3 +1,6 @@
+using DualJobDate.BusinessObjects.Entities;
+using DualJobDate.BusinessObjects.Entities.Models;
+
 namespace DualJobDate.BusinessObjects.Resources;
 
 public class CompanyResource
@@ -8,7 +11,7 @@ public class CompanyResource
     public string? LogoBase64 { get; set; }
     public string? Website { get; set; }
     public bool IsActive { get; set; }
-    public string AcademicProgramResource { get; set; }
-    public int InstitutionId { get; set; }
-    public string UserId { get; set; }
+    public AcademicProgramResource AcademicProgram{ get; set; }
+    public InstitutionResource Institution { get; set; }
+    public CompanyDetailsResource CompanyDetails { get; set; }
 }
