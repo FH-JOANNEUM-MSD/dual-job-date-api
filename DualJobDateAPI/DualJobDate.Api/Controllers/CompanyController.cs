@@ -95,7 +95,7 @@ public class CompanyController(ICompanyService companyService, IMapper mapper, U
         }
     }
 
-    [Authorize(Policy = "Company")]
+    [Authorize(Policy = "WebApp")]
     [HttpPut("IsActive")]
     public async Task<IActionResult> UpdateCompanyActivity([FromQuery] int id, [FromQuery] bool isActive)
     {
