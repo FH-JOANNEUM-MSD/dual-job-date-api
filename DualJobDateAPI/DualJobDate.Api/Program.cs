@@ -32,7 +32,7 @@ internal class Program
     private static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
         RepositoryRegistration.RegisterRepository(services);
-        ServiceRegistration.RegisterServices(services);
+        ServiceRegistration.RegisterServices(services, configuration);
         ConfigureCores(services);
         ConfigureDatabase(services, configuration);
         ConfigureIdentity(services);
@@ -66,6 +66,11 @@ internal class Program
 
     public static void ConfigureJwtAuthentication(IServiceCollection services, IConfiguration configuration)
     {
+#if DEBUG
+        string Jwt = "JwtDebug";
+#else
+        string Jwt = "JwtRelease";
+#endif
         services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -73,10 +78,10 @@ internal class Program
             })
             .AddJwtBearer(options =>
             {
-                var secretKey = configuration["JwtSecret"];
+                var secretKey = configuration[$"{Jwt}:JwtSecret"];
                 if (string.IsNullOrEmpty(secretKey))
                 {
-                    throw new InvalidOperationException("Der JWT-Schlüssel darf nicht null oder leer sein.");
+                    throw new InvalidOperationException("JwtSecret is not defined");
                 }
 
                 options.TokenValidationParameters = new TokenValidationParameters
@@ -85,8 +90,8 @@ internal class Program
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
                     ValidateIssuer = true,
                     ValidateAudience = true,
-                    ValidIssuer = "localhost",
-                    ValidAudience = "localhost",
+                    ValidIssuer = configuration[$"{Jwt}:Audience"],
+                    ValidAudience = configuration[$"{Jwt}:Issuer"],
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.Zero,
                     NameClaimType = ClaimTypes.NameIdentifier

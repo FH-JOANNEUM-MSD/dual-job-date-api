@@ -2,19 +2,16 @@ using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using AutoMapper;
-using DualJobDate.BusinessLogic.Helper;
 using DualJobDate.BusinessObjects.Entities;
 using DualJobDate.BusinessObjects.Entities.Enum;
+using DualJobDate.BusinessObjects.Entities.Interface.Helper;
 using DualJobDate.BusinessObjects.Entities.Models;
 using DualJobDate.BusinessObjects.Resources;
-using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 namespace DualJobDate.Api.Controllers;
@@ -26,7 +23,7 @@ public class UserController(
     SignInManager<User> signInManager,
     IServiceProvider serviceProvider,
     IMapper mapper,
-    RoleManager<Role> roleManager, JwtAuthManager jwtAuthManager)
+    RoleManager<Role> roleManager, IJwtAuthManager jwtAuthManager)
     : ControllerBase
 {
     private const string LowerCase = "abcdefghijklmnopqrstuvwxyz";
@@ -115,7 +112,7 @@ public class UserController(
     [Route("Refresh")]
     public async Task<IActionResult> Refresh([FromBody] RefreshRequest model)
     {
-        var principal = jwtAuthManager.GetPrincipalFromToken(model.RefreshToken, checkExpired: true);
+        var principal = jwtAuthManager.GetPrincipalFromToken(model.RefreshToken, true);
         if (principal == null)
         {
             return Unauthorized("Invalid token");
