@@ -21,7 +21,7 @@ namespace DualJobDate.BusinessLogic.Helper
             {
                 TokenType = "Bearer",
                 AccessToken = new JwtSecurityTokenHandler().WriteToken(accessToken),
-                ExpiresIn = now.AddMinutes(60),
+                ExpiresIn = 3600,
                 RefreshToken = new JwtSecurityTokenHandler().WriteToken(refreshToken),
                 IsNew = user.IsNew
             };
@@ -41,7 +41,7 @@ namespace DualJobDate.BusinessLogic.Helper
                 issuer: issuer,
                 audience: audience,
                 claims: userClaims,
-                expires: now.AddMinutes(60),
+                expires: now.AddSeconds(3600),
                 signingCredentials: new SigningCredentials(new SymmetricSecurityKey(secret),
                     SecurityAlgorithms.HmacSha256)
             );
