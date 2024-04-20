@@ -6,7 +6,7 @@ namespace DualJobDate.BusinessObjects.Entities.Interface.Service;
 public interface ICompanyService
 {
     Task<Company?> GetCompanyByIdAsync(int id);
-    Task<List<Company>> GetActiveCompaniesAsync(int academicProgramId);
+    Task<List<Company>> GetActiveCompaniesAsync(User user);
     Task<List<Company>> GetCompaniesByInstitutionAsync(int institutionId);
     Task<List<Company>> GetCompaniesByAcademicProgramAsync(int academicProgramId);
     Task UpdateCompany(UpdateCompanyModel companymodel, Company company);

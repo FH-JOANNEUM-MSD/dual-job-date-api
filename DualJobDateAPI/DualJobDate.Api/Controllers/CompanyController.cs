@@ -57,7 +57,7 @@ public class CompanyController(ICompanyService companyService, IMapper mapper, U
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Unauthorized();
 
-        var companies = await companyService.GetActiveCompaniesAsync(user.AcademicProgramId);
+        var companies = await companyService.GetActiveCompaniesAsync(user);
         var companyResources = mapper.Map<IEnumerable<Company>, IEnumerable<CompanyDto>>(companies);
         return Ok(companyResources);
     }

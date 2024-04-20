@@ -18,4 +18,5 @@ public class CompanyDto
     public CompanyDetailsDto CompanyDetails { get; set; }
     public List<ActivityDto> Activities { get; set; }
     public List<AddressDto> Addresses { get; set; }
+    public List<StudentCompanyDto> StudentCompanies { get; set; }
 }

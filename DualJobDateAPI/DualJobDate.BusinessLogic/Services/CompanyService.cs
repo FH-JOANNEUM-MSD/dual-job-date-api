@@ -23,12 +23,19 @@ public class CompanyService(IUnitOfWork unitOfWork, UserManager<User> userManage
         return result;
     }
 
-    public Task<List<Company>> GetActiveCompaniesAsync(int academicProgramId)
+    public async Task<List<Company>> GetActiveCompaniesAsync(User user)
     {
-        var result = unitOfWork.CompanyRepository.GetAllAsync();
-        return result.Result.Where(c => c.AcademicProgramId == academicProgramId && c.IsActive == true)
+        // Fetch all active companies related to the specified academicProgramId
+        // and include the StudentCompany data specifically for the given user.
+        var result = await unitOfWork.CompanyRepository
+            .GetAllAsync().Result
+            .Include(c => c.StudentCompanies.Where(sc => sc.StudentId == user.Id)) // Include only StudentCompany for the given user
+            .Where(c => c.AcademicProgramId == user.AcademicProgramId && c.IsActive)
             .ToListAsync();
+        return result;
     }
+
+
 
     public Task<List<Company>> GetCompaniesByInstitutionAsync(int institutionId)
     {
