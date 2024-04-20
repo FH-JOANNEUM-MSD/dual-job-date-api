@@ -7,6 +7,7 @@ using DualJobDate.BusinessObjects.Entities;
 using DualJobDate.BusinessObjects.Entities.Interface.Service;
 using DualJobDate.BusinessObjects.Entities.Models;
 using DualJobDate.BusinessObjects.Resources;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Testing;
@@ -98,10 +99,22 @@ namespace DualJobDate.Testing;
         {
             // Arrange
             var user = new User { /* Benutzerinformationen setzen */ };
-            _userManagerMock.Setup(manager => manager.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user); 
+            _userManagerMock.Setup(manager => manager.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+        var httpContext = new DefaultHttpContext
+        {
+            User = new ClaimsPrincipal(new ClaimsIdentity(
+            [
+                    new Claim(ClaimTypes.NameIdentifier, user.Id),
+            ], "mock"))
+        };
+        _controller.ControllerContext = new ControllerContext()
+        {
+            HttpContext = httpContext,
+        };
 
-            // Act
-            var result = await _controller.GetCompanies(institutionId: null, academicProgramId: null);  //TODO: login first with a User
+
+        // Act
+        var result = await _controller.GetCompanies(institutionId: null, academicProgramId: null);  //TODO: login first with a User
 
             // Assert
             Assert.IsType<BadRequestObjectResult>(result.Result);
