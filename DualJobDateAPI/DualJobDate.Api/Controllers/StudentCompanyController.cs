@@ -77,6 +77,18 @@ public class StudentCompanyController(UserManager<User> userManager, ICompanySer
     [HttpDelete("RemoveLikeOrDislike")]
     public async Task<ActionResult> DeleteStudentCompany([FromQuery] int id)
     {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null)
+        {
+            return Unauthorized();
+        }
+
+        var studentCompany = await studentCompanyService.GetStudentCompanyByIdAsync(id);
+        if (studentCompany != null && studentCompany.StudentId != user.Id)
+        {
+            return BadRequest("A student can't delete the likes and dislikes of another student.");
+        }
+        
         if (await studentCompanyService.DeleteStudentCompanyAsync(id))
         {
             return Ok("Removing like or dislike succeeded.");

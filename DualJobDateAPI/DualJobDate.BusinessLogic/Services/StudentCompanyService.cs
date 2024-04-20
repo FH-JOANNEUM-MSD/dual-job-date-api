@@ -21,6 +21,11 @@ public class StudentCompanyService(IUnitOfWork unitOfWork) : IStudentCompanyServ
         return await result.ToListAsync();
     }
     
+    public async Task<StudentCompany?> GetStudentCompanyByIdAsync(int id)
+    {
+        return await (await unitOfWork.StudentCompanyRepository.GetAllAsync()).FirstOrDefaultAsync(x => x.Id == id);
+    }
+    
     public async Task<StudentCompany?> CreateStudentCompanyAsync(bool like, int companyId, string studentId)
     {
         var studentCompany = (await unitOfWork.StudentCompanyRepository.GetAllAsync()).FirstOrDefault(x => x.StudentId == studentId && x.CompanyId == companyId);
