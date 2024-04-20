@@ -97,7 +97,7 @@ namespace DualJobDate.Testing;
             };
 
             // Act
-            var result = await _controller.GetCompanies(institutionId: 1, academicProgramId: 1); //TODO: login first with a User
+            var result = await _controller.GetCompanies(institutionId: 1, academicProgramId: 1); 
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result.Result);
