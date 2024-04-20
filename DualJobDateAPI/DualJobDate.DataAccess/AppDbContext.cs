@@ -19,7 +19,6 @@ public class AppDbContext : IdentityDbContext<User, Role, string>, IDbContext
 
     public DbSet<Institution> Institutions { get; set; }
     public DbSet<AcademicProgram> AcademicPrograms { get; set; }
-    public DbSet<AcademicDegree> AcademicDegrees { get; set; }
     public DbSet<Activity> Activities { get; set; }
     public DbSet<Address> Addresses { get; set; }
     public DbSet<Company> Companies { get; set; }
@@ -57,11 +56,6 @@ public class AppDbContext : IdentityDbContext<User, Role, string>, IDbContext
             .HasMany(e => e.Activities)
             .WithMany(e => e.Companies)
             .UsingEntity<CompanyActivity>();
-
-        modelBuilder
-            .Entity<AcademicDegree>()
-            .Property(x => x.AcademicDegreeEnum)
-            .HasConversion<int>();
 
         modelBuilder
             .Entity<Role>()

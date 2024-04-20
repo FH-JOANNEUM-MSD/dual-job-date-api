@@ -11,5 +11,5 @@ public class UserDto
     public UserTypeEnum UserType { get; set; }
     public bool IsNew { get; set; }
     public string Email { get; set; }
-    public CompanyDto Company { get; set; }
+    public UserCompanyDto Company { get; set; }
 }

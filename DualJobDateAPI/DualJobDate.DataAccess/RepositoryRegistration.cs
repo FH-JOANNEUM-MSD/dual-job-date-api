@@ -14,7 +14,6 @@ public static class RepositoryRegistration
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IInstitutionRepository, InstitutionRepository>();
         services.AddScoped<IAcademicProgramRepository, AcademicProgramRepository>();
-        services.AddScoped<IAcademicDegreeRepository, AcademicDegreeRepository>();
         services.AddScoped<IActivityRepository, ActivityRepository>();
         services.AddScoped<ICompanyRepository, CompanyRepository>();
         services.AddScoped<ICompanyDetailsRepository, CompanyDetailsRepository>();

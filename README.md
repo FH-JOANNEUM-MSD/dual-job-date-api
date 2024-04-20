@@ -15,11 +15,14 @@ There will be an error after first start since the Database is created only and 
 
 ### Migrating DB (Only if there are changes in EF Model)
 Create a migration file with the following command:
+
 `dotnet ef migrations add <MigrationName> --project DualJobDate.DataAccess --startup-project DualJobDate.Api`
+
 This only needs to be applied if you change the entity framework model. There is already an existing migration.
 
 ### Updating DB
 Create database scheme with the following command:
+
 `dotnet ef database update --project DualJobDate.DataAccess --startup-project DualJobDate.Api`
 
 ### Starting the application again

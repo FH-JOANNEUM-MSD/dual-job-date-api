@@ -12,5 +12,7 @@ public class ResourceToModelProfile : Profile
         CreateMap<UserDto, User>();
         CreateMap<CompanyDetailsDto, CompanyDetails>();
         CreateMap<ActivityDto, CompanyActivity>();
+        CreateMap<InstitutionDto, Institution>();
+        CreateMap<AcademicProgramDto, AcademicProgram>();
     }
 }

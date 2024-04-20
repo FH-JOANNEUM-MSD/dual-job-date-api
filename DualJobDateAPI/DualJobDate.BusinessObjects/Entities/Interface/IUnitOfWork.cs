@@ -6,7 +6,6 @@ public interface IUnitOfWork : IDisposable
 {
     IInstitutionRepository InstitutionRepository { get; }
     IAcademicProgramRepository AcademicProgramRepository { get; }
-    IAcademicDegreeRepository AcademicDegreeRepository { get; }
     IActivityRepository ActivityRepository { get; }
     ICompanyRepository CompanyRepository { get; }
     ICompanyDetailsRepository CompanyDetailsRepository { get; }
