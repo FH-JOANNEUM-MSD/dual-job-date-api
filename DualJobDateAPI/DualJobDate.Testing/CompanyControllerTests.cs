@@ -84,9 +84,20 @@ namespace DualJobDate.Testing;
             _companyServiceMock.Setup(service => service.GetCompaniesByInstitutionAsync(It.IsAny<int>())).ReturnsAsync(companies);
             
             //_userManagerMock.Setup(it => it.User.IsInRole("Admin"))
+            var httpContext = new DefaultHttpContext
+            {
+                User = new ClaimsPrincipal(new ClaimsIdentity(
+                [
+                    new Claim(ClaimTypes.NameIdentifier, user.Id),
+                ], "mock"))
+            };
+            _controller.ControllerContext = new ControllerContext()
+            {
+                HttpContext = httpContext,
+            };
 
             // Act
-            var result = await _controller.GetCompanies(institutionId: 1, academicProgramId: null); //TODO: login first with a User
+            var result = await _controller.GetCompanies(institutionId: 1, academicProgramId: 1); //TODO: login first with a User
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result.Result);
