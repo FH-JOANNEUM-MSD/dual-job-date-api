@@ -2,7 +2,7 @@
 using DualJobDate.BusinessObjects.Entities.Interface;
 using DualJobDate.BusinessObjects.Entities.Interface.Service;
 using DualJobDate.BusinessObjects.Entities.Models;
-using DualJobDate.BusinessObjects.Resources;
+using DualJobDate.BusinessObjects.Dtos;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -90,12 +90,12 @@ public class CompanyService(IUnitOfWork unitOfWork, UserManager<User> userManage
         await unitOfWork.SaveChanges();
     }
 
-    public async Task<IEnumerable<ActivityResource>> GetCompanyActivitiesAsync(Company company)
+    public async Task<IEnumerable<ActivityDto>> GetCompanyActivitiesAsync(Company company)
     {
         return await unitOfWork.CompanyActivityRepository.GetAllAsync().Result
             .Where(ca => ca.CompanyId == company.Id)
             .Include(a => a.Activity)
-            .Select(a => new ActivityResource
+            .Select(a => new ActivityDto
             {
                 Id = a.Id,
                 Name = a.Activity.Name,

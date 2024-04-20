@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using AutoMapper;
-using DualJobDate.BusinessObjects.Resources;
+using DualJobDate.BusinessObjects.Dtos;
 
 namespace DualJobDate.Api.Controllers;
 

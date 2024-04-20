@@ -1,4 +1,4 @@
-﻿namespace DualJobDate.BusinessObjects.Resources;
+﻿namespace DualJobDate.BusinessObjects.Dtos;
 
 public class StudentCompanyDto
 {

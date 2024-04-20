@@ -1,5 +1,5 @@
 ﻿using DualJobDate.BusinessObjects.Entities.Models;
-using DualJobDate.BusinessObjects.Resources;
+using DualJobDate.BusinessObjects.Dtos;
 
 namespace DualJobDate.BusinessObjects.Entities.Interface.Service;
 
@@ -13,7 +13,7 @@ public interface ICompanyService
     Task UpdateCompanyActivity(bool isActive, Company company);
     Task UpdateCompanyDetails(CompanyDetails details, Company company);
     Task<CompanyDetails?> GetCompanyDetailsAsync(Company company);
-    Task<IEnumerable<ActivityResource>> GetCompanyActivitiesAsync(Company company);
+    Task<IEnumerable<ActivityDto>> GetCompanyActivitiesAsync(Company company);
     Task UpdateCompanyActivities(IEnumerable<CompanyActivity> activities, Company company);
     Task<Company?> AddCompany(int programId, string companyName, User companyUser);
     Task<Company?> GetCompanyByUser(User user);
