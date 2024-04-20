@@ -1,18 +1,18 @@
 using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 using System.Security.Cryptography;
 using AutoMapper;
 using DualJobDate.BusinessObjects.Entities;
 using DualJobDate.BusinessObjects.Entities.Enum;
+using DualJobDate.BusinessObjects.Entities.Interface.Helper;
 using DualJobDate.BusinessObjects.Entities.Models;
-using DualJobDate.BusinessObjects.Resources;
+using DualJobDate.BusinessObjects.Dtos;
 using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 namespace DualJobDate.Api.Controllers;
@@ -24,7 +24,8 @@ public class UserController(
     SignInManager<User> signInManager,
     IServiceProvider serviceProvider,
     IMapper mapper,
-    RoleManager<Role> roleManager)
+    RoleManager<Role> roleManager, 
+    IJwtAuthManager jwtAuthManager)
     : ControllerBase
 {
     private const string LowerCase = "abcdefghijklmnopqrstuvwxyz";
@@ -87,43 +88,40 @@ public class UserController(
 
     [HttpPost]
     [Route("Login")]
-    public async Task<Results<Ok<AccessTokenResponse>, EmptyHttpResult, ProblemHttpResult>> Login(
-        [FromBody] LoginModel login, [FromQuery] bool? useCookies, [FromQuery] bool? useSessionCookies)
+    public async Task<ActionResult<JwtAuthResultViewModel>> Login(LoginModel model)
     {
-        var useCookieScheme = useCookies == true || useSessionCookies == true;
-        var isPersistent = useCookies == true && useSessionCookies != true;
-        signInManager.AuthenticationScheme =
-            useCookieScheme ? IdentityConstants.ApplicationScheme : IdentityConstants.BearerScheme;
-
-        var result = await signInManager.PasswordSignInAsync(login.Email, login.Password, isPersistent, true);
-
+        var result = await signInManager.PasswordSignInAsync(model.Email, model.Password, false, false);
         if (!result.Succeeded)
-            return TypedResults.Problem(result.ToString(), statusCode: StatusCodes.Status401Unauthorized);
-
-        // The signInManager already produced the needed response in the form of a cookie or bearer token.
-        return TypedResults.Empty;
+        {
+            return Unauthorized("Invalid Username or Password");
+        }
+        var user = await userManager.FindByEmailAsync(model.Email);
+        var jwtResult = await jwtAuthManager.GenerateTokens(user, DateTime.Now);
+        return Ok(jwtResult);
     }
 
     [HttpPost]
     [Route("Refresh")]
-    public async Task<Results<Ok<AccessTokenResponse>, UnauthorizedHttpResult, SignInHttpResult, ChallengeHttpResult>>
-        RefreshToken
-        ([FromBody] RefreshRequest refreshRequest)
+    public async Task<IActionResult> Refresh([FromBody] RefreshRequest model)
     {
-        var optionsMonitor = serviceProvider.GetRequiredService<IOptionsMonitor<BearerTokenOptions>>();
-        var refreshTokenProtector = optionsMonitor.Get(IdentityConstants.BearerScheme).RefreshTokenProtector;
-        var refreshTicket = refreshTokenProtector.Unprotect(refreshRequest.RefreshToken);
+        var principal = jwtAuthManager.GetPrincipalFromToken(model.RefreshToken, true);
 
-        // Reject the /refresh attempt with a 401 if the token expired or the security stamp validation fails
-        if (refreshTicket?.Properties?.ExpiresUtc is not { } expiresUtc ||
-            DateTime.Now >= expiresUtc ||
-            await signInManager.ValidateSecurityStampAsync(refreshTicket.Principal) is not User user)
-            return TypedResults.Challenge();
+        var userId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId))
+        {
+            return Unauthorized("Invalid token - no user ID");
+        }
 
-        var newPrincipal = await signInManager.CreateUserPrincipalAsync(user);
-        return TypedResults.SignIn(newPrincipal, authenticationScheme: IdentityConstants.BearerScheme);
+        var user = await userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            return NotFound("User not found");
+        }
+
+        var newTokens = await jwtAuthManager.GenerateTokens(user, DateTime.Now);
+        return Ok(newTokens);
     }
-
+    
     [HttpPost]
     [Authorize]
     [Route("ChangePassword")]
@@ -140,14 +138,13 @@ public class UserController(
             var userResult = await userManager.UpdateAsync(user);
             if (userResult.Succeeded) return Ok();
         }
-
         return BadRequest(result.Errors);
     }
 
     [HttpPost]
     [Authorize("AdminOrInstitution")]
     [Route("ResetPassword")]
-    public async Task<ActionResult<CredentialsResource>> ResetPassword([FromQuery] string id)
+    public async Task<ActionResult<CredentialsDto>> ResetPassword([FromQuery] string id)
     {
         var user = await userManager.FindByIdAsync(id);
         if (user is null) return NotFound();
@@ -162,7 +159,7 @@ public class UserController(
             var userResult = await userManager.UpdateAsync(user);
             if (userResult.Succeeded)
             {
-                var credentials = new CredentialsResource
+                var credentials = new CredentialsDto
                 {
                     Email = user.Email,
                     Password = password
@@ -177,7 +174,7 @@ public class UserController(
     [Authorize(Policy = "AdminOrInstitution")]
     [HttpGet]
     [Route("GetAllUsers")]
-    public async Task<ActionResult<IEnumerable<UserResource>>> GetAllUsers(
+    public async Task<ActionResult<IEnumerable<UserDto>>> GetAllUsers(
         [FromQuery] int? institutionId,
         [FromQuery] int? academicProgramId,
         [FromQuery] UserTypeEnum userType)
@@ -201,7 +198,7 @@ public class UserController(
 
         if (usersList.IsNullOrEmpty()) return NotFound("No user found!");
 
-        var userResources = mapper.Map<IEnumerable<User>, IEnumerable<UserResource>>(usersList);
+        var userResources = mapper.Map<IEnumerable<User>, IEnumerable<UserDto>>(usersList);
         return Ok(userResources);
     }
 
@@ -209,11 +206,11 @@ public class UserController(
     [Authorize(Policy = "AdminOrInstitution")]
     [HttpGet]
     [Route("GetUser")]
-    public async Task<ActionResult<IEnumerable<UserResource>>> GetUser([FromQuery] string id)
+    public async Task<ActionResult<IEnumerable<UserDto>>> GetUser([FromQuery] string id)
     {
         var user = await userManager.Users.Where(u => u.Id == id).Include(u => u.Company).SingleOrDefaultAsync();
         if (user == null) return NotFound("User not found");
-        var userResource = mapper.Map<User, UserResource>(user);
+        var userResource = mapper.Map<User, UserDto>(user);
         return Ok(userResource);
     }
 

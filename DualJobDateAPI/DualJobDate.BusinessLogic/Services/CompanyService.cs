@@ -2,7 +2,7 @@
 using DualJobDate.BusinessObjects.Entities.Interface;
 using DualJobDate.BusinessObjects.Entities.Interface.Service;
 using DualJobDate.BusinessObjects.Entities.Models;
-using DualJobDate.BusinessObjects.Resources;
+using DualJobDate.BusinessObjects.Dtos;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,16 +12,30 @@ public class CompanyService(IUnitOfWork unitOfWork, UserManager<User> userManage
 {
     public Task<Company?> GetCompanyByIdAsync(int id)
     {
-        var result = unitOfWork.CompanyRepository.GetByIdAsync(id);
+        var result = unitOfWork.CompanyRepository.GetAllAsync().Result.
+            Include(x => x.AcademicProgram).
+            Include(x => x.Institution).
+            Include(x => x.User).
+            Include(x => x.CompanyDetails).
+            Include(x => x.Activities).
+            Include(x => x.Addresses).
+            Where(x => x.Id == id).SingleOrDefaultAsync();
         return result;
     }
 
-    public Task<List<Company>> GetActiveCompaniesAsync(int academicProgramId)
+    public async Task<List<Company>> GetActiveCompaniesAsync(User user)
     {
-        var result = unitOfWork.CompanyRepository.GetAllAsync();
-        return result.Result.Where(c => c.AcademicProgramId == academicProgramId && c.IsActive == true)
+        // Fetch all active companies related to the specified academicProgramId
+        // and include the StudentCompany data specifically for the given user.
+        var result = await unitOfWork.CompanyRepository
+            .GetAllAsync().Result
+            .Include(c => c.StudentCompanies.Where(sc => sc.StudentId == user.Id)) // Include only StudentCompany for the given user
+            .Where(c => c.AcademicProgramId == user.AcademicProgramId && c.IsActive)
             .ToListAsync();
+        return result;
     }
+
+
 
     public Task<List<Company>> GetCompaniesByInstitutionAsync(int institutionId)
     {
@@ -38,13 +52,43 @@ public class CompanyService(IUnitOfWork unitOfWork, UserManager<User> userManage
     public async Task UpdateCompany(UpdateCompanyModel model, Company company)
     {
         unitOfWork.BeginTransaction();
+        
+        if (string.IsNullOrWhiteSpace(model.Name))
+        {
+            throw new ArgumentException("Company Name cannot be null or whitespace.");
+        }
+
+        if (string.IsNullOrWhiteSpace(model.Industry))
+        {
+            throw new ArgumentException("Industry cannot be null or whitespace.");
+        }
+    
+        if (!string.IsNullOrWhiteSpace(model.Website) && !Uri.IsWellFormedUriString(model.Website, UriKind.Absolute))
+        {
+            throw new ArgumentException("Website must be a valid URL.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(model.LogoBase64) && !IsBase64String(model.LogoBase64))
+        {
+            throw new ArgumentException("LogoBase64 must be a valid Base64 string.");
+        }
+
         company.Industry = model.Industry;
         company.LogoBase64 = model.LogoBase64;
         company.Website = model.Website;
+
         await unitOfWork.CompanyRepository.UpdateAsync(company);
+
         unitOfWork.Commit();
         await unitOfWork.SaveChanges();
     }
+
+    private bool IsBase64String(string base64)
+    {
+        Span<byte> buffer = new Span<byte>(new byte[base64.Length]);
+        return Convert.TryFromBase64String(base64, buffer, out int bytesParsed);
+    }
+
 
     public async Task UpdateCompanyActivity(bool isActive, Company company)
     {
@@ -65,6 +109,28 @@ public class CompanyService(IUnitOfWork unitOfWork, UserManager<User> userManage
     public async Task UpdateCompanyDetails(CompanyDetails details, Company company)
     {
         unitOfWork.BeginTransaction();
+        
+        if (details == null)
+        {
+            throw new ArgumentNullException(nameof(details));
+        }
+
+        if (string.IsNullOrWhiteSpace(details.Trainer))
+        {
+            throw new ArgumentException("Trainer cannot be null or whitespace.");
+        }
+        
+        if (string.IsNullOrWhiteSpace(details.ContactPersonInCompany))
+        {
+             throw new ArgumentException("Contact person in company cannot be null or whitespace.");
+        }
+        
+
+        if (!string.IsNullOrWhiteSpace(details.TeamPictureBase64) && !IsBase64String(details.TeamPictureBase64))
+        {
+            throw new ArgumentException("TeamPictureBase64 must be a valid Base64 string.");
+        }
+        
         if (company.CompanyDetailsId == null)
         {
             company.CompanyDetails = details;
@@ -85,17 +151,16 @@ public class CompanyService(IUnitOfWork unitOfWork, UserManager<User> userManage
             companyDetails.TrainerProfessionalExperience = details.TrainerProfessionalExperience;
             await unitOfWork.CompanyDetailsRepository.UpdateAsync(companyDetails);
         }
-
         unitOfWork.Commit();
         await unitOfWork.SaveChanges();
     }
 
-    public async Task<IEnumerable<ActivityResource>> GetCompanyActivitiesAsync(Company company)
+    public async Task<IEnumerable<ActivityDto>> GetCompanyActivitiesAsync(Company company)
     {
         return await unitOfWork.CompanyActivityRepository.GetAllAsync().Result
             .Where(ca => ca.CompanyId == company.Id)
             .Include(a => a.Activity)
-            .Select(a => new ActivityResource
+            .Select(a => new ActivityDto
             {
                 Id = a.Id,
                 Name = a.Activity.Name,
@@ -116,9 +181,8 @@ public class CompanyService(IUnitOfWork unitOfWork, UserManager<User> userManage
                 await unitOfWork.CompanyActivityRepository.UpdateAsync(existingActivity);
             }
         }
-
-        await unitOfWork.SaveChanges();
         unitOfWork.Commit();
+        await unitOfWork.SaveChanges();
     }
 
     public async Task<Company?> AddCompany(int programId, string companyName, User companyUser)

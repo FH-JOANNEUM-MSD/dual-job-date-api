@@ -2,7 +2,7 @@ namespace DualJobDate.BusinessObjects.Entities.Models;
 
 public class RegisterCompanyModel
 {
-    public int AcademicProgramId { get; set; }
-    public string CompanyName { get; set; }
-    public string UserEmail { get; set; }
+    public required int AcademicProgramId { get; set; }
+    public required string CompanyName { get; set; }
+    public required string UserEmail { get; set; }
 }

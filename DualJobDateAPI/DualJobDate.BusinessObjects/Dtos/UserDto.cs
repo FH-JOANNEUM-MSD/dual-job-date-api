@@ -1,8 +1,8 @@
 using DualJobDate.BusinessObjects.Entities.Enum;
 
-namespace DualJobDate.BusinessObjects.Resources;
+namespace DualJobDate.BusinessObjects.Dtos;
 
-public class UserResource
+public class UserDto
 {
     public string Id { get; set; }
     public int? AcademicProgramId { get; set; }
@@ -11,5 +11,5 @@ public class UserResource
     public UserTypeEnum UserType { get; set; }
     public bool IsNew { get; set; }
     public string Email { get; set; }
-    public CompanyResource Company { get; set; }
+    public UserCompanyDto Company { get; set; }
 }

@@ -3,5 +3,8 @@ using DualJobDate.BusinessObjects.Entities.Interface.Repository;
 
 namespace DualJobDate.DataAccess.Repositories;
 
-public class AcademicDegreeRepository(AppDbContext dbContext)
-    : BaseRepository<AcademicDegree>(dbContext), IAcademicDegreeRepository;
+public class StudentCompanyRepository(AppDbContext dbContext)
+    : BaseRepository<StudentCompany>(dbContext), IStudentCompanyRepository
+{
+    
+}
