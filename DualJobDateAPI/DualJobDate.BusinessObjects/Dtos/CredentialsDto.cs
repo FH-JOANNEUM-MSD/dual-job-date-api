@@ -1,6 +1,6 @@
-namespace DualJobDate.BusinessObjects.Resources;
+namespace DualJobDate.BusinessObjects.Dtos;
 
-public class CredentialsResource
+public class CredentialsDto
 {
     public string Email { get; set; }
     public string Password { get; set; }

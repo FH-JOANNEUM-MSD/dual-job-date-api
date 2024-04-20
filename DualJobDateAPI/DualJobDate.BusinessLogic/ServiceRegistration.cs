@@ -33,6 +33,7 @@ public static class ServiceRegistration
             return new JwtAuthManager(userManager, secret, issuer, audience, expireDate1, expireDate2);
         });
         services.AddTransient<ICompanyService, CompanyService>();
+        services.AddTransient<IStudentCompanyService, StudentCompanyService>();
         services.AddTransient<IUtilService, UtilService>();
     }
 }
