@@ -1,6 +1,6 @@
-namespace DualJobDate.BusinessObjects.Entities.Models;
+namespace DualJobDate.BusinessObjects.Dtos;
 
-public class CompanyDetailsResource
+public class CompanyDetailsDto
 {
     public string? ShortDescription { get; set; }
     public string? TeamPictureBase64 { get; set; }

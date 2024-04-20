@@ -2,7 +2,7 @@
 using DualJobDate.BusinessObjects.Entities.Interface;
 using DualJobDate.BusinessObjects.Entities.Interface.Service;
 using DualJobDate.BusinessObjects.Entities.Models;
-using DualJobDate.BusinessObjects.Resources;
+using DualJobDate.BusinessObjects.Dtos;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,12 +23,19 @@ public class CompanyService(IUnitOfWork unitOfWork, UserManager<User> userManage
         return result;
     }
 
-    public Task<List<Company>> GetActiveCompaniesAsync(int academicProgramId)
+    public async Task<List<Company>> GetActiveCompaniesAsync(User user)
     {
-        var result = unitOfWork.CompanyRepository.GetAllAsync();
-        return result.Result.Where(c => c.AcademicProgramId == academicProgramId && c.IsActive == true)
+        // Fetch all active companies related to the specified academicProgramId
+        // and include the StudentCompany data specifically for the given user.
+        var result = await unitOfWork.CompanyRepository
+            .GetAllAsync().Result
+            .Include(c => c.StudentCompanies.Where(sc => sc.StudentId == user.Id)) // Include only StudentCompany for the given user
+            .Where(c => c.AcademicProgramId == user.AcademicProgramId && c.IsActive)
             .ToListAsync();
+        return result;
     }
+
+
 
     public Task<List<Company>> GetCompaniesByInstitutionAsync(int institutionId)
     {
@@ -148,12 +155,12 @@ public class CompanyService(IUnitOfWork unitOfWork, UserManager<User> userManage
         await unitOfWork.SaveChanges();
     }
 
-    public async Task<IEnumerable<ActivityResource>> GetCompanyActivitiesAsync(Company company)
+    public async Task<IEnumerable<ActivityDto>> GetCompanyActivitiesAsync(Company company)
     {
         return await unitOfWork.CompanyActivityRepository.GetAllAsync().Result
             .Where(ca => ca.CompanyId == company.Id)
             .Include(a => a.Activity)
-            .Select(a => new ActivityResource
+            .Select(a => new ActivityDto
             {
                 Id = a.Id,
                 Name = a.Activity.Name,

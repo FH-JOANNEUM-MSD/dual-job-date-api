@@ -6,7 +6,8 @@ using DualJobDate.BusinessObjects.Entities;
 using DualJobDate.BusinessObjects.Entities.Enum;
 using DualJobDate.BusinessObjects.Entities.Interface.Helper;
 using DualJobDate.BusinessObjects.Entities.Models;
-using DualJobDate.BusinessObjects.Resources;
+using DualJobDate.BusinessObjects.Dtos;
+using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
@@ -197,7 +198,7 @@ public class UserController(
     [HttpPost]
     [Authorize("AdminOrInstitution")]
     [Route("ResetPassword")]
-    public async Task<ActionResult<CredentialsResource>> ResetPassword([FromQuery] string id)
+    public async Task<ActionResult<CredentialsDto>> ResetPassword([FromQuery] string id)
     {
         var user = await userManager.FindByIdAsync(id);
         if (user is null) return NotFound();
@@ -212,7 +213,7 @@ public class UserController(
             var userResult = await userManager.UpdateAsync(user);
             if (userResult.Succeeded)
             {
-                var credentials = new CredentialsResource
+                var credentials = new CredentialsDto
                 {
                     Email = user.Email,
                     Password = password
@@ -227,7 +228,7 @@ public class UserController(
     [Authorize(Policy = "AdminOrInstitution")]
     [HttpGet]
     [Route("GetAllUsers")]
-    public async Task<ActionResult<IEnumerable<UserResource>>> GetAllUsers(
+    public async Task<ActionResult<IEnumerable<UserDto>>> GetAllUsers(
         [FromQuery] int? institutionId,
         [FromQuery] int? academicProgramId,
         [FromQuery] UserTypeEnum userType)
@@ -251,7 +252,7 @@ public class UserController(
 
         if (usersList.IsNullOrEmpty()) return NotFound("No user found!");
 
-        var userResources = mapper.Map<IEnumerable<User>, IEnumerable<UserResource>>(usersList);
+        var userResources = mapper.Map<IEnumerable<User>, IEnumerable<UserDto>>(usersList);
         return Ok(userResources);
     }
 
@@ -259,11 +260,11 @@ public class UserController(
     [Authorize(Policy = "AdminOrInstitution")]
     [HttpGet]
     [Route("GetUser")]
-    public async Task<ActionResult<IEnumerable<UserResource>>> GetUser([FromQuery] string id)
+    public async Task<ActionResult<IEnumerable<UserDto>>> GetUser([FromQuery] string id)
     {
         var user = await userManager.Users.Where(u => u.Id == id).Include(u => u.Company).SingleOrDefaultAsync();
         if (user == null) return NotFound("User not found");
-        var userResource = mapper.Map<User, UserResource>(user);
+        var userResource = mapper.Map<User, UserDto>(user);
         return Ok(userResource);
     }
 

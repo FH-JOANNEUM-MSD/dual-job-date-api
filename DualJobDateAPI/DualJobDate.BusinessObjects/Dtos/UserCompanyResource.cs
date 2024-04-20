@@ -1,6 +1,6 @@
-namespace DualJobDate.BusinessObjects.Resources;
+namespace DualJobDate.BusinessObjects.Dtos;
 
-public class UserCompanyResource
+public class UserCompanyDto
 {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
