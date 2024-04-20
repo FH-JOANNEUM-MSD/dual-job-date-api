@@ -88,20 +88,16 @@ public class UserController(
 
     [HttpPost]
     [Route("Login")]
-    public async Task<JwtAuthResultViewModel> Login(LoginModel model)
+    public async Task<ActionResult<JwtAuthResultViewModel>> Login(LoginModel model)
     {
         var result = await signInManager.PasswordSignInAsync(model.Email, model.Password, false, false);
         if (!result.Succeeded)
         {
-            return null;
+            return Unauthorized("Invalid Username or Password");
         }
         var user = await userManager.FindByEmailAsync(model.Email);
-        if (user == null)
-        {
-            return null;
-        }
         var jwtResult = await jwtAuthManager.GenerateTokens(user, DateTime.Now);
-        return jwtResult;
+        return Ok(jwtResult);
     }
 
     [HttpPost]
