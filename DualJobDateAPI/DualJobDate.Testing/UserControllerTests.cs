@@ -1,14 +1,17 @@
 using AutoMapper;
 using DualJobDate.Api.Controllers;
 using DualJobDate.BusinessObjects.Entities;
+using DualJobDate.BusinessObjects.Entities.Interface.Helper;
 using DualJobDate.BusinessObjects.Entities.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
+using SignInResult = Microsoft.AspNetCore.Identity.SignInResult;
 
 namespace DualJobDate.Testing;
 
@@ -26,11 +29,12 @@ public class UserControllerTests
     private Mock<IMapper> mockMapper = new Mock<IMapper>();
     private Mock<RoleManager<Role>> mockRoleManager = MockHelpers.MockRoleManager<Role>();
     private UserController controller;
+    private Mock<IJwtAuthManager> mockAthManager = new Mock<IJwtAuthManager>();
 
     public UserControllerTests()
     {
         // setup for tests
-        controller = new UserController(mockUserManager.Object, mockSignInManager.Object, mockServiceProvider.Object, mockMapper.Object, mockRoleManager.Object);
+        controller = new UserController(mockUserManager.Object, mockSignInManager.Object, mockServiceProvider.Object, mockMapper.Object, mockRoleManager.Object, mockAthManager.Object);
     }
     
     //test Login
@@ -47,10 +51,10 @@ public class UserControllerTests
             .ReturnsAsync(SignInResult.Success);
         
         //Assert
-        var result = controller.Login(loginModel, false, false);
+        var result = controller.Login(loginModel);
         Assert.NotNull(result);
-        Assert.IsType<EmptyHttpResult>(result.Result.Result);   //empty bc signinManager is handing the result to the user
-        Assert.IsNotType<ProblemHttpResult>(result.Result.Result);
+        Assert.IsType<OkObjectResult>(result.Result.Result);   //empty bc signinManager is handing the result to the user
+        Assert.IsNotType<UnauthorizedObjectResult>(result.Result.Result);
     }
 }
 
