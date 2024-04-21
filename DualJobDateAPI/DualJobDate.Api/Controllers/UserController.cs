@@ -66,7 +66,7 @@ public class UserController(
         var user = new User
         {
             Email = model.Email,
-            UserType = UserTypeEnum.Admin,
+            UserType = model.Role,
             IsNew = true,
             InstitutionId = institution,
             AcademicProgramId = program
@@ -83,7 +83,7 @@ public class UserController(
         if (role == null) return NotFound("Role doesn't exist");
         await userManager.AddToRoleAsync(user, role.Name);
 
-        return Ok($"User '{user.Email}' created successfully");
+        return Ok($"User '{user.Email}' created successfully. ID: {user.Id}");
     }
 
     [HttpPost]
