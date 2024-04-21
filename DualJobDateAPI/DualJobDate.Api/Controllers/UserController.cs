@@ -1,12 +1,14 @@
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using System.Text.Json;
 using AutoMapper;
 using DualJobDate.BusinessObjects.Entities;
 using DualJobDate.BusinessObjects.Entities.Enum;
 using DualJobDate.BusinessObjects.Entities.Interface.Helper;
 using DualJobDate.BusinessObjects.Entities.Models;
 using DualJobDate.BusinessObjects.Dtos;
+using DualJobDate.BusinessObjects.Entities.Interface.Service;
 using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -25,7 +27,8 @@ public class UserController(
     IServiceProvider serviceProvider,
     IMapper mapper,
     RoleManager<Role> roleManager, 
-    IJwtAuthManager jwtAuthManager)
+    IJwtAuthManager jwtAuthManager,
+    IUtilService utilService)
     : ControllerBase
 {
     private const string LowerCase = "abcdefghijklmnopqrstuvwxyz";
@@ -87,53 +90,67 @@ public class UserController(
     }
     
     [Authorize("AdminOrInstitution")]
-    [HttpPut("RegisterStudentsFromJson")]
-    public async Task<IActionResult> RegisterStudentsFromJson([FromBody] RegisterUserModel model)
+    [HttpPut("RegisterStudentAndCompanyUsersFromJson")]
+    public async Task<IActionResult> RegisterUsersFromJson([FromBody] RegisterUsersFromJsonModel registerUsersFromJsonModel)
     {
-        var adminUser = await userManager.GetUserAsync(User);
-        int institution;
-        int program;
-        if (User.IsInRole("Admin"))
-        {
-            if (model.InstitutionId == null || model.AcademicProgramId == null)
-                return BadRequest("InstitutionId or AcademicProgramId cannot be null!");
-            institution = (int)model.InstitutionId;
-            program = (int)model.AcademicProgramId;
-        }
-        else
-        {
-            institution = adminUser.InstitutionId;
-            program = adminUser.AcademicProgramId;
-            if (model.Role == UserTypeEnum.Admin || model.Role == UserTypeEnum.Company)
-                return Unauthorized("You're not authorized to register an Admin or Company");
-        }
+        var registerStudentUserFromJsonModelList = registerUsersFromJsonModel.StudentUsers;
+        var registerCompanyUserFromJsonModelList = registerUsersFromJsonModel.CompanyUsers;
+
+        var errorMessages = new List<string>();
 
         var userStore = serviceProvider.GetRequiredService<IUserStore<User>>();
+        
 
-        if (string.IsNullOrEmpty(model.Email) || !EmailAddressAttribute.IsValid(model.Email))
-            return BadRequest($"Email '{model.Email}' is invalid.");
-
-        var user = new User
+        foreach (var registerStudentUser in registerStudentUserFromJsonModelList)
         {
-            Email = model.Email,
-            UserType = UserTypeEnum.Admin,
-            IsNew = true,
-            InstitutionId = institution,
-            AcademicProgramId = program
-        };
+            var academicProgram =
+                utilService.GetAcademicProgramByKeyNameAndYearAsync(registerStudentUser.AcademicProgramKeyName,
+                    registerStudentUser.AcademicProgramYear);
+            var institution = utilService.GetInstitutionByKeyNameAsync(registerStudentUser.InstitutionKeyName);
 
-        await userStore.SetUserNameAsync(user, model.Email, CancellationToken.None);
+            if (string.IsNullOrEmpty(registerStudentUser.Email) ||
+                !EmailAddressAttribute.IsValid(registerStudentUser.Email))
+            {
+                errorMessages.Add($"Bad Request: Email '{registerStudentUser.Email}' is invalid.");
+                continue;
+            }
+            
+            var user = new User()
+            {
+                Email = registerStudentUser.Email,
+                AcademicProgramId = academicProgram.Id,
+                InstitutionId = institution.Id,
+                IsNew = true,
+                UserType = UserTypeEnum.Student
+            };
+            
+            await userStore.SetUserNameAsync(user, registerStudentUser.Email, CancellationToken.None);
 
-        var password = GeneratePassword();
+            var password = GeneratePassword();
 
-        var result = await userManager.CreateAsync(user, password);
+            var result = await userManager.CreateAsync(user, password);
 
-        if (!result.Succeeded) return BadRequest(result.Errors);
-        var role = await roleManager.Roles.Where(r => r.UserTypeEnum == model.Role).SingleOrDefaultAsync();
-        if (role == null) return NotFound("Role doesn't exist");
-        await userManager.AddToRoleAsync(user, role.Name);
+            if (!result.Succeeded)
+            {
+                errorMessages.Add("Bad Request: " + result.Errors);
+                continue;
+            }
+            
+            var role = await roleManager.Roles.Where(r => r.UserTypeEnum == UserTypeEnum.Student).SingleOrDefaultAsync();
+            if (role == null)
+            {
+                errorMessages.Add("Not found: Role doesn't exist");
+            }
+            await userManager.AddToRoleAsync(user, role.Name);
 
-        return Ok($"User '{user.Email}' created successfully");
+            
+        }
+        
+        if (errorMessages.IsNullOrEmpty())
+            return Ok($"Users were created successfully");
+
+        return BadRequest(errorMessages);
+
     }
 
     [HttpPost]
