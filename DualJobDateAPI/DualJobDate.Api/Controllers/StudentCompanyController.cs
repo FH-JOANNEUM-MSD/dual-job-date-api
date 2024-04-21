@@ -31,7 +31,7 @@ public class StudentCompanyController(UserManager<User> userManager, ICompanySer
     
     [Authorize(Policy = "AdminOrInstitutionOrStudent")]
     [HttpGet("GetLikesAndDislikesByStudentId")]
-    public async Task<ActionResult<List<StudentCompanyDto>>> GetStudentCompaniesByStudentId([FromQuery] string studentId)
+    public async Task<ActionResult<List<StudentCompanyDto>>> GetStudentCompaniesByStudentId([FromQuery] string? studentId)
     {
         var user = await userManager.GetUserAsync(User);
         if (user == null)
@@ -39,9 +39,9 @@ public class StudentCompanyController(UserManager<User> userManager, ICompanySer
             return Unauthorized();
         }
         
-        if (User.IsInRole("Student") && user.Id != studentId)
+        if (User.IsInRole("Student"))
         {
-            return BadRequest("A student can't access the likes and dislikes of another student.");
+            studentId = user.Id;
         }
         
         var studentCompanies = await studentCompanyService.GetStudentCompaniesByStudentIdAsync(studentId);
