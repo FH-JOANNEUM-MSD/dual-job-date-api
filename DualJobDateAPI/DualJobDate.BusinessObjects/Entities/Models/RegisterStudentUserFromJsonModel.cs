@@ -1,6 +1,8 @@
-﻿namespace DualJobDate.BusinessObjects.Entities.Models;
+﻿using DualJobDate.BusinessObjects.Entities.Interface;
 
-public class RegisterStudentUserFromJsonModel
+namespace DualJobDate.BusinessObjects.Entities.Models;
+
+public class RegisterStudentUserFromJsonModel : IRegisterUserFromJsonModel
 {
     public required string Email { get; set; }
     public required int AcademicProgramYear { get; set; }

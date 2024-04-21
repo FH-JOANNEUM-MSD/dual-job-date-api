@@ -8,6 +8,7 @@ using DualJobDate.BusinessObjects.Entities.Enum;
 using DualJobDate.BusinessObjects.Entities.Interface.Helper;
 using DualJobDate.BusinessObjects.Entities.Models;
 using DualJobDate.BusinessObjects.Dtos;
+using DualJobDate.BusinessObjects.Entities.Interface;
 using DualJobDate.BusinessObjects.Entities.Interface.Service;
 using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.Authorization;
@@ -105,51 +106,7 @@ public class UserController(
         {
             try
             {
-                var academicProgram =
-                    await utilService.GetAcademicProgramByKeyNameAndYearAsync(
-                        registerStudentUser.AcademicProgramKeyName,
-                        registerStudentUser.AcademicProgramYear);
-                var institution =
-                    await utilService.GetInstitutionByKeyNameAsync(registerStudentUser.InstitutionKeyName);
-
-                if (string.IsNullOrEmpty(registerStudentUser.Email) ||
-                    !EmailAddressAttribute.IsValid(registerStudentUser.Email))
-                {
-                    errorMessages.Add(
-                        $"Bad Request for email {registerStudentUser.Email}: Email '{registerStudentUser.Email}' is invalid.");
-                    continue;
-                }
-
-                var user = new User()
-                {
-                    Email = registerStudentUser.Email,
-                    AcademicProgramId = academicProgram.Id,
-                    InstitutionId = institution.Id,
-                    IsNew = true,
-                    UserType = UserTypeEnum.Student
-                };
-
-                await userStore.SetUserNameAsync(user, registerStudentUser.Email, CancellationToken.None);
-
-                var password = GeneratePassword();
-
-                var result = await userManager.CreateAsync(user, password);
-
-                if (!result.Succeeded)
-                {
-                    errorMessages.Add($"Bad Request for email {registerStudentUser.Email}: " +
-                                      String.Join(";", result.Errors));
-                    continue;
-                }
-
-                var role = await roleManager.Roles.Where(r => r.UserTypeEnum == UserTypeEnum.Student)
-                    .SingleOrDefaultAsync();
-                if (role == null)
-                {
-                    errorMessages.Add($"Not found for email {registerStudentUser.Email}: Role doesn't exist");
-                }
-
-                await userManager.AddToRoleAsync(user, role.Name);
+                await RegisterUserFromJsonInformation(registerStudentUser, errorMessages, userStore);
             }
             catch
             {
@@ -161,54 +118,13 @@ public class UserController(
         {
             try
             {
-                var academicProgram =
-                    await utilService.GetAcademicProgramByKeyNameAndYearAsync(
-                        registerCompanyUser.AcademicProgramKeyName,
-                        registerCompanyUser.AcademicProgramYear);
-                var institution =
-                    await utilService.GetInstitutionByKeyNameAsync(registerCompanyUser.InstitutionKeyName);
+                var user = await RegisterUserFromJsonInformation(registerCompanyUser, errorMessages, userStore);
 
-                if (string.IsNullOrEmpty(registerCompanyUser.Email) ||
-                    !EmailAddressAttribute.IsValid(registerCompanyUser.Email))
+                if (user != null)
                 {
-                    errorMessages.Add(
-                        $"Bad Request for email {registerCompanyUser.Email}: Email '{registerCompanyUser.Email}' is invalid.");
-                    continue;
+                    await utilService.PutCompanyAsync(registerCompanyUser.CompanyName, user.AcademicProgramId, user.InstitutionId,
+                        user.Id);
                 }
-
-                var user = new User()
-                {
-                    Email = registerCompanyUser.Email,
-                    AcademicProgramId = academicProgram.Id,
-                    InstitutionId = institution.Id,
-                    IsNew = true,
-                    UserType = UserTypeEnum.Company
-                };
-
-                await userStore.SetUserNameAsync(user, registerCompanyUser.Email, CancellationToken.None);
-
-                var password = GeneratePassword();
-
-                var result = await userManager.CreateAsync(user, password);
-
-                if (!result.Succeeded)
-                {
-                    errorMessages.Add($"Bad Request for email {registerCompanyUser.Email}: " +
-                                      String.Join(";", result.Errors));
-                    continue;
-                }
-
-                var role = await roleManager.Roles.Where(r => r.UserTypeEnum == UserTypeEnum.Student)
-                    .SingleOrDefaultAsync();
-                if (role == null)
-                {
-                    errorMessages.Add($"Not found for email {registerCompanyUser.Email}: Role doesn't exist");
-                }
-
-                await userManager.AddToRoleAsync(user, role.Name);
-
-                await utilService.PutCompanyAsync(registerCompanyUser.CompanyName, academicProgram.Id, institution.Id,
-                    user.Id);
             }
             catch
             {
@@ -221,6 +137,57 @@ public class UserController(
 
         return BadRequest(errorMessages);
 
+    }
+
+    private async Task<User?> RegisterUserFromJsonInformation(IRegisterUserFromJsonModel registerUserFromJsonModel, ICollection<string> errorMessages, IUserStore<User> userStore)
+    {
+        var academicProgram =
+            await utilService.GetAcademicProgramByKeyNameAndYearAsync(
+                registerUserFromJsonModel.AcademicProgramKeyName,
+                registerUserFromJsonModel.AcademicProgramYear);
+        var institution =
+            await utilService.GetInstitutionByKeyNameAsync(registerUserFromJsonModel.InstitutionKeyName);
+
+        if (string.IsNullOrEmpty(registerUserFromJsonModel.Email) ||
+            !EmailAddressAttribute.IsValid(registerUserFromJsonModel.Email))
+        {
+            errorMessages.Add(
+                $"Bad Request for email {registerUserFromJsonModel.Email}: Email '{registerUserFromJsonModel.Email}' is invalid.");
+            return null;
+        }
+
+        var user = new User()
+        {
+            Email = registerUserFromJsonModel.Email,
+            AcademicProgramId = academicProgram.Id,
+            InstitutionId = institution.Id,
+            IsNew = true,
+            UserType = UserTypeEnum.Company
+        };
+
+        await userStore.SetUserNameAsync(user, registerUserFromJsonModel.Email, CancellationToken.None);
+
+        var password = GeneratePassword();
+
+        var result = await userManager.CreateAsync(user, password);
+
+        if (!result.Succeeded)
+        {
+            errorMessages.Add($"Bad Request for email {registerUserFromJsonModel.Email}: " +
+                              String.Join(";", result.Errors));
+            return null;
+        }
+
+        var role = await roleManager.Roles.Where(r => r.UserTypeEnum == UserTypeEnum.Student)
+            .SingleOrDefaultAsync();
+        if (role == null)
+        {
+            errorMessages.Add($"Not found for email {registerUserFromJsonModel.Email}: Role doesn't exist");
+        }
+
+        await userManager.AddToRoleAsync(user, role.Name);
+
+        return user;
     }
 
     [HttpPost]
