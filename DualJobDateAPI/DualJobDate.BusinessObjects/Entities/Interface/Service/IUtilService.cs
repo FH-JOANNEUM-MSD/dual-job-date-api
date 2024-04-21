@@ -10,4 +10,5 @@ public interface IUtilService
     Task<AcademicProgram> GetAcademicProgramByKeyNameAndYearAsync(string keyName, int year);
     Task<AcademicProgram?> PostAcademicProgramAsync(int id,AcademicProgramModel model);
     Task<Institution?> PostInstitutionAsync(InstitutionModel model);
+    Task<Company?> PutCompanyAsync(string name, int academicProgramId, int institutionId, string userId);
 }
