@@ -158,7 +158,7 @@ public class UserController(
         var result = await userManager.ResetPasswordAsync(user, code, password);
         if (result.Succeeded)
         {
-            user.IsNew = false;
+            user.IsNew = true;
             var userResult = await userManager.UpdateAsync(user);
             if (userResult.Succeeded)
             {
