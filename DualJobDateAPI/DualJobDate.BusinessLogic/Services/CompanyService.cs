@@ -29,7 +29,10 @@ public class CompanyService(IUnitOfWork unitOfWork, UserManager<User> userManage
         // and include the StudentCompany data specifically for the given user.
         var result = await unitOfWork.CompanyRepository
             .GetAllAsync().Result
-            .Include(c => c.StudentCompanies.Where(sc => sc.StudentId == user.Id)) // Include only StudentCompany for the given user
+            .Include(c => c.StudentCompanies.Where(sc => sc.StudentId == user.Id)). // Include only StudentCompany for the given user
+            Include(x => x.CompanyDetails).
+            Include(x => x.Activities).
+            Include(x => x.Addresses)
             .Where(c => c.AcademicProgramId == user.AcademicProgramId && c.IsActive)
             .ToListAsync();
         return result;
