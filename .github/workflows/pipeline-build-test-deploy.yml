@@ -67,8 +67,10 @@ jobs:
 
     - name: Test
       working-directory: DualJobDateAPI
-      run: dotnet test --no-build DualJobDateAPI.sln -c Release
+      run: dotnet test --no-build /home/runner/work/dual-job-date-api/dual-job-date-api/DualJobDateAPI/DualJobDate.Testing/DualJobDate.Testing.csproj -c Release
 
+
+      
   build-and-push-docker:
     permissions:
       contents: read
