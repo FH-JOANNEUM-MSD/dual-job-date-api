@@ -60,7 +60,18 @@ public class UserController(
             if (model.Role == UserTypeEnum.Admin || model.Role == UserTypeEnum.Company)
                 return Unauthorized("You're not authorized to register an Admin or Company");
         }
-
+        
+        var inst = utilService.GetInstitutionsAsync().Result.Where(x => x.Id == institution);
+        if (inst == null)
+        {
+            return NotFound("Institution not found");
+        }
+        var ap = utilService.GetAcademicProgramsAsync().Result.Where(x => x.Id == program);
+        if (ap == null)
+        {
+            return NotFound("AcademicProgram not found");
+        }
+        
         var userStore = serviceProvider.GetRequiredService<IUserStore<User>>();
 
         if (string.IsNullOrEmpty(model.Email) || !EmailAddressAttribute.IsValid(model.Email))
@@ -107,6 +118,16 @@ public class UserController(
             institution = user.InstitutionId;
         }
         program = academicProgramId;
+        var inst = utilService.GetInstitutionsAsync().Result.Where(x => x.Id == institution);
+        if (inst == null)
+        {
+            return NotFound("Institution not found");
+        }
+        var ap = utilService.GetAcademicProgramsAsync().Result.Where(x => x.Id == program);
+        if (ap == null)
+        {
+            return NotFound("AcademicProgram not found");
+        }
         
         var userStore = serviceProvider.GetRequiredService<IUserStore<User>>();
 
