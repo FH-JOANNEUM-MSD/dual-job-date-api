@@ -8,4 +8,5 @@ public interface IUtilService
     Task<IQueryable<AcademicProgram>> GetAcademicProgramsAsync();
     Task<AcademicProgram?> PostAcademicProgramAsync(int id,AcademicProgramModel model);
     Task<Institution?> PostInstitutionAsync(InstitutionModel model);
+    Task<IQueryable<Address>> GetLocationsAsync();
 }

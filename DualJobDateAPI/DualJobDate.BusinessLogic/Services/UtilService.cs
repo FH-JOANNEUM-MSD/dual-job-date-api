@@ -61,4 +61,10 @@ public class UtilService(IUnitOfWork unitOfWork) : IUtilService
         await unitOfWork.SaveChanges();
         return institution;
     }
+
+    public Task<IQueryable<Address>> GetLocationsAsync()
+    {
+        var ret = unitOfWork.AdressRepository.GetAllAsync();
+        return ret;
+    }
 }
