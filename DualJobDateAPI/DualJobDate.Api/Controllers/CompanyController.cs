@@ -200,9 +200,8 @@ public class CompanyController(ICompanyService companyService, IMapper mapper, U
 
         try
         {
-            if (user.Company == null) return Unauthorized();
             var company = await companyService.GetCompanyByUser(user);
-            if (company == null) return NotFound("Company not found");
+            if (company == null) return Unauthorized();
 
             var addresses = mapper.Map<IEnumerable<AddressDto>, IEnumerable<Address>>(resources);
             await companyService.AddLocations(addresses, company);
@@ -215,12 +214,19 @@ public class CompanyController(ICompanyService companyService, IMapper mapper, U
     }
     
     [HttpGet("Locations")]
-    public async Task<ActionResult<IEnumerable<AddressDto>>> GetLocations([FromQuery] int id)
+    public async Task<ActionResult<IEnumerable<AddressDto>>> GetLocations([FromQuery] int? companyId)
     {
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Unauthorized();
-
-        var company = await companyService.GetCompanyByIdAsync(id);
+        Company company;
+        if (User.IsInRole("Company"))
+        {
+            company = await companyService.GetCompanyByUser(user);
+        }
+        else
+        {
+            company = await companyService.GetCompanyByIdAsync((int)companyId);
+        }
         if (company == null) return NotFound("Company not found");
 
         var locations = await companyService.GetLocationsByCompanyAsync(company);
