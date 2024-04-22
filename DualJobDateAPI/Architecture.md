@@ -14,6 +14,7 @@ The application is divided into several layers:
 - Business Logic
 - Data Access
 - Database Initializer
+- Testing
 
 ### HTTP Requests
 All interactions with the API are initiated through HTTP requests. We use .NET Core Identity for authentication and authorization. The Authentication works Bearer Token that gets generated during the login process.
