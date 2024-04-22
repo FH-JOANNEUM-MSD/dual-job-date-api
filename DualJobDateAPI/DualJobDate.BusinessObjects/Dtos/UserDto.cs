@@ -5,9 +5,8 @@ namespace DualJobDate.BusinessObjects.Dtos;
 public class UserDto
 {
     public string Id { get; set; }
-    public int? AcademicProgramId { get; set; }
-    public int? InstitutionId { get; set; }
-    public bool IsActive { get; set; }
+    public InstitutionDto Institution { get; set; }
+    public AcademicProgramDto AcademicProgram { get; set; }
     public UserTypeEnum UserType { get; set; }
     public bool IsNew { get; set; }
     public string Email { get; set; }

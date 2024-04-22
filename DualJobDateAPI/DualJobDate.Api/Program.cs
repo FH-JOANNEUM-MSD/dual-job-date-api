@@ -168,7 +168,7 @@ internal class Program
         var loggerFactory = services.GetRequiredService<ILoggerFactory>();
         if (app.Environment.IsDevelopment()) DbInitializer.InitializeDb(loggerFactory);
         DatabaseConnectionTester.TestDbConnection(app).Wait();
-        DbInitializer.SeedData(services).Wait();
+        DbSeeder.SeedData(services).Wait();
         app.UseCors();
 
         app.UseRouting();

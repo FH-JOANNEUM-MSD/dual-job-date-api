@@ -25,7 +25,6 @@ public class AppDbContext : IdentityDbContext<User, Role, string>, IDbContext
     public DbSet<CompanyActivity> CompanyActivities { get; set; }
     public DbSet<CompanyDetails> CompanyDetailsEnumerable { get; set; }
     public DbSet<StudentCompany> StudentCompanies { get; set; }
-    public DbSet<UserType> UserTypes { get; set; }
 
     public Task<int> SaveChangesAsync()
     {

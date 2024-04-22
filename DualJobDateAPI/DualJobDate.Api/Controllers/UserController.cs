@@ -66,7 +66,7 @@ public class UserController(
         var user = new User
         {
             Email = model.Email,
-            UserType = UserTypeEnum.Admin,
+            UserType = model.Role,
             IsNew = true,
             InstitutionId = institution,
             AcademicProgramId = program
@@ -83,7 +83,7 @@ public class UserController(
         if (role == null) return NotFound("Role doesn't exist");
         await userManager.AddToRoleAsync(user, role.Name);
 
-        return Ok($"User '{user.Email}' created successfully");
+        return Ok($"User '{user.Email}' created successfully. ID: {user.Id}");
     }
 
     [HttpPost]
@@ -105,7 +105,10 @@ public class UserController(
     public async Task<IActionResult> Refresh([FromBody] RefreshRequest model)
     {
         var principal = jwtAuthManager.GetPrincipalFromToken(model.RefreshToken, true);
-
+        if (principal == null) //Expression is NOT always false
+        {
+            return Unauthorized("Invalid Token");
+        }
         var userId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (string.IsNullOrEmpty(userId))
         {
@@ -155,7 +158,7 @@ public class UserController(
         var result = await userManager.ResetPasswordAsync(user, code, password);
         if (result.Succeeded)
         {
-            user.IsNew = false;
+            user.IsNew = true;
             var userResult = await userManager.UpdateAsync(user);
             if (userResult.Succeeded)
             {
@@ -183,7 +186,7 @@ public class UserController(
         if (user == null) return Unauthorized();
         var users = new List<User>();
 
-        var query = userManager.Users.Include(u => u.Company).AsQueryable();
+        var query = userManager.Users.Include(u => u.Institution).Include(u => u.AcademicProgram).Include(u => u.Company).AsQueryable();
 
         if (User.IsInRole("Admin") && institutionId.HasValue)
             query = query.Where(u => u.InstitutionId == institutionId);
@@ -208,7 +211,7 @@ public class UserController(
     [Route("GetUser")]
     public async Task<ActionResult<IEnumerable<UserDto>>> GetUser([FromQuery] string id)
     {
-        var user = await userManager.Users.Where(u => u.Id == id).Include(u => u.Company).SingleOrDefaultAsync();
+        var user = await userManager.Users.Where(u => u.Id == id).Include(u => u.Institution).Include(u => u.AcademicProgram).Include(u => u.Company).SingleOrDefaultAsync();
         if (user == null) return NotFound("User not found");
         var userResource = mapper.Map<User, UserDto>(user);
         return Ok(userResource);
