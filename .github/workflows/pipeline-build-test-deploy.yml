@@ -42,7 +42,7 @@ jobs:
 
     - name: List Build Artifacts
       working-directory: DualJobDateAPI
-      run: ls -la ./bin/Release/net8.0/
+      run: tree 
 
     - name: Publish Build Artifacts
       uses: actions/upload-artifact@v2
