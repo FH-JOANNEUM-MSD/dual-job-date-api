@@ -23,7 +23,7 @@ public class UserController(
     SignInManager<User> signInManager,
     IServiceProvider serviceProvider,
     IMapper mapper,
-    RoleManager<Role> roleManager, 
+    RoleManager<Role> roleManager,
     IJwtAuthManager jwtAuthManager)
     : ControllerBase
 {
@@ -84,56 +84,64 @@ public class UserController(
 
         return Ok($"User '{user.Email}' created successfully");
     }
-    
+
     [Authorize("AdminOrInstitution")]
     [HttpPut("RegisterStudentsFromJson")]
-    public async Task<IActionResult> RegisterStudentsFromJson([FromBody] RegisterUserModel model)
+    public async Task<ActionResult<Json>> RegisterStudentsFromJson([FromQuery] int? institutionId, int academicProgramId, [FromBody] List<RegisterStudentModel> models)
     {
-        var adminUser = await userManager.GetUserAsync(User);
+        var user = await userManager.GetUserAsync(User);
         int institution;
         int program;
         if (User.IsInRole("Admin"))
         {
-            if (model.InstitutionId == null || model.AcademicProgramId == null)
-                return BadRequest("InstitutionId or AcademicProgramId cannot be null!");
-            institution = (int)model.InstitutionId;
-            program = (int)model.AcademicProgramId;
+            if (institutionId == null)
+                return BadRequest("InstitutionId cannot be null!");
+            institution = (int)institutionId;
         }
         else
         {
-            institution = adminUser.InstitutionId;
-            program = adminUser.AcademicProgramId;
-            if (model.Role == UserTypeEnum.Admin || model.Role == UserTypeEnum.Company)
-                return Unauthorized("You're not authorized to register an Admin or Company");
+            institution = user.InstitutionId;
         }
-
+        program = academicProgramId;
+        
         var userStore = serviceProvider.GetRequiredService<IUserStore<User>>();
 
-        if (string.IsNullOrEmpty(model.Email) || !EmailAddressAttribute.IsValid(model.Email))
-            return BadRequest($"Email '{model.Email}' is invalid.");
-
-        var user = new User
+        var successful = new List<string>();
+        var failed = new List<string>();
+        foreach (var toRegister in models)
         {
-            Email = model.Email,
-            UserType = UserTypeEnum.Admin,
-            IsNew = true,
-            InstitutionId = institution,
-            AcademicProgramId = program
-        };
+            var registerUser = new User
+            {
+                Email = toRegister.Email,
+                UserType = UserTypeEnum.Student,
+                IsNew = true,
+                InstitutionId = institution,
+                AcademicProgramId = program
+            };      
+            
+            await userStore.SetUserNameAsync(registerUser, registerUser.Email, CancellationToken.None);
 
-        await userStore.SetUserNameAsync(user, model.Email, CancellationToken.None);
+            var password = GeneratePassword();
 
-        var password = GeneratePassword();
+            var result = await userManager.CreateAsync(registerUser, password);
 
-        var result = await userManager.CreateAsync(user, password);
+            if (result.Succeeded)
+            {
+                successful.Add(toRegister.Email);
+            }
+            else
+            {
+                failed.Add(toRegister.Email);
+            }
+            var role = await roleManager.Roles.Where(r => r.UserTypeEnum == UserTypeEnum.Student).SingleOrDefaultAsync();
+            await userManager.AddToRoleAsync(registerUser, role.Name);
+        }
 
-        if (!result.Succeeded) return BadRequest(result.Errors);
-        var role = await roleManager.Roles.Where(r => r.UserTypeEnum == model.Role).SingleOrDefaultAsync();
-        if (role == null) return NotFound("Role doesn't exist");
-        await userManager.AddToRoleAsync(user, role.Name);
-
-        return Ok($"User '{user.Email}' created successfully");
+        var response = new Json { SuccesfullyRegistered = successful, FailedToRegister = failed};
+        return response;
     }
+
+
 
     [HttpPost]
     [Route("Login")]
@@ -340,4 +348,10 @@ public class UserController(
                 passwordChars[replaceIndex] = t[random.Next(t.Length)];
             }
     }
+}
+
+public class Json
+{
+    public List<string> SuccesfullyRegistered { get; set; }
+    public List<string> FailedToRegister { get; set; }
 }
