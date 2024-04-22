@@ -190,4 +190,27 @@ public class CompanyController(ICompanyService companyService, IMapper mapper, U
             return BadRequest(e.Message);
         }
     }
+    
+    [Authorize("Company")]
+    [HttpPost("Locations")]
+    public async Task<IActionResult> AddLocations([FromBody] List<AddressDto> resources)
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null) return Unauthorized();
+
+        try
+        {
+            if (user.Company == null) return Unauthorized();
+            var company = await companyService.GetCompanyByUser(user);
+            if (company == null) return NotFound("Company not found");
+
+            var addresses = mapper.Map<IEnumerable<AddressDto>, IEnumerable<Address>>(resources);
+            await companyService.AddLocations(addresses, company);
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            return NotFound(ex.Message);
+        }
+    }
 }
