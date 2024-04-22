@@ -70,6 +70,9 @@ jobs:
       run: |
         find ${{github.workspace}}/bin/Release/net8.0 -name '*.csproj' -type f | head -n 1
   
+    - name: Set Working Directory
+      run: cd ${{github.workspace}}/bin/Release/net8.0
+
     - name: Run Tests
       run: |
         dotnet test --no-build ${{ steps.find-project.outputs.path }} -c Release --verbosity detailed
