@@ -190,4 +190,48 @@ public class CompanyController(ICompanyService companyService, IMapper mapper, U
             return BadRequest(e.Message);
         }
     }
+    
+    [Authorize("Company")]
+    [HttpPost("Locations")]
+    public async Task<IActionResult> AddLocations([FromBody] List<AddressDto> resources)
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null) return Unauthorized();
+
+        try
+        {
+            var company = await companyService.GetCompanyByUser(user);
+            if (company == null) return Unauthorized();
+
+            var addresses = mapper.Map<IEnumerable<AddressDto>, IEnumerable<Address>>(resources);
+            await companyService.AddLocations(addresses, company);
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            return NotFound(ex.Message);
+        }
+    }
+    
+    [HttpGet("Locations")]
+    public async Task<ActionResult<IEnumerable<AddressDto>>> GetLocations([FromQuery] int? companyId)
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null) return Unauthorized();
+        Company company;
+        if (User.IsInRole("Company"))
+        {
+            company = await companyService.GetCompanyByUser(user);
+        }
+        else
+        {
+            company = await companyService.GetCompanyByIdAsync((int)companyId);
+        }
+        if (company == null) return NotFound("Company not found");
+
+        var locations = await companyService.GetLocationsByCompanyAsync(company);
+        var locationResources = mapper.Map<IEnumerable<Address>, IEnumerable<AddressDto>>(locations);
+        return Ok(locationResources);
+    }
+    
 }
