@@ -65,10 +65,14 @@ jobs:
       with:
         dotnet-version: '8.0'
 
-    - name: Test
-      working-directory: DualJobDateAPI
-      run: dotnet test --no-build DualJobDateAPI/DualJobDate.Testing/DualJobDate.Testing.csproj -c Release --verbosity detailed
-
+    - name: Find Test Project
+      id: find-project
+      run: |
+        find ${{github.workspace}}/bin/Release/net8.0 -name '*.csproj' -type f | head -n 1
+  
+    - name: Run Tests
+      run: |
+        dotnet test --no-build ${{ steps.find-project.outputs.path }} -c Release --verbosity detailed
 
       
   build-and-push-docker:
