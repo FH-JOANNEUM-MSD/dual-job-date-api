@@ -31,7 +31,8 @@ public class CompanyService(IUnitOfWork unitOfWork, UserManager<User> userManage
             .GetAllAsync().Result
             .Include(c => c.StudentCompanies.Where(sc => sc.StudentId == user.Id)). // Include only StudentCompany for the given user
             Include(x => x.CompanyDetails).
-            Include(x => x.Activities).
+            Include(x => x.Activities)
+            .Include(x => x.CompanyActivities).
             Include(x => x.Addresses)
             .Where(c => c.AcademicProgramId == user.AcademicProgramId && c.IsActive)
             .ToListAsync();
