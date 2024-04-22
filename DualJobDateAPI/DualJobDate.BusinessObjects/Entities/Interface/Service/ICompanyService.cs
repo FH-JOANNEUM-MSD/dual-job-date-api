@@ -19,4 +19,5 @@ public interface ICompanyService
     Task<Company?> GetCompanyByUser(User user);
     Task DeleteCompany(int id);
     Task AddLocations(IEnumerable<Address> addresses, Company company);
+    Task<IEnumerable<Address>> GetLocationsByCompanyAsync(Company company);
 }

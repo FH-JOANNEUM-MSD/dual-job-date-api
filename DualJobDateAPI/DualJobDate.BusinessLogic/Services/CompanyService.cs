@@ -230,4 +230,9 @@ public class CompanyService(IUnitOfWork unitOfWork, UserManager<User> userManage
         }
         unitOfWork.Commit();
     }
+
+    public async Task<IEnumerable<Address>> GetLocationsByCompanyAsync(Company company)
+    {
+        return await unitOfWork.AdressRepository.GetAllAsync().Result.Where(a => a.CompanyId == company.Id).ToListAsync();
+    }
 }

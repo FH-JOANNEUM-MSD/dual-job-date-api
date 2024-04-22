@@ -71,12 +71,4 @@ public class UtilController(IUtilService utilService, IMapper mapper) : Controll
             return StatusCode(500, "An unexpected error occurred");
         }
     }
-    
-    [HttpGet("Locations")]
-    public async Task<ActionResult<IEnumerable<AddressDto>>> GetLocations()
-    {
-        var locations = await utilService.GetLocationsAsync();
-        var locationResources = mapper.Map<IEnumerable<Address>, IEnumerable<AddressDto>>(locations);
-        return Ok(locationResources);
-    }
 }

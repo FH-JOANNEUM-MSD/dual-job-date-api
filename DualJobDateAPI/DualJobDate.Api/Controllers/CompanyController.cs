@@ -213,4 +213,19 @@ public class CompanyController(ICompanyService companyService, IMapper mapper, U
             return NotFound(ex.Message);
         }
     }
+    
+    [HttpGet("Locations")]
+    public async Task<ActionResult<IEnumerable<AddressDto>>> GetLocations([FromQuery] int id)
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null) return Unauthorized();
+
+        var company = await companyService.GetCompanyByIdAsync(id);
+        if (company == null) return NotFound("Company not found");
+
+        var locations = await companyService.GetLocationsByCompanyAsync(company);
+        var locationResources = mapper.Map<IEnumerable<Address>, IEnumerable<AddressDto>>(locations);
+        return Ok(locationResources);
+    }
+    
 }
