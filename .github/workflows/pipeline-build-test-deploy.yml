@@ -40,39 +40,20 @@ jobs:
         key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
         restore-keys: ${{ runner.os }}-nuget-
 
-    - name: List Build Artifacts
-      working-directory: DualJobDateAPI
-      run: tree 
-
-    - name: Publish Build Artifacts
-      uses: actions/upload-artifact@v2
-      with:
-        name: built-app
-        path: DualJobDateAPI/bin/Release/net8.0/
-
   test:
     needs: build
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-
-    - name: Download Build Artifacts
-      uses: actions/download-artifact@v2
-      with:
-        name: built-app
-        path: DualJobDateApi/bin/Release/net8.0
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v2
       with:
         dotnet-version: '8.0'
 
-    - name: List working directory
-      run: ls -la
-
     - name: Run Tests
       working-directory: DualJobDateAPI
       run: |
-        dotnet test --no-build -c Release DualJobDateAPI.sln --verbosity detailed
+        dotnet test -c Release DualJobDateAPI.sln --verbosity detailed
       
   build-and-push-docker:
     permissions:
