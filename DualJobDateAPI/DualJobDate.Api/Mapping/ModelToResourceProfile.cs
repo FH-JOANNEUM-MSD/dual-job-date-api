@@ -23,7 +23,7 @@ public class ModelToResourceProfile : Profile
             .ForMember(dest => dest.Activities, opt => opt.MapFrom(src => src.CompanyActivities.Select(ca => new ActivityDto {
                 Id = ca.Activity.Id,
                 Name = ca.Activity.Name,
-                Value = ca.Value // Angenommen, Value ist ein Feld in CompanyActivity
+                Value = ca.Value
             }).ToList()));
     }
 }
