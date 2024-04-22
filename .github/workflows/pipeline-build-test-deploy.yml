@@ -65,14 +65,12 @@ jobs:
       with:
         dotnet-version: '8.0'
 
-    - name: Find Test Project
-      id: find-project
-      run: |
-        find ${{github.workspace}}/bin/Release/net8.0 -name '*.csproj' -type f | head -n 1
+    - name: List working directory
+      run: ls -la ${{github.workspace}}
 
     - name: Run Tests
       run: |
-        dotnet test --no-build ${{ steps.find-project.outputs.path }} -c Release --verbosity detailed
+        dotnet test --no-build -c Release --verbosity detailed
 
       
   build-and-push-docker:
