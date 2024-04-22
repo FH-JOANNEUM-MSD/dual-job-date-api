@@ -6,7 +6,10 @@ using DualJobDate.BusinessObjects.Entities;
 using DualJobDate.BusinessObjects.Entities.Enum;
 using DualJobDate.BusinessObjects.Entities.Interface.Helper;
 using DualJobDate.BusinessObjects.Entities.Models;
-using DualJobDate.BusinessObjects.Resources;
+using DualJobDate.BusinessObjects.Dtos;
+using DualJobDate.BusinessObjects.Entities.Interface;
+using DualJobDate.BusinessObjects.Entities.Interface.Service;
+using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
@@ -23,8 +26,9 @@ public class UserController(
     SignInManager<User> signInManager,
     IServiceProvider serviceProvider,
     IMapper mapper,
-    RoleManager<Role> roleManager,
-    IJwtAuthManager jwtAuthManager)
+    RoleManager<Role> roleManager, 
+    IJwtAuthManager jwtAuthManager,
+    IUtilService utilService)
     : ControllerBase
 {
     private const string LowerCase = "abcdefghijklmnopqrstuvwxyz";
@@ -65,7 +69,7 @@ public class UserController(
         var user = new User
         {
             Email = model.Email,
-            UserType = UserTypeEnum.Admin,
+            UserType = model.Role,
             IsNew = true,
             InstitutionId = institution,
             AcademicProgramId = program
@@ -82,7 +86,7 @@ public class UserController(
         if (role == null) return NotFound("Role doesn't exist");
         await userManager.AddToRoleAsync(user, role.Name);
 
-        return Ok($"User '{user.Email}' created successfully");
+        return Ok($"User '{user.Email}' created successfully. ID: {user.Id}");
     }
 
     [Authorize("AdminOrInstitution")]
@@ -145,20 +149,16 @@ public class UserController(
 
     [HttpPost]
     [Route("Login")]
-    public async Task<JwtAuthResultViewModel> Login(LoginModel model)
+    public async Task<ActionResult<JwtAuthResultViewModel>> Login(LoginModel model)
     {
         var result = await signInManager.PasswordSignInAsync(model.Email, model.Password, false, false);
         if (!result.Succeeded)
         {
-            return null;
+            return Unauthorized("Invalid Username or Password");
         }
         var user = await userManager.FindByEmailAsync(model.Email);
-        if (user == null)
-        {
-            return null;
-        }
         var jwtResult = await jwtAuthManager.GenerateTokens(user, DateTime.Now);
-        return jwtResult;
+        return Ok(jwtResult);
     }
 
     [HttpPost]
@@ -166,7 +166,10 @@ public class UserController(
     public async Task<IActionResult> Refresh([FromBody] RefreshRequest model)
     {
         var principal = jwtAuthManager.GetPrincipalFromToken(model.RefreshToken, true);
-
+        if (principal == null) //Expression is NOT always false
+        {
+            return Unauthorized("Invalid Token");
+        }
         var userId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (string.IsNullOrEmpty(userId))
         {
@@ -205,7 +208,7 @@ public class UserController(
     [HttpPost]
     [Authorize("AdminOrInstitution")]
     [Route("ResetPassword")]
-    public async Task<ActionResult<CredentialsResource>> ResetPassword([FromQuery] string id)
+    public async Task<ActionResult<CredentialsDto>> ResetPassword([FromQuery] string id)
     {
         var user = await userManager.FindByIdAsync(id);
         if (user is null) return NotFound();
@@ -216,11 +219,11 @@ public class UserController(
         var result = await userManager.ResetPasswordAsync(user, code, password);
         if (result.Succeeded)
         {
-            user.IsNew = false;
+            user.IsNew = true;
             var userResult = await userManager.UpdateAsync(user);
             if (userResult.Succeeded)
             {
-                var credentials = new CredentialsResource
+                var credentials = new CredentialsDto
                 {
                     Email = user.Email,
                     Password = password
@@ -235,7 +238,7 @@ public class UserController(
     [Authorize(Policy = "AdminOrInstitution")]
     [HttpGet]
     [Route("GetAllUsers")]
-    public async Task<ActionResult<IEnumerable<UserResource>>> GetAllUsers(
+    public async Task<ActionResult<IEnumerable<UserDto>>> GetAllUsers(
         [FromQuery] int? institutionId,
         [FromQuery] int? academicProgramId,
         [FromQuery] UserTypeEnum userType)
@@ -244,7 +247,7 @@ public class UserController(
         if (user == null) return Unauthorized();
         var users = new List<User>();
 
-        var query = userManager.Users.Include(u => u.Company).AsQueryable();
+        var query = userManager.Users.Include(u => u.Institution).Include(u => u.AcademicProgram).Include(u => u.Company).AsQueryable();
 
         if (User.IsInRole("Admin") && institutionId.HasValue)
             query = query.Where(u => u.InstitutionId == institutionId);
@@ -259,7 +262,7 @@ public class UserController(
 
         if (usersList.IsNullOrEmpty()) return NotFound("No user found!");
 
-        var userResources = mapper.Map<IEnumerable<User>, IEnumerable<UserResource>>(usersList);
+        var userResources = mapper.Map<IEnumerable<User>, IEnumerable<UserDto>>(usersList);
         return Ok(userResources);
     }
 
@@ -267,11 +270,11 @@ public class UserController(
     [Authorize(Policy = "AdminOrInstitution")]
     [HttpGet]
     [Route("GetUser")]
-    public async Task<ActionResult<IEnumerable<UserResource>>> GetUser([FromQuery] string id)
+    public async Task<ActionResult<IEnumerable<UserDto>>> GetUser([FromQuery] string id)
     {
-        var user = await userManager.Users.Where(u => u.Id == id).Include(u => u.Company).SingleOrDefaultAsync();
+        var user = await userManager.Users.Where(u => u.Id == id).Include(u => u.Institution).Include(u => u.AcademicProgram).Include(u => u.Company).SingleOrDefaultAsync();
         if (user == null) return NotFound("User not found");
-        var userResource = mapper.Map<User, UserResource>(user);
+        var userResource = mapper.Map<User, UserDto>(user);
         return Ok(userResource);
     }
 

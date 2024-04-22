@@ -110,6 +110,9 @@ internal class Program
             options.AddPolicy("AdminOrInstitution", policy =>
                 policy.RequireAssertion(context =>
                     context.User.IsInRole("Admin") || context.User.IsInRole("Institution")));
+            options.AddPolicy("AdminOrInstitutionOrStudent", policy =>
+                policy.RequireAssertion(context =>
+                    context.User.IsInRole("Admin") || context.User.IsInRole("Institution") || context.User.IsInRole("Student")));
             options.AddPolicy("WebApp", policy =>
                 policy.RequireAssertion(context =>
                     context.User.IsInRole("Admin") || context.User.IsInRole("Institution") || context.User.IsInRole("Company")));

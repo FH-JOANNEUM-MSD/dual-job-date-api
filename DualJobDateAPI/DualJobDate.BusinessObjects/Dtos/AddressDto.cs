@@ -1,6 +1,6 @@
-namespace DualJobDate.BusinessObjects.Resources;
+namespace DualJobDate.BusinessObjects.Dtos;
 
-public class AdressResource
+public class AddressDto
 {
     public string Street { get; set; } = string.Empty;
     public string BuildingNumber { get; set; } = string.Empty;

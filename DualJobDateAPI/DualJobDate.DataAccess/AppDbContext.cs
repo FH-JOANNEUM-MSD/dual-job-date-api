@@ -52,10 +52,15 @@ public class AppDbContext : IdentityDbContext<User, Role, string>, IDbContext
             .WithMany(e => e.Likers)
             .UsingEntity<StudentCompany>();
 
-        modelBuilder.Entity<Company>()
-            .HasMany(e => e.Activities)
-            .WithMany(e => e.Companies)
-            .UsingEntity<CompanyActivity>();
+        modelBuilder.Entity<Company>(builder =>
+        {
+            builder
+                .HasMany(e => e.Activities)
+                .WithMany(e => e.Companies)
+                .UsingEntity<CompanyActivity>();
+            builder.HasIndex(x => new { x.Name, x.InstitutionId, x.AcademicProgramId }).IsUnique();
+        });
+            
 
         modelBuilder
             .Entity<Role>()
@@ -72,6 +77,11 @@ public class AppDbContext : IdentityDbContext<User, Role, string>, IDbContext
         {
             builder.HasIndex(x => new { x.Year, x.KeyName })
                 .IsUnique();
+        });
+
+        modelBuilder.Entity<Institution>(builder =>
+        {
+            builder.HasIndex(x => x.KeyName).IsUnique();
         });
     }
 }
