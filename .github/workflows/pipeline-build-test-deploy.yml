@@ -2,11 +2,11 @@ name: .NET CI/CD Pipeline
 
 on:
   push:
-    branches: 
-      - cicd/notification #dev #change to main before merge
+    branches:
+      - cicd/notification # Ändern Sie dies auf "main" vor dem Merge
   pull_request:
     branches:
-      - cicd/notification #dev #change to main before merge
+      - cicd/notification # Ändern Sie dies auf "main" vor dem Merge
 
 env:
   REGISTRY: ghcr.io
@@ -15,24 +15,19 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v1
         with:
           dotnet-version: '8.0'
-
       - name: Restore dependencies
         working-directory: DualJobDateAPI
         run: dotnet restore DualJobDateAPI.sln
-
       - name: Build
         working-directory: DualJobDateAPI
         run: dotnet build --no-restore DualJobDateAPI.sln -c Release
-
       - name: Cache NuGet Packages
         uses: actions/cache@v2
         with:
@@ -45,12 +40,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v1
         with:
           dotnet-version: '8.0'
-
       - name: Test
         working-directory: DualJobDateAPI
         run: dotnet test --no-build DualJobDateAPI.sln -c Release
@@ -62,19 +55,38 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: Convert to lowercase
-      run: |
-        echo "IMAGE_NAME=${IMAGE_NAME@L}" >> "${GITHUB_ENV}"
-    - name: Login to GitHub Container Registry
-      uses: docker/login-action@v3
-      with:
-        registry: ${{ env.REGISTRY }}
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-    - name: Build and push Docker image
-      uses: docker/build-push-action@v5
-      with:
-        context: ./DualJobDateAPI
-        push: true
-        tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:build-develop
+      - uses: actions/checkout@v2
+      - name: Convert to lowercase
+        run: |
+          echo "IMAGE_NAME=${IMAGE_NAME@L}" >> "${GITHUB_ENV}"
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./DualJobDateAPI
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:build-develop
+
+  create_issue_on_failure:
+    runs-on: ubuntu-latest
+    if: ${{ failure() }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Create Issue
+        uses: imjohnbo/issue-bot@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          title: "Failure Detected in ${{ github.workflow }}"
+          body: |
+            **Failure Details:**
+            - **Workflow Name**: ${{ github.workflow }}
+            - **Branch**: ${{ github.ref_name }}
+            - **Commit**: ${{ github.sha }}
+            - **Author**: ${{ github.actor }}
+            - **Failed Job Link**: [View Detailed Logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
