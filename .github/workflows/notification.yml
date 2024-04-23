@@ -1,0 +1,38 @@
+name: Create Issue on Failure
+
+on:
+    workflow_run:
+      workflows: [".NET CI/CD Pipeline"]
+      types:
+        - completed
+      branches:
+        - main
+
+jobs:
+  create_issue:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        
+      - name: Create Issue
+        id: issue
+        uses: imjohnbo/issue-bot@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          title: "Failure Detected in ${{ github.workflow }}"
+          body: |
+            **Failure Details:**
+            - **Workflow Name**: ${{ github.workflow }}
+            - **Branch**: ${{ github.ref_name }}
+            - **Commit**: ${{ github.sha }}
+            - **Author**: ${{ github.actor }}
+            - **Failed Job Link**: [View Detailed Logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+      
+      - name: Assign Issue
+        uses: octokit/request-action@v2.x
+        with:
+          route: POST /repos/${{ github.repository }}/issues/${{ steps.issue.outputs.issue-number }}/assignees
+          assignees: ${{ github.actor }}
+          token: ${{ secrets.GITHUB_TOKEN }}
