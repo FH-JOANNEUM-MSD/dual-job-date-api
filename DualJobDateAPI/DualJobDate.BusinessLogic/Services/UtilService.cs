@@ -3,6 +3,7 @@ using DualJobDate.BusinessObjects.Entities.Interface;
 using DualJobDate.BusinessObjects.Entities.Interface.Service;
 using DualJobDate.BusinessObjects.Entities.Models;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.EntityFrameworkCore;
 
 namespace DualJobDate.BusinessLogic.Services;
 
@@ -13,10 +14,22 @@ public class UtilService(IUnitOfWork unitOfWork) : IUtilService
         var ret = unitOfWork.InstitutionRepository.GetAllAsync();
         return ret;
     }
+    
+    public Task<Institution> GetInstitutionByKeyNameAsync(string keyName)
+    {
+        var ret = unitOfWork.InstitutionRepository.GetByName(keyName);
+        return ret;
+    }
 
     public Task<IQueryable<AcademicProgram>> GetAcademicProgramsAsync()
     {
         var ret = unitOfWork.AcademicProgramRepository.GetAllAsync();
+        return ret;
+    }
+    
+    public Task<AcademicProgram> GetAcademicProgramByKeyNameAndYearAsync(string keyName, int year)
+    {
+        var ret = unitOfWork.AcademicProgramRepository.GetByNameAndYear(keyName, year);
         return ret;
     }
 
@@ -60,5 +73,26 @@ public class UtilService(IUnitOfWork unitOfWork) : IUtilService
         unitOfWork.Commit();
         await unitOfWork.SaveChanges();
         return institution;
+    }
+    
+    public async Task<Company?> PutCompanyAsync(string name, int academicProgramId, int institutionId, string userId)
+    {
+        var i = await (await unitOfWork.CompanyRepository.GetAllAsync()).Where(x => x.Name == name && x.AcademicProgramId == academicProgramId && x.InstitutionId == institutionId).FirstOrDefaultAsync();
+        if (i != null)
+        {
+            throw new ArgumentException("Company already exists!");
+        }
+        unitOfWork.BeginTransaction();
+        var company = new Company()
+        {
+            Name = name,
+            AcademicProgramId = academicProgramId,
+            InstitutionId = institutionId,
+            UserId = userId
+        };
+        await unitOfWork.CompanyRepository.AddAsync(company);
+        unitOfWork.Commit();
+        await unitOfWork.SaveChanges();
+        return company;
     }
 }

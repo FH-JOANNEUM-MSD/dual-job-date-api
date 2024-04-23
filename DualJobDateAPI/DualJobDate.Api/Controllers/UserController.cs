@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Security.Authentication;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using AutoMapper;
@@ -7,6 +8,8 @@ using DualJobDate.BusinessObjects.Entities.Enum;
 using DualJobDate.BusinessObjects.Entities.Interface.Helper;
 using DualJobDate.BusinessObjects.Entities.Models;
 using DualJobDate.BusinessObjects.Dtos;
+using DualJobDate.BusinessObjects.Entities.Interface;
+using DualJobDate.BusinessObjects.Entities.Interface.Service;
 using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -25,7 +28,8 @@ public class UserController(
     IServiceProvider serviceProvider,
     IMapper mapper,
     RoleManager<Role> roleManager, 
-    IJwtAuthManager jwtAuthManager)
+    IJwtAuthManager jwtAuthManager,
+    IUtilService utilService)
     : ControllerBase
 {
     private const string LowerCase = "abcdefghijklmnopqrstuvwxyz";
@@ -57,7 +61,18 @@ public class UserController(
             if (model.Role == UserTypeEnum.Admin || model.Role == UserTypeEnum.Company)
                 return Unauthorized("You're not authorized to register an Admin or Company");
         }
-
+        
+        var inst = utilService.GetInstitutionsAsync().Result.Where(x => x.Id == institution);
+        if (inst == null)
+        {
+            return NotFound("Institution not found");
+        }
+        var ap = utilService.GetAcademicProgramsAsync().Result.Where(x => x.Id == program);
+        if (ap == null)
+        {
+            return NotFound("AcademicProgram not found");
+        }
+        
         var userStore = serviceProvider.GetRequiredService<IUserStore<User>>();
 
         if (string.IsNullOrEmpty(model.Email) || !EmailAddressAttribute.IsValid(model.Email))
@@ -84,6 +99,153 @@ public class UserController(
         await userManager.AddToRoleAsync(user, role.Name);
 
         return Ok($"User '{user.Email}' created successfully. ID: {user.Id}");
+    }
+
+    [Authorize("AdminOrInstitution")]
+    [HttpPut("RegisterStudentsFromJson")]
+    public async Task<ActionResult<Json>> RegisterStudentsFromJson([FromQuery] int? institutionId, int academicProgramId, [FromBody] List<RegisterStudentUserFromJsonModel> registerStudentUserFromJsonModelList)
+    {
+        var errorMessages = new List<string>();
+        var successMessages = new List<string>();
+
+        var userStore = serviceProvider.GetRequiredService<IUserStore<User>>();
+        
+
+        foreach (var registerStudentUser in registerStudentUserFromJsonModelList)
+        {
+            try
+            {
+                await RegisterUserFromJsonInformation(registerStudentUser, errorMessages, successMessages, userStore,
+                    institutionId, academicProgramId, UserTypeEnum.Student);
+            }
+            catch (AuthenticationException exc)
+            {
+                return BadRequest(exc.Message);
+            }
+            catch (KeyNotFoundException exc)
+            {
+                return NotFound(exc.Message);
+            }
+            catch
+            {
+                errorMessages.Add($"Error for email {registerStudentUser.Email} occurred.");
+            }
+        }
+        
+        return new Json { SuccesfullyRegistered = successMessages, FailedToRegister = errorMessages };
+
+    }
+    
+    [Authorize("AdminOrInstitution")]
+    [HttpPut("RegisterCompaniesFromJson")]
+    public async Task<ActionResult<Json>> RegisterCompaniesFromJson([FromQuery] int? institutionId, int academicProgramId, [FromBody] List<RegisterCompanyUserFromJsonModel> registerCompanyUserFromJsonModelList)
+    {
+        var errorMessages = new List<string>();
+        var successMessages = new List<string>();
+
+        var userStore = serviceProvider.GetRequiredService<IUserStore<User>>();
+        
+        
+        foreach (var registerCompanyUser in registerCompanyUserFromJsonModelList)
+        {
+            try
+            {
+                var user = await RegisterUserFromJsonInformation(registerCompanyUser, errorMessages, successMessages, userStore, institutionId, academicProgramId, UserTypeEnum.Company);
+
+                if (user != null)
+                {
+                    await utilService.PutCompanyAsync(registerCompanyUser.CompanyName, user.AcademicProgramId, user.InstitutionId,
+                        user.Id);
+                }
+            } catch (AuthenticationException exc)
+            {
+                return BadRequest(exc.Message);
+            }
+            catch (KeyNotFoundException exc)
+            {
+                return NotFound(exc.Message);
+            }
+            catch
+            {
+                errorMessages.Add($"Error for email {registerCompanyUser.Email} occurred.");
+            }
+        }
+        
+        return new Json { SuccesfullyRegistered = successMessages, FailedToRegister = errorMessages };
+
+    }
+
+    private async Task<User?> RegisterUserFromJsonInformation(IRegisterUserFromJsonModel registerUserFromJsonModel, ICollection<string> errorMessages, ICollection<string> successMessages, IUserStore<User> userStore, int? institutionId, int academicProgramId, UserTypeEnum userType)
+    {
+        var currentUser = await userManager.GetUserAsync(User);
+        int institution;
+        int academicProgram = academicProgramId;
+        if (User.IsInRole("Admin"))
+        {
+            if (institutionId == null)
+                throw new AuthenticationException("InstitutionId cannot be null!");
+            institution = (int)institutionId;
+        }
+        else
+        {
+            institution = currentUser.InstitutionId;
+        }
+        var inst = await utilService.GetInstitutionsAsync().Result.FirstOrDefaultAsync(x => x.Id == institution);
+        if (inst == null)
+        {
+            throw new KeyNotFoundException("Institution not found");
+        }
+        var ap = await utilService.GetAcademicProgramsAsync().Result.FirstOrDefaultAsync(x => x.Id == academicProgram);
+        if (ap == null)
+        {
+            throw new KeyNotFoundException("AcademicProgram not found");
+        }
+
+        if (string.IsNullOrEmpty(registerUserFromJsonModel.Email) ||
+            !EmailAddressAttribute.IsValid(registerUserFromJsonModel.Email))
+        {
+            errorMessages.Add(
+                $"Bad Request for email {registerUserFromJsonModel.Email}: Email '{registerUserFromJsonModel.Email}' is invalid.");
+            return null;
+        }
+
+        var user = new User()
+        {
+            Email = registerUserFromJsonModel.Email,
+            AcademicProgramId = academicProgram,
+            InstitutionId = institution,
+            IsNew = true,
+            UserType = userType
+        };
+
+        await userStore.SetUserNameAsync(user, registerUserFromJsonModel.Email, CancellationToken.None);
+
+        var password = GeneratePassword();
+
+        var result = await userManager.CreateAsync(user, password);
+
+        if (!result.Succeeded)
+        {
+            errorMessages.Add($"Bad Request for email {registerUserFromJsonModel.Email}: " +
+                              String.Join(";", result.Errors));
+            return null;
+        }
+
+        var role = await roleManager.Roles.Where(r => r.UserTypeEnum == userType)
+            .SingleOrDefaultAsync();
+        if (role == null)
+        {
+            errorMessages.Add($"Not found for email {registerUserFromJsonModel.Email}: Role doesn't exist");
+        }
+
+        await userManager.AddToRoleAsync(user, role.Name);
+
+        if (errorMessages.IsNullOrEmpty())
+        {
+            successMessages.Add($"Registration for email {registerUserFromJsonModel.Email} succeeded.");
+        }
+
+        return user;
     }
 
     [HttpPost]
@@ -290,4 +452,10 @@ public class UserController(
                 passwordChars[replaceIndex] = t[random.Next(t.Length)];
             }
     }
+}
+
+public class Json
+{
+    public List<string> SuccesfullyRegistered { get; set; }
+    public List<string> FailedToRegister { get; set; }
 }
