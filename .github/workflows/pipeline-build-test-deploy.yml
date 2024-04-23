@@ -3,10 +3,10 @@ name: .NET CI/CD Pipeline
 on:
   push:
     branches:
-      - cicd/notification # Ändern Sie dies auf "main" vor dem Merge
+      - dev # Ändern Sie dies auf "main" vor dem Merge
   pull_request:
     branches:
-      - cicd/notification # Ändern Sie dies auf "main" vor dem Merge
+      - dev # Ändern Sie dies auf "main" vor dem Merge
 
 env:
   REGISTRY: ghcr.io
@@ -16,6 +16,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: Simulate Failure
+        run: exit 1
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Setup .NET Core
