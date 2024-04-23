@@ -74,7 +74,7 @@ jobs:
 
   create_issue_on_failure:
     runs-on: ubuntu-latest
-    if: ${{ failure() }}
+    if: ${{ success() }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
