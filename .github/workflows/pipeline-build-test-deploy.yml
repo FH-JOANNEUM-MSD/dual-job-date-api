@@ -96,3 +96,13 @@ jobs:
             - **Commit**: ${{ github.sha }}
             - **Author**: ${{ github.actor }}
             - **Failed Job Link**: [View Detailed Logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          labels: |
+            bug
+
+      - name: Assign Issue
+        if: ${{ steps.create_issue.outputs.issue-number }}
+        uses: octokit/request-action@v2.x
+        with:
+          route: POST /repos/${{ github.repository }}/issues/${{ steps.issue.outputs.issue-number }}/assignees
+          assignees: ${{ github.actor }}  # Ersetzen Sie 'username' durch den GitHub-Benutzernamen, den Sie zuweisen möchten.
+          token: ${{ secrets.GITHUB_TOKEN }}
