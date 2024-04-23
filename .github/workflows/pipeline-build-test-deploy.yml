@@ -74,6 +74,7 @@ jobs:
 
   create_issue_on_failure:
     runs-on: ubuntu-latest
+    needs: [build, test, build-and-push-docker]
     permissions:
       contents: read
       issues: write
