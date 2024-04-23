@@ -3,10 +3,10 @@ name: .NET CI/CD Pipeline
 on:
   push:
     branches: 
-      - feature/tests #change to main before merge
+      - dev
   pull_request:
     branches:
-      - feature/tests #change to main before merge
+      - dev
 
 env:
   REGISTRY: ghcr.io
@@ -31,7 +31,7 @@ jobs:
 
     - name: Build
       working-directory: DualJobDateAPI
-      run: dotnet build --no-restore -c Release -o ${{github.workspace}}/bin/Release/net8.0/
+      run: dotnet build --no-restore -c Release
 
     - name: Cache NuGet Packages
       uses: actions/cache@v2
@@ -40,43 +40,20 @@ jobs:
         key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
         restore-keys: ${{ runner.os }}-nuget-
 
-    - name: List Build Artifacts
-      run: ls -la ${{github.workspace}}/bin/Release/net8.0/
-
-    - name: Publish Build Artifacts
-      uses: actions/upload-artifact@v2
-      with:
-        name: built-app
-        path: ${{github.workspace}}/bin/Release/net8.0/
-
   test:
     needs: build
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-
-    - name: Download Build Artifacts
-      uses: actions/download-artifact@v2
-      with:
-        name: built-app
-        path: ${{github.workspace}}/bin/Release/net8.0
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v2
       with:
         dotnet-version: '8.0'
 
-    - name: Find Test Project
-      id: find-project
-      run: |
-        find ${{github.workspace}}/bin/Release/net8.0 -name '*.csproj' -type f | head -n 1
-  
-    - name: Set Working Directory
-      run: cd ${{github.workspace}}/bin/Release/net8.0
-
     - name: Run Tests
+      working-directory: DualJobDateAPI
       run: |
-        dotnet test --no-build ${{ steps.find-project.outputs.path }} -c Release --verbosity detailed
-
+        dotnet test -c Release DualJobDateAPI.sln --verbosity detailed
       
   build-and-push-docker:
     permissions:
