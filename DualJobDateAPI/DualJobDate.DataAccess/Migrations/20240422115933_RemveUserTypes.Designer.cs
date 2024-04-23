@@ -3,6 +3,7 @@ using System;
 using DualJobDate.DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DualJobDate.DataAccess.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240422115933_RemveUserTypes")]
+    partial class RemveUserTypes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -150,7 +153,7 @@ namespace DualJobDate.DataAccess.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("varchar(255)");
+                        .HasColumnType("longtext");
 
                     b.Property<string>("UserId")
                         .IsRequired()
@@ -168,9 +171,6 @@ namespace DualJobDate.DataAccess.Migrations
                     b.HasIndex("InstitutionId");
 
                     b.HasIndex("UserId")
-                        .IsUnique();
-
-                    b.HasIndex("Name", "InstitutionId", "AcademicProgramId")
                         .IsUnique();
 
                     b.ToTable("Companies");
@@ -246,7 +246,7 @@ namespace DualJobDate.DataAccess.Migrations
 
                     b.Property<string>("KeyName")
                         .IsRequired()
-                        .HasColumnType("varchar(255)");
+                        .HasColumnType("longtext");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -256,9 +256,6 @@ namespace DualJobDate.DataAccess.Migrations
                         .HasColumnType("longtext");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("KeyName")
-                        .IsUnique();
 
                     b.ToTable("Institutions");
                 });

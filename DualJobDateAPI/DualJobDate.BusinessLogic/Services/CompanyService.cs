@@ -29,7 +29,11 @@ public class CompanyService(IUnitOfWork unitOfWork, UserManager<User> userManage
         // and include the StudentCompany data specifically for the given user.
         var result = await unitOfWork.CompanyRepository
             .GetAllAsync().Result
-            .Include(c => c.StudentCompanies.Where(sc => sc.StudentId == user.Id)) // Include only StudentCompany for the given user
+            .Include(c => c.StudentCompanies.Where(sc => sc.StudentId == user.Id)). // Include only StudentCompany for the given user
+            Include(x => x.CompanyDetails).
+            Include(x => x.Activities)
+            .Include(x => x.CompanyActivities).
+            Include(x => x.Addresses)
             .Where(c => c.AcademicProgramId == user.AcademicProgramId && c.IsActive)
             .ToListAsync();
         return result;
@@ -214,5 +218,21 @@ public class CompanyService(IUnitOfWork unitOfWork, UserManager<User> userManage
     public async Task DeleteCompany(int id)
     {
         await unitOfWork.CompanyRepository.DeleteAsync(id);
+    }
+
+    public async Task AddLocations(IEnumerable<Address> addresses, Company company)
+    {
+        unitOfWork.BeginTransaction();
+        foreach (var address in addresses)
+        {
+            address.Company = company;
+            await unitOfWork.AdressRepository.AddAsync(address);
+        }
+        unitOfWork.Commit();
+    }
+
+    public async Task<IEnumerable<Address>> GetLocationsByCompanyAsync(Company company)
+    {
+        return await unitOfWork.AdressRepository.GetAllAsync().Result.Where(a => a.CompanyId == company.Id).ToListAsync();
     }
 }

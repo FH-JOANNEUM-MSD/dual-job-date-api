@@ -18,7 +18,12 @@ public class ModelToResourceProfile : Profile
         CreateMap<AcademicProgram, AcademicProgramDto>();
         CreateMap<User, CompanyUserDto>();
         CreateMap<Company, UserCompanyDto>();
-        CreateMap<Activity, ActivityDto>();
         CreateMap<Address, AddressDto>();
+        CreateMap<Company, CompanyDto>()
+            .ForMember(dest => dest.Activities, opt => opt.MapFrom(src => src.CompanyActivities.Select(ca => new ActivityDto {
+                Id = ca.Activity.Id,
+                Name = ca.Activity.Name,
+                Value = ca.Value
+            }).ToList()));
     }
 }
