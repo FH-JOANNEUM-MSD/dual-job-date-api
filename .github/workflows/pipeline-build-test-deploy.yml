@@ -85,6 +85,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Create Issue
+        id: create_issue
         uses: imjohnbo/issue-bot@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
