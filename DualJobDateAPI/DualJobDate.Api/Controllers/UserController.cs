@@ -231,7 +231,7 @@ public class UserController(
             return null;
         }
 
-        var role = await roleManager.Roles.Where(r => r.UserTypeEnum == UserTypeEnum.Student)
+        var role = await roleManager.Roles.Where(r => r.UserTypeEnum == userType)
             .SingleOrDefaultAsync();
         if (role == null)
         {
