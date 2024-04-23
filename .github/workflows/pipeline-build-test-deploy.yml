@@ -74,6 +74,9 @@ jobs:
 
   create_issue_on_failure:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
     if: ${{ success() }}
     steps:
       - name: Checkout code
