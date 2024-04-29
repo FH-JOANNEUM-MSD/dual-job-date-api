@@ -41,16 +41,16 @@ public class CompanyService(IUnitOfWork unitOfWork, UserManager<User> userManage
 
 
 
-    public Task<List<Company>> GetCompaniesByInstitutionAsync(int institutionId)
+    public async Task<List<Company>> GetCompaniesByInstitutionAsync(int institutionId)
     {
-        var result = unitOfWork.CompanyRepository.GetAllAsync();
-        return result.Result.Where(c => c.InstitutionId == institutionId).ToListAsync();
+        var companies = unitOfWork.CompanyRepository.GetAllAsync();
+        return companies.Result.Where(c => c.InstitutionId == institutionId).ToList();
     }
 
-    public Task<List<Company>> GetCompaniesByAcademicProgramAsync(int academicProgramId)
+    public async Task<List<Company>> GetCompaniesByAcademicProgramAsync(int academicProgramId)
     {
-        var result = unitOfWork.CompanyRepository.GetAllAsync();
-        return result.Result.Where(c => c.AcademicProgramId == academicProgramId).ToListAsync();
+        var companies = await unitOfWork.CompanyRepository.GetAllAsync();
+        return companies.Where(c => c.AcademicProgramId == academicProgramId).ToList();
     }
 
     public async Task UpdateCompany(UpdateCompanyModel model, Company company)

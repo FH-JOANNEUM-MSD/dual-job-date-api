@@ -32,18 +32,22 @@ public class CompanyController(ICompanyService companyService, IMapper mapper, U
 
     [Authorize("AdminOrInstitution")]
     [HttpGet("Companies")]
-    public async Task<ActionResult<IEnumerable<CompanyDto>>> GetCompanies([FromQuery] int? institutionId,
+    public async Task<ActionResult<IEnumerable<CompanyDto>>> GetCompanies(
+        [FromQuery] int? institutionId,
         [FromQuery] int? academicProgramId)
     {
         var user = await userManager.GetUserAsync(User);
-        if (user == null) return Unauthorized();
+        if (user is null)
+            return Unauthorized();
 
         var companies = new List<Company>();
         if (User.IsInRole("Admin") && institutionId.HasValue)
-            companies = await companyService.GetCompaniesByInstitutionAsync((int)institutionId);
-        else if (academicProgramId.HasValue)
-            companies = await companyService.GetCompaniesByAcademicProgramAsync((int)academicProgramId);
-        else
+            companies = await companyService.GetCompaniesByInstitutionAsync(institutionId.Value);
+
+        if (academicProgramId.HasValue)
+            companies = await companyService.GetCompaniesByAcademicProgramAsync(academicProgramId.Value);
+        
+        if (!academicProgramId.HasValue & !institutionId.HasValue)
             return BadRequest("Invalid request parameters or insufficient permissions.");
 
         var companyResources = mapper.Map<IEnumerable<Company>, IEnumerable<CompanyDto>>(companies);
