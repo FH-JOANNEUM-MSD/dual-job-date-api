@@ -93,7 +93,6 @@ public class CompanyService(IUnitOfWork unitOfWork, UserManager<User> userManage
         return Convert.TryFromBase64String(base64, buffer, out int bytesParsed);
     }
 
-
     public async Task UpdateCompanyActivity(bool isActive, Company company)
     {
         unitOfWork.BeginTransaction();
@@ -107,7 +106,7 @@ public class CompanyService(IUnitOfWork unitOfWork, UserManager<User> userManage
     {
         if (company.CompanyDetailsId == null)
             return null;
-        return await unitOfWork.CompanyDetailsRepository.GetByIdAsync((int)company.CompanyDetailsId);
+        return await unitOfWork.CompanyDetailsRepository.GetByIdAsync(company.CompanyDetailsId.Value);
     }
 
     public async Task UpdateCompanyDetails(CompanyDetails details, Company company)
@@ -129,7 +128,6 @@ public class CompanyService(IUnitOfWork unitOfWork, UserManager<User> userManage
              throw new ArgumentException("Contact person in company cannot be null or whitespace.");
         }
         
-
         if (!string.IsNullOrWhiteSpace(details.TeamPictureBase64) && !IsBase64String(details.TeamPictureBase64))
         {
             throw new ArgumentException("TeamPictureBase64 must be a valid Base64 string.");

@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Xunit;
+using DualJobDate.BusinessLogic.Exceptions;
 
 namespace DualJobDate.Testing.Controller;
 
@@ -37,6 +38,13 @@ public class CompanyControllerTests
             _userManagerMock.Object
         );
         SetupMapper();
+    }
+
+    [Fact]
+    public async Task GetCompany_ReturnCompanyNotFoundException()
+    {
+        async Task Act() => await _controller.GetCompany(1);
+        await Assert.ThrowsAsync<CompanyNotFoundException>(Act);
     }
 
     [Fact]
