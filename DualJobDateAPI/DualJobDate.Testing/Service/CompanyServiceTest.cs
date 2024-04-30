@@ -60,7 +60,7 @@ public class CompanyServiceTest
         }.AsQueryable();
 
         _unitOfWorkMock.Setup(service =>
-                service.CompanyRepository.GetAllAsync())
+            service.CompanyRepository.GetAllAsync())
             .ReturnsAsync(companies);
 
         // Act
