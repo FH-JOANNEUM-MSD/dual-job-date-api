@@ -360,7 +360,7 @@ public class UserController(
 
         var users = await query.ToListAsync();
 
-        if (users.IsNullOrEmpty()) return NotFound("No user found!");
+        if (users.IsNullOrEmpty()) return Ok(new List<UserDto>());
 
         var userResources = mapper.Map<IEnumerable<User>, IEnumerable<UserDto>>(users);
         return Ok(userResources);
