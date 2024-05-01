@@ -67,7 +67,7 @@ public class UserController(
         {
             return NotFound("Institution not found");
         }
-        var ap = utilService.GetAcademicProgramsAsync().Result.Where(x => x.Id == program);
+        var ap = utilService.GetAcademicProgramsAsync(null).Result.Where(x => x.Id == program);
         if (ap == null)
         {
             return NotFound("AcademicProgram not found");
@@ -195,7 +195,7 @@ public class UserController(
         {
             throw new KeyNotFoundException("Institution not found");
         }
-        var ap = await utilService.GetAcademicProgramsAsync().Result.FirstOrDefaultAsync(x => x.Id == academicProgram);
+        var ap = await utilService.GetAcademicProgramsAsync(null).Result.FirstOrDefaultAsync(x => x.Id == academicProgram);
         if (ap == null)
         {
             throw new KeyNotFoundException("AcademicProgram not found");
