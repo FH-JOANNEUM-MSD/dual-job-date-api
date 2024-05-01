@@ -3,6 +3,7 @@ using System.Security.Authentication;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using AutoMapper;
+using DualJobDate.BusinessLogic.Exceptions;
 using DualJobDate.BusinessObjects.Entities;
 using DualJobDate.BusinessObjects.Entities.Enum;
 using DualJobDate.BusinessObjects.Entities.Interface.Helper;
@@ -22,7 +23,7 @@ namespace DualJobDate.Api.Controllers;
 
 [Route("[controller]")]
 [ApiController]
-public class UserController(
+public class UserController(ICompanyService companyService,
     UserManager<User> userManager,
     SignInManager<User> signInManager,
     IServiceProvider serviceProvider,
@@ -38,6 +39,65 @@ public class UserController(
     private const string SpecialChars = "!@#$%^&*()_-+=[{]};:<>|./?";
     private static readonly EmailAddressAttribute EmailAddressAttribute = new();
 
+    [Authorize("AdminOrInstitution")]
+    [HttpPost("RegisterCompany")]
+    public async Task<ActionResult<CompanyDto>> AddCompany([FromBody] RegisterCompanyModel model)
+    {
+        var adminUser = await userManager.GetUserAsync(User);
+        int? program = null;
+        IQueryable<Institution> inst;
+        IQueryable<AcademicProgram> ap;
+        if (User.IsInRole("Admin"))
+        { 
+            ap = utilService.GetAcademicProgramsAsync().Result.Where(x => x.Id == model.AcademicProgramId);
+            if (ap == null)
+            {
+                return NotFound("AcademicProgram not found");
+            }
+            program = model.AcademicProgramId;
+        }
+        else
+        {
+
+            ap = utilService.GetAcademicProgramsAsync().Result.Where(x => x.Id == model.AcademicProgramId && x.InstitutionId == adminUser.InstitutionId);
+            if (ap == null)
+            {
+                return Unauthorized("You are not authorized to register a company for given academic program");
+            }
+            program = model.AcademicProgramId;
+        }
+        
+        var userStore = serviceProvider.GetRequiredService<IUserStore<User>>();
+
+        if (string.IsNullOrEmpty(model.UserEmail) || !EmailAddressAttribute.IsValid(model.UserEmail))
+            return BadRequest($"Email '{model.UserEmail}' is invalid.");
+
+        var user = new User
+        {
+            Email = model.UserEmail,
+            UserType = UserTypeEnum.Company,
+            IsNew = true,
+            AcademicProgramId = program
+        };
+
+        await userStore.SetUserNameAsync(user, model.UserEmail, CancellationToken.None);
+
+        var password = GeneratePassword();
+
+        var result = await userManager.CreateAsync(user, password);
+
+        if (!result.Succeeded) return BadRequest(result.Errors);
+        var role = await roleManager.Roles.Where(r => r.UserTypeEnum == UserTypeEnum.Company).SingleOrDefaultAsync();
+        if (role == null) return NotFound("Role doesn't exist");
+        await userManager.AddToRoleAsync(user, role.Name);
+        
+        var company = await companyService.AddCompany(model.AcademicProgramId, model.CompanyName, user);
+        if (company is null)
+            throw new CompanyNotFoundException();
+
+        var companyResource = mapper.Map<Company, CompanyDto>(company);
+        return Ok(companyResource);
+    }
 
     [Authorize("AdminOrInstitution")]
     [HttpPut]
@@ -51,14 +111,14 @@ public class UserController(
         {
             if (model.AcademicProgramId == null)
             {
-                return BadRequest("AcademicProgram is mandatory for Student or Comapny");
+                return BadRequest("AcademicProgram is mandatory for Student");
             }
         }
         else
         {
             if (model.InstitutionId == null)
             {
-                return BadRequest("Institution is mandatory for Student or Comapny");
+                return BadRequest("Institution is mandatory for Student");
             }
         }
         IQueryable<Institution> inst;
@@ -95,7 +155,7 @@ public class UserController(
                 ap = utilService.GetAcademicProgramsAsync().Result.Where(x => x.Id == model.AcademicProgramId && x.InstitutionId == adminUser.InstitutionId);
                 if (ap == null)
                 {
-                    return NotFound("AcademicProgram not found");
+                    return Unauthorized("You are not authorized to register a user for given academic program");
                 }
                 program = (int)model.AcademicProgramId;
             }

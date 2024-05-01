@@ -9,10 +9,10 @@ namespace DualJobDate.BusinessLogic.Services;
 
 public class StudentCompanyService(IUnitOfWork unitOfWork) : IStudentCompanyService
 {
-    public async Task<List<StudentCompany>> GetStudentCompaniesAsync()
+    public async Task<List<StudentCompany>> GetStudentCompaniesAsync(int id)
     {
-        var result = (await unitOfWork.StudentCompanyRepository.GetAllAsync());
-        return await result.ToListAsync();
+        var result = await unitOfWork.StudentCompanyRepository.GetAllAsync().Result.Where(s => s.Student.AcademicProgramId == id).ToListAsync();
+        return result;
     }
     
     public async Task<List<StudentCompany>> GetStudentCompaniesByStudentIdAsync(string studentId)

@@ -6,25 +6,31 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using AutoMapper;
 using DualJobDate.BusinessObjects.Dtos;
+using Microsoft.EntityFrameworkCore;
 
 namespace DualJobDate.Api.Controllers;
 
 [ApiController]
 [Authorize]
 [Route("[controller]")]
-public class StudentCompanyController(UserManager<User> userManager, ICompanyService companyService, IStudentCompanyService studentCompanyService, IMapper mapper) : ControllerBase
+public class StudentCompanyController(UserManager<User> userManager, IUtilService utilService, ICompanyService companyService, IStudentCompanyService studentCompanyService, IMapper mapper) : ControllerBase
 {
     [Authorize(Policy = "AdminOrInstitution")]
     [HttpGet("GetLikesAndDislikes")]
-    public async Task<ActionResult<List<StudentCompanyDto>>> GetStudentCompanies()
+    public async Task<ActionResult<List<StudentCompanyDto>>> GetStudentCompanies(int academicProgramId)
     {
         var user = await userManager.GetUserAsync(User);
+        var ap = await utilService.GetAcademicProgramsAsync().Result.Where(ap => ap.Id == academicProgramId).SingleOrDefaultAsync();
+        if (User.IsInRole("Institution") && user.InstitutionId != ap.InstitutionId)
+        {
+            return Unauthorized("No permission to see Likes from this Academic Program");
+        }
         if (user == null)
         {
             return Unauthorized();
         }
         
-        var studentCompanies = await studentCompanyService.GetStudentCompaniesAsync();
+        var studentCompanies = await studentCompanyService.GetStudentCompaniesAsync(academicProgramId);
         var studentCompanyDtoList = mapper.Map<List<StudentCompany>, List<StudentCompanyDto>>(studentCompanies);
         return Ok(studentCompanyDtoList);
     }
@@ -34,6 +40,11 @@ public class StudentCompanyController(UserManager<User> userManager, ICompanySer
     public async Task<ActionResult<List<StudentCompanyDto>>> GetStudentCompaniesByStudentId([FromQuery] string? studentId)
     {
         var user = await userManager.GetUserAsync(User);
+        var student = await userManager.Users.Include(u => u.AcademicProgram).Where(u => u.Id == studentId).SingleOrDefaultAsync();
+        if (User.IsInRole("Institution") && user.InstitutionId != student.AcademicProgram.InstitutionId)
+        {
+            return Unauthorized("No permission to see Likes from this Academic Program");
+        }
         if (user == null)
         {
             return Unauthorized();

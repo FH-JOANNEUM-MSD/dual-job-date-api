@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Mvc;
 using DualJobDate.BusinessLogic.Exceptions;
 using DualJobDate.BusinessObjects.Entities.Enum;
 using Microsoft.EntityFrameworkCore;
-using MySqlX.XDevAPI.Common;
 
 namespace DualJobDate.API.Controllers;
 
@@ -45,25 +44,11 @@ public class CompanyController(ICompanyService companyService, IMapper mapper, U
         IQueryable<Company> companies;
         if (User.IsInRole(UserTypeEnum.Admin.ToString()))
         {
-            if (institutionId.HasValue)
-            {
-                companies = companyquerable.Where(x => x.AcademicProgram.InstitutionId == institutionId);
-            }
-            else
-            {
-                companies = companyquerable;
-            }
+            companies = institutionId.HasValue ? companyquerable.Where(x => x.AcademicProgram.InstitutionId == institutionId) : companyquerable;
         }
         else
         {
-            if (academicProgramId.HasValue)
-            {
-                companies = companyquerable.Where(x => x.AcademicProgramId == academicProgramId);
-            }
-            else
-            {
-                companies = companyquerable.Where(x => x.AcademicProgram.InstitutionId == user.InstitutionId);
-            }        
+            companies = academicProgramId.HasValue ? companyquerable.Where(x => x.AcademicProgramId == academicProgramId) : companyquerable.Where(x => x.AcademicProgram.InstitutionId == user.InstitutionId);
         }
         var companyList = await companies.ToListAsync();
         var companyResources = mapper.Map<IEnumerable<Company>, IEnumerable<CompanyDto>>(companyList);
@@ -120,16 +105,35 @@ public class CompanyController(ICompanyService companyService, IMapper mapper, U
         }
     }
 
-    //TODO Refacotring
     [Authorize(Policy = "WebApp")]
     [HttpPut("IsActive")]
-    public async Task<IActionResult> UpdateCompanyActivity([FromQuery] int id, [FromQuery] bool isActive)
+    public async Task<IActionResult> UpdateCompanyActivity([FromQuery] int? id, [FromQuery] bool isActive)
     {
         var user = await userManager.GetUserAsync(User);
+        Company? company;
+        if (User.IsInRole("Admin") || User.IsInRole("Institution"))
+        {
+            if (id == null)
+            {
+                return BadRequest("Insufficient Id");
+            }
+            company = await companyService.GetCompanyByIdAsync((int)id);
+        }
+        else
+        {
+            company = await companyService.GetCompanyByUser(user);
+        }
+        
         if (user is null)
             throw new UserNotFoundException();
 
-        var company = await companyService.GetCompanyByUser(user);
+        if (User.IsInRole("Institution"))
+        {
+            if (user.InstitutionId != company.AcademicProgram.InstitutionId)
+            {
+                return Unauthorized("No permission to change this company");
+            }
+        }
         if (company is null)
             throw new CompanyNotFoundException();
 
@@ -185,22 +189,6 @@ public class CompanyController(ICompanyService companyService, IMapper mapper, U
             mapper.Map<IEnumerable<ActivityDto>, IEnumerable<CompanyActivity>>(resources);
         await companyService.UpdateCompanyActivities(companyActivities, user.Company);
         return Ok();
-    }
-
-    [Authorize("AdminOrInstitution")]
-    [HttpPost("Register")]
-    public async Task<ActionResult<CompanyDto>> AddCompany([FromBody] RegisterCompanyModel model)
-    {
-        var user = await userManager.GetUserAsync(User);
-        if (user is null)
-            throw new UserNotFoundException();
-
-        var company = await companyService.AddCompany(model.AcademicProgramId, model.CompanyName, user);
-        if (company is null)
-            throw new CompanyNotFoundException();
-
-        var companyResource = mapper.Map<Company, CompanyDto>(company);
-        return Ok(companyResource);
     }
     
     [Authorize("Company")]
