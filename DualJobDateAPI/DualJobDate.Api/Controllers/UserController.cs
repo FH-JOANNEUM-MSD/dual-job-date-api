@@ -346,7 +346,6 @@ public class UserController(
     {
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Unauthorized();
-        var users = new List<User>();
 
         var query = userManager.Users.Include(u => u.Institution).Include(u => u.AcademicProgram).Include(u => u.Company).AsQueryable();
 
@@ -359,11 +358,11 @@ public class UserController(
 
         if (userType != UserTypeEnum.Default) query = query.Where(u => u.UserType == userType);
 
-        var usersList = await query.ToListAsync();
+        var users = await query.ToListAsync();
 
-        if (usersList.IsNullOrEmpty()) return NotFound("No user found!");
+        if (users.IsNullOrEmpty()) return Ok(new List<UserDto>());
 
-        var userResources = mapper.Map<IEnumerable<User>, IEnumerable<UserDto>>(usersList);
+        var userResources = mapper.Map<IEnumerable<User>, IEnumerable<UserDto>>(users);
         return Ok(userResources);
     }
 
