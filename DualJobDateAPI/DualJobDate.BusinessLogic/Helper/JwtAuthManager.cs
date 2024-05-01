@@ -8,7 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace DualJobDate.BusinessLogic.Helper
 {
-    public class JwtAuthManager(UserManager<User> userManager,byte[] secret,  string issuer, string audience, int expireDate1, int expireDate2) : IJwtAuthManager
+    public class JwtAuthManager(UserManager<User> userManager, byte[] secret,  string issuer, string audience, int expireDate1, int expireDate2) : IJwtAuthManager
     {
         public async Task<JwtAuthResultViewModel> GenerateTokens(User user, DateTime now)
         {
@@ -21,7 +21,10 @@ namespace DualJobDate.BusinessLogic.Helper
                 AccessToken = new JwtSecurityTokenHandler().WriteToken(accessToken),
                 ExpiresIn = expireDate1,
                 RefreshToken = new JwtSecurityTokenHandler().WriteToken(refreshToken),
-                IsNew = user.IsNew
+                IsNew = user.IsNew,
+                UserId = user.Id,
+                Email = user.Email,
+                UserType = user.UserType
             };
             return jwtResult;
         }
