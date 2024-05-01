@@ -349,12 +349,21 @@ public class UserController(
 
         var query = userManager.Users.Include(u => u.Institution).Include(u => u.AcademicProgram).Include(u => u.Company).AsQueryable();
 
-        if (User.IsInRole("Admin") && institutionId.HasValue)
-            query = query.Where(u => u.InstitutionId == institutionId);
-        else if (academicProgramId.HasValue)
-            query = query.Where(u => u.AcademicProgramId == academicProgramId);
-        else
-            return BadRequest("Invalid request parameters or insufficient permissions.");
+        if (User.IsInRole("Admin"))
+        {
+            if (institutionId.HasValue)
+                query = query.Where(u => u.InstitutionId == institutionId);
+            if (academicProgramId.HasValue)
+                query = query.Where(u => u.AcademicProgramId == academicProgramId);
+        }
+
+        if (!User.IsInRole("Admin"))
+        {
+            if (!academicProgramId.HasValue)
+                return BadRequest("Invalid request parameters or insufficient permissions.");
+            if (academicProgramId.HasValue)
+                query = query.Where(u => u.AcademicProgramId == academicProgramId);
+        }
 
         if (userType != UserTypeEnum.Default) query = query.Where(u => u.UserType == userType);
 
