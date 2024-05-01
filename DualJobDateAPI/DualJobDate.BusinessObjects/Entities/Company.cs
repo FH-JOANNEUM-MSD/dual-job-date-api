@@ -3,7 +3,7 @@ using DualJobDate.BusinessObjects.Entities.Base.Interface;
 
 namespace DualJobDate.BusinessObjects.Entities;
 
-public class Company : BaseEntity, IBaseAcademicProgramEntity
+public class Company : BaseEntity
 {
     public string Name { get; set; } = string.Empty;
     public string? Industry { get; set; }
@@ -24,6 +24,4 @@ public class Company : BaseEntity, IBaseAcademicProgramEntity
     public ICollection<StudentCompany> StudentCompanies { get; set; } = [];
     public AcademicProgram? AcademicProgram { get; set; }
     public int AcademicProgramId { get; set; }
-    public Institution? Institution { get; set; }
-    public int InstitutionId { get; set; }
 }

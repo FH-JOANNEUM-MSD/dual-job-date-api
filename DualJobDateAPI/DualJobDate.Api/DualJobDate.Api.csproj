@@ -8,7 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="AutoMapper" Version="13.0.1"/>
+        <PackageReference Include="AutoMapper" Version="13.0.1" />
         <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.4" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.4" />
         <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.4" />
@@ -17,25 +17,25 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="7.5.1" />
-        <PackageReference Include="MySql.EntityFrameworkCore" Version="8.0.0"/>
-        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0"/>
-        <PackageReference Include="Swashbuckle.AspNetCore.Filters" Version="8.0.1"/>
+        <PackageReference Include="MySql.EntityFrameworkCore" Version="8.0.0" />
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+        <PackageReference Include="Swashbuckle.AspNetCore.Filters" Version="8.0.1" />
         <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.5.1" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\DualJobDate.BusinessLogic\DualJobDate.BusinessLogic.csproj"/>
-        <ProjectReference Include="..\DualJobDate.BusinessObjects\DualJobDate.BusinessObjects.csproj"/>
-        <ProjectReference Include="..\DualJobDate.DataAccess\DualJobDate.DataAccess.csproj"/>
-        <ProjectReference Include="..\DualJobDate.DatabaseInitializer\DualJobDate.DatabaseInitializer.csproj"/>
+        <ProjectReference Include="..\DualJobDate.BusinessLogic\DualJobDate.BusinessLogic.csproj" />
+        <ProjectReference Include="..\DualJobDate.BusinessObjects\DualJobDate.BusinessObjects.csproj" />
+        <ProjectReference Include="..\DualJobDate.DataAccess\DualJobDate.DataAccess.csproj" />
+        <ProjectReference Include="..\DualJobDate.DatabaseInitializer\DualJobDate.DatabaseInitializer.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-        <None Remove="email.html"/>
+        <None Remove="email.html" />
     </ItemGroup>
 
     <ItemGroup>
-        <Compile Remove="Controllers\InstitutionController.cs"/>
+        <Compile Remove="Controllers\InstitutionController.cs" />
     </ItemGroup>
 
 </Project>

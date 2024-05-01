@@ -8,5 +8,4 @@ public class RegisterUserModel
     public required UserTypeEnum Role { get; set; }
     public int? InstitutionId { get; set; }
     public int? AcademicProgramId { get; set; }
-    public int? CompanyId { get; set; }
 }

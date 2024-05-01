@@ -45,32 +45,48 @@ public class UserController(
     public async Task<IActionResult> RegisterUser([FromBody] RegisterUserModel model)
     {
         var adminUser = await userManager.GetUserAsync(User);
-        int institution;
-        int program;
+        int? institution = null;
+        int? program = null;
+        IQueryable<Institution> inst;
+        IQueryable<AcademicProgram> ap;
         if (User.IsInRole("Admin"))
         {
-            if (model.InstitutionId == null || model.AcademicProgramId == null)
-                return BadRequest("InstitutionId or AcademicProgramId cannot be null!");
-            institution = (int)model.InstitutionId;
-            program = (int)model.AcademicProgramId;
+            if (model.InstitutionId != null)
+            {
+                inst = utilService.GetInstitutionsAsync().Result.Where(x => x.Id == model.InstitutionId);
+                if (inst == null)
+                {
+                    return NotFound("Institution not found");
+                }
+                institution = (int)model.InstitutionId;
+            }else if (model.AcademicProgramId != null)
+            {
+                ap = utilService.GetAcademicProgramsAsync().Result.Where(x => x.Id == model.AcademicProgramId);
+                if (ap == null)
+                {
+                    return NotFound("AcademicProgram not found");
+                }
+
+                program = (int)model.AcademicProgramId;
+            }
+            else
+            {
+                return BadRequest("InstitutionId and AcademicProgramId cannot be null!");
+            }
         }
         else
         {
-            institution = adminUser.InstitutionId;
-            program = adminUser.AcademicProgramId;
-            if (model.Role == UserTypeEnum.Admin || model.Role == UserTypeEnum.Company)
-                return Unauthorized("You're not authorized to register an Admin or Company");
-        }
-        
-        var inst = utilService.GetInstitutionsAsync().Result.Where(x => x.Id == institution);
-        if (inst == null)
-        {
-            return NotFound("Institution not found");
-        }
-        var ap = utilService.GetAcademicProgramsAsync(null).Result.Where(x => x.Id == program);
-        if (ap == null)
-        {
-            return NotFound("AcademicProgram not found");
+            if (model.AcademicProgramId != null)
+            {
+                ap = utilService.GetAcademicProgramsAsync().Result.Where(x => x.Id == model.AcademicProgramId && x.InstitutionId == adminUser.InstitutionId);
+                if (ap == null)
+                {
+                    return NotFound("AcademicProgram not found");
+                }
+                program = (int)model.AcademicProgramId;
+            }
+            if (model.Role == UserTypeEnum.Admin || model.Role == UserTypeEnum.Institution)
+                return Unauthorized("You're not authorized to register an Admin or Institution");
         }
         
         var userStore = serviceProvider.GetRequiredService<IUserStore<User>>();
@@ -83,7 +99,7 @@ public class UserController(
             Email = model.Email,
             UserType = model.Role,
             IsNew = true,
-            InstitutionId = institution,
+            InstitutionId = institution ?? null,
             AcademicProgramId = program
         };
 
@@ -103,7 +119,7 @@ public class UserController(
 
     [Authorize("AdminOrInstitution")]
     [HttpPut("RegisterStudentsFromJson")]
-    public async Task<ActionResult<Json>> RegisterStudentsFromJson([FromQuery] int? institutionId, int academicProgramId, [FromBody] List<RegisterStudentUserFromJsonModel> registerStudentUserFromJsonModelList)
+    public async Task<ActionResult<Json>> RegisterStudentsFromJson([FromQuery] int academicProgramId, [FromBody] List<RegisterStudentUserFromJsonModel> registerStudentUserFromJsonModelList)
     {
         var errorMessages = new List<string>();
         var successMessages = new List<string>();
@@ -115,8 +131,7 @@ public class UserController(
         {
             try
             {
-                await RegisterUserFromJsonInformation(registerStudentUser, errorMessages, successMessages, userStore,
-                    institutionId, academicProgramId, UserTypeEnum.Student);
+                await RegisterUserFromJsonInformation(registerStudentUser, errorMessages, successMessages, userStore, academicProgramId, UserTypeEnum.Student);
             }
             catch (AuthenticationException exc)
             {
@@ -138,7 +153,7 @@ public class UserController(
     
     [Authorize("AdminOrInstitution")]
     [HttpPut("RegisterCompaniesFromJson")]
-    public async Task<ActionResult<Json>> RegisterCompaniesFromJson([FromQuery] int? institutionId, int academicProgramId, [FromBody] List<RegisterCompanyUserFromJsonModel> registerCompanyUserFromJsonModelList)
+    public async Task<ActionResult<Json>> RegisterCompaniesFromJson([FromQuery]int academicProgramId, [FromBody] List<RegisterCompanyUserFromJsonModel> registerCompanyUserFromJsonModelList)
     {
         var errorMessages = new List<string>();
         var successMessages = new List<string>();
@@ -150,11 +165,11 @@ public class UserController(
         {
             try
             {
-                var user = await RegisterUserFromJsonInformation(registerCompanyUser, errorMessages, successMessages, userStore, institutionId, academicProgramId, UserTypeEnum.Company);
+                var user = await RegisterUserFromJsonInformation(registerCompanyUser, errorMessages, successMessages, userStore, academicProgramId, UserTypeEnum.Company);
 
                 if (user != null)
                 {
-                    await utilService.PutCompanyAsync(registerCompanyUser.CompanyName, user.AcademicProgramId, user.InstitutionId,
+                    await utilService.PutCompanyAsync(registerCompanyUser.CompanyName, (int)user.AcademicProgramId,
                         user.Id);
                 }
             } catch (AuthenticationException exc)
@@ -175,27 +190,12 @@ public class UserController(
 
     }
 
-    private async Task<User?> RegisterUserFromJsonInformation(IRegisterUserFromJsonModel registerUserFromJsonModel, ICollection<string> errorMessages, ICollection<string> successMessages, IUserStore<User> userStore, int? institutionId, int academicProgramId, UserTypeEnum userType)
+    private async Task<User?> RegisterUserFromJsonInformation(IRegisterUserFromJsonModel registerUserFromJsonModel, ICollection<string> errorMessages, ICollection<string> successMessages, IUserStore<User> userStore, int academicProgramId, UserTypeEnum userType)
     {
         var currentUser = await userManager.GetUserAsync(User);
         int institution;
         int academicProgram = academicProgramId;
-        if (User.IsInRole("Admin"))
-        {
-            if (institutionId == null)
-                throw new AuthenticationException("InstitutionId cannot be null!");
-            institution = (int)institutionId;
-        }
-        else
-        {
-            institution = currentUser.InstitutionId;
-        }
-        var inst = await utilService.GetInstitutionsAsync().Result.FirstOrDefaultAsync(x => x.Id == institution);
-        if (inst == null)
-        {
-            throw new KeyNotFoundException("Institution not found");
-        }
-        var ap = await utilService.GetAcademicProgramsAsync(null).Result.FirstOrDefaultAsync(x => x.Id == academicProgram);
+        var ap = await utilService.GetAcademicProgramsAsync().Result.FirstOrDefaultAsync(x => x.Id == academicProgram);
         if (ap == null)
         {
             throw new KeyNotFoundException("AcademicProgram not found");
@@ -213,7 +213,6 @@ public class UserController(
         {
             Email = registerUserFromJsonModel.Email,
             AcademicProgramId = academicProgram,
-            InstitutionId = institution,
             IsNew = true,
             UserType = userType
         };
@@ -312,6 +311,18 @@ public class UserController(
     public async Task<ActionResult<CredentialsDto>> ResetPassword([FromQuery] string id)
     {
         var user = await userManager.FindByIdAsync(id);
+        var adminUser = await userManager.GetUserAsync(User);
+        if (User.IsInRole("Institution"))
+        {
+            if (user.UserType is UserTypeEnum.Admin or UserTypeEnum.Institution)
+            {
+                return Unauthorized("You can't change the password of an Admin User or Institution User");
+            }
+            if (user.AcademicProgram.InstitutionId != adminUser.InstitutionId)
+            {
+                return Unauthorized("No Permissions to change this user's name.");
+            }
+        }
         if (user is null) return NotFound();
 
         var code = await userManager.GeneratePasswordResetTokenAsync(user);
@@ -346,22 +357,44 @@ public class UserController(
     {
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Unauthorized();
-        var users = new List<User>();
 
         var query = userManager.Users.Include(u => u.Institution).Include(u => u.AcademicProgram).Include(u => u.Company).AsQueryable();
-
-        if (User.IsInRole("Admin") && institutionId.HasValue)
-            query = query.Where(u => u.InstitutionId == institutionId);
-        else if (academicProgramId.HasValue)
-            query = query.Where(u => u.AcademicProgramId == academicProgramId);
+        if (User.IsInRole("Admin"))
+        {
+            if (institutionId.HasValue)
+            {
+                query = query.Where(u => u.AcademicProgram.InstitutionId == institutionId || u.InstitutionId == institutionId);
+            }else if (academicProgramId.HasValue)
+            {
+                query = query.Where(u => u.AcademicProgramId == academicProgramId);
+            }        
+        }
         else
-            return BadRequest("Invalid request parameters or insufficient permissions.");
+        {
+                if (academicProgramId.HasValue)
+                {
+                    query = query.Include(u => u.AcademicProgram).Where(u => u.AcademicProgramId == academicProgramId && u.AcademicProgram.InstitutionId == user.InstitutionId);
+                }
+                else
+                {
+                    query = query.Include(u => u.AcademicProgram).Where(u => u.AcademicProgram.InstitutionId == user.InstitutionId);
+                }
 
-        if (userType != UserTypeEnum.Default) query = query.Where(u => u.UserType == userType);
+        }
+        if (User.IsInRole("Admin"))
+        {
+            if (userType != UserTypeEnum.Default) query = query.Where(u => u.UserType == userType);
+        }
+        else
+        {
+            if (userType is UserTypeEnum.Admin or UserTypeEnum.Institution)
+            {
+                return Unauthorized("You don't have the rights to see other Users than Students or Companies");
+            }
+            if (userType != UserTypeEnum.Default) query = query.Where(u => u.UserType == userType);
+        }
 
-        var usersList = await query.ToListAsync();
-
-        if (usersList.IsNullOrEmpty()) return NotFound("No user found!");
+        var usersList = await query.ToListAsync(); ;
 
         var userResources = mapper.Map<IEnumerable<User>, IEnumerable<UserDto>>(usersList);
         return Ok(userResources);
@@ -373,8 +406,21 @@ public class UserController(
     [Route("GetUser")]
     public async Task<ActionResult<IEnumerable<UserDto>>> GetUser([FromQuery] string id)
     {
-        var user = await userManager.Users.Where(u => u.Id == id).Include(u => u.Institution).Include(u => u.AcademicProgram).Include(u => u.Company).SingleOrDefaultAsync();
-        if (user == null) return NotFound("User not found");
+        var adminUser = await userManager.GetUserAsync(User);
+        User? user;
+        if (User.IsInRole("Admin"))
+        {
+            user = await userManager.Users.Where(u => u.Id == id).Include(u => u.Institution).Include(u => u.AcademicProgram).Include(u => u.Company).SingleOrDefaultAsync();
+        }
+        else
+        {
+            user = await userManager.Users.Where(u => u.Id == id).Include(u => u.Institution).Include(u => u.AcademicProgram).Include(u => u.Company).SingleOrDefaultAsync();
+            if (user.AcademicProgram.InstitutionId != adminUser.InstitutionId || user.UserType == UserTypeEnum.Admin || user.UserType == UserTypeEnum.Institution)
+            {
+                return Unauthorized("You don't have the rights to see this user");
+            }
+        }
+        if (user is null) return NotFound();
         var userResource = mapper.Map<User, UserDto>(user);
         return Ok(userResource);
     }
@@ -385,7 +431,20 @@ public class UserController(
     [Route("DeleteUser")]
     public async Task<IActionResult> DeleteUser([FromQuery] string id)
     {
-        var user = await userManager.FindByIdAsync(id);
+        var adminUser = await userManager.GetUserAsync(User);
+        User? user;
+        if (User.IsInRole("Admin"))
+        {
+            user = await userManager.Users.Where(u => u.Id == id).Include(u => u.Institution).Include(u => u.AcademicProgram).Include(u => u.Company).SingleOrDefaultAsync();
+        }
+        else
+        {
+            user = await userManager.Users.Where(u => u.Id == id).Include(u => u.Institution).Include(u => u.AcademicProgram).Include(u => u.Company).SingleOrDefaultAsync();
+            if (user.AcademicProgram.InstitutionId != adminUser.InstitutionId || user.UserType == UserTypeEnum.Admin || user.UserType == UserTypeEnum.Institution)
+            {
+                return Unauthorized("You don't have the rights to delete this user");
+            }
+        }
         if (user is null) return NotFound();
 
         var result = await userManager.DeleteAsync(user);

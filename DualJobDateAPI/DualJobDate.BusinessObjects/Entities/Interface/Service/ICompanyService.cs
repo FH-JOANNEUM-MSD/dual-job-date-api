@@ -7,8 +7,7 @@ public interface ICompanyService
 {
     Task<Company?> GetCompanyByIdAsync(int id);
     Task<List<Company>> GetActiveCompaniesAsync(User user);
-    Task<List<Company>> GetCompaniesByInstitutionAsync(int institutionId);
-    Task<List<Company>> GetCompaniesByAcademicProgramAsync(int academicProgramId);
+    Task<IQueryable<Company>> GetCompaniesAsync();
     Task UpdateCompany(UpdateCompanyModel companymodel, Company company);
     Task UpdateCompanyActivity(bool isActive, Company company);
     Task UpdateCompanyDetails(CompanyDetails details, Company company);

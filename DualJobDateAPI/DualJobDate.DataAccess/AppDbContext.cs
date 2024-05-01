@@ -57,7 +57,7 @@ public class AppDbContext : IdentityDbContext<User, Role, string>, IDbContext
                 .HasMany(e => e.Activities)
                 .WithMany(e => e.Companies)
                 .UsingEntity<CompanyActivity>();
-            builder.HasIndex(x => new { x.Name, x.InstitutionId, x.AcademicProgramId }).IsUnique();
+            builder.HasIndex(x => new { x.Name, x.AcademicProgramId }).IsUnique();
         });
             
 

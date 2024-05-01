@@ -3,6 +3,7 @@ using System.Text;
 using AutoMapper;
 using DualJobDate.Api.Extensions;
 using DualJobDate.Api.Mapping;
+using DualJobDate.Api.Middleware;
 using DualJobDate.BusinessLogic;
 using DualJobDate.BusinessLogic.Helper;
 using DualJobDate.BusinessObjects.Entities;
@@ -33,6 +34,7 @@ internal class Program
     {
         RepositoryRegistration.RegisterRepository(services);
         ServiceRegistration.RegisterServices(services, configuration);
+        ConfigureExceptionHandler(services);
         ConfigureCores(services);
         ConfigureDatabase(services, configuration);
         ConfigureIdentity(services);
@@ -41,6 +43,11 @@ internal class Program
         ConfigureSwagger(services);
         ConfigureMapper(services);
         services.AddControllers();
+    }
+
+    private static void ConfigureExceptionHandler(IServiceCollection services)
+    {
+        services.AddTransient<ExceptionHandlingMiddleware>();
     }
 
     private static void ConfigureDatabase(IServiceCollection services, IConfiguration configuration)

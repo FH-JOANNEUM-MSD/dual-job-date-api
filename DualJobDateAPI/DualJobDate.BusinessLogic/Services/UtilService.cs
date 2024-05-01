@@ -21,14 +21,9 @@ public class UtilService(IUnitOfWork unitOfWork) : IUtilService
         return ret;
     }
 
-    public async Task<IQueryable<AcademicProgram>> GetAcademicProgramsAsync(int? institutionId)
+    public Task<IQueryable<AcademicProgram>> GetAcademicProgramsAsync()
     {
-        var ret = await unitOfWork.AcademicProgramRepository.GetAllAsync();
-        if (institutionId is not null)
-        {
-            ret = ret.Where(ap => ap.InstitutionId == institutionId);
-        }
-
+        var ret = unitOfWork.AcademicProgramRepository.GetAllAsync();
         return ret;
     }
     
@@ -80,9 +75,9 @@ public class UtilService(IUnitOfWork unitOfWork) : IUtilService
         return institution;
     }
     
-    public async Task<Company?> PutCompanyAsync(string name, int academicProgramId, int institutionId, string userId)
+    public async Task<Company?> PutCompanyAsync(string name, int academicProgramId, string userId)
     {
-        var i = await (await unitOfWork.CompanyRepository.GetAllAsync()).Where(x => x.Name == name && x.AcademicProgramId == academicProgramId && x.InstitutionId == institutionId).FirstOrDefaultAsync();
+        var i = await (await unitOfWork.CompanyRepository.GetAllAsync()).Where(x => x.Name == name && x.AcademicProgramId == academicProgramId).FirstOrDefaultAsync();
         if (i != null)
         {
             throw new ArgumentException("Company already exists!");
@@ -92,7 +87,6 @@ public class UtilService(IUnitOfWork unitOfWork) : IUtilService
         {
             Name = name,
             AcademicProgramId = academicProgramId,
-            InstitutionId = institutionId,
             UserId = userId
         };
         await unitOfWork.CompanyRepository.AddAsync(company);
