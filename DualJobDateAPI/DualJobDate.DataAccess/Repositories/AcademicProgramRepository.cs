@@ -13,8 +13,4 @@ public class AcademicProgramRepository(AppDbContext dbContext)
             .SingleOrDefaultAsync(ap => ap.KeyName == KeyName && ap.Year == Year);
         return result;
     }
-    public Task<IQueryable<AcademicProgram>> GetByInstitutionId(int institutionId)
-    {
-        return Task.FromResult(dbContext.Set<AcademicProgram>().Where(ap => ap.InstitutionId == institutionId));
-    }
 }

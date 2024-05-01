@@ -21,14 +21,15 @@ public class UtilService(IUnitOfWork unitOfWork) : IUtilService
         return ret;
     }
 
-    public Task<IQueryable<AcademicProgram>> GetAcademicProgramsAsync(int? institutionId)
+    public async Task<IQueryable<AcademicProgram>> GetAcademicProgramsAsync(int? institutionId)
     {
-        if (institutionId is null)
+        var ret = await unitOfWork.AcademicProgramRepository.GetAllAsync();
+        if (institutionId is not null)
         {
-            return unitOfWork.AcademicProgramRepository.GetAllAsync();
+            ret = ret.Where(ap => ap.InstitutionId == institutionId);
         }
 
-        return unitOfWork.AcademicProgramRepository.GetByInstitutionId(institutionId.Value);
+        return ret;
     }
     
     public Task<AcademicProgram> GetAcademicProgramByKeyNameAndYearAsync(string keyName, int year)
