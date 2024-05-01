@@ -47,6 +47,20 @@ public class UserController(
         var adminUser = await userManager.GetUserAsync(User);
         int? institution = null;
         int? program = null;
+        if (model.Role is UserTypeEnum.Company or UserTypeEnum.Student)
+        {
+            if (model.AcademicProgramId == null)
+            {
+                return BadRequest("AcademicProgram is mandatory for Student or Comapny");
+            }
+        }
+        else
+        {
+            if (model.InstitutionId == null)
+            {
+                return BadRequest("Institution is mandatory for Student or Comapny");
+            }
+        }
         IQueryable<Institution> inst;
         IQueryable<AcademicProgram> ap;
         if (User.IsInRole("Admin"))
@@ -426,7 +440,7 @@ public class UserController(
     }
 
 
-    [Authorize(Policy = "Admin")]
+    [Authorize(Policy = "Institution")]
     [HttpDelete]
     [Route("DeleteUser")]
     public async Task<IActionResult> DeleteUser([FromQuery] string id)
