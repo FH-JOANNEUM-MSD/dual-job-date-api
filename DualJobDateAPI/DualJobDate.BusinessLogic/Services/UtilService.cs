@@ -21,9 +21,14 @@ public class UtilService(IUnitOfWork unitOfWork) : IUtilService
         return ret;
     }
 
-    public Task<IQueryable<AcademicProgram>> GetAcademicProgramsAsync()
+    public async Task<IQueryable<AcademicProgram>> GetAcademicProgramsAsync(int? institutionId)
     {
-        var ret = unitOfWork.AcademicProgramRepository.GetAllAsync();
+        var ret = await unitOfWork.AcademicProgramRepository.GetAllAsync();
+        if (institutionId is not null)
+        {
+            ret = ret.Where(ap => ap.InstitutionId == institutionId);
+        }
+
         return ret;
     }
     
