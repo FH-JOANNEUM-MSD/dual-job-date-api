@@ -35,5 +35,6 @@ public static class ServiceRegistration
         services.AddTransient<ICompanyService, CompanyService>();
         services.AddTransient<IStudentCompanyService, StudentCompanyService>();
         services.AddTransient<IUtilService, UtilService>();
+        services.AddTransient<IPasswordGenerator, PasswordGenerator>();
     }
 }

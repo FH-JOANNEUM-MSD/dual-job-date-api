@@ -1,7 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Security.Authentication;
 using System.Security.Claims;
-using System.Security.Cryptography;
 using AutoMapper;
 using DualJobDate.BusinessObjects.Entities;
 using DualJobDate.BusinessObjects.Entities.Enum;
@@ -10,7 +9,6 @@ using DualJobDate.BusinessObjects.Entities.Models;
 using DualJobDate.BusinessObjects.Dtos;
 using DualJobDate.BusinessObjects.Entities.Interface;
 using DualJobDate.BusinessObjects.Entities.Interface.Service;
-using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
@@ -29,13 +27,10 @@ public class UserController(
     IMapper mapper,
     RoleManager<Role> roleManager, 
     IJwtAuthManager jwtAuthManager,
-    IUtilService utilService)
+    IUtilService utilService,
+    IPasswordGenerator generator)
     : ControllerBase
 {
-    private const string LowerCase = "abcdefghijklmnopqrstuvwxyz";
-    private const string UpperCase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    private const string Digits = "0123456789";
-    private const string SpecialChars = "!@#$%^&*()_-+=[{]};:<>|./?";
     private static readonly EmailAddressAttribute EmailAddressAttribute = new();
 
 
@@ -89,7 +84,7 @@ public class UserController(
 
         await userStore.SetUserNameAsync(user, model.Email, CancellationToken.None);
 
-        var password = GeneratePassword();
+        var password = generator.GeneratePassword();
 
         var result = await userManager.CreateAsync(user, password);
 
@@ -220,7 +215,7 @@ public class UserController(
 
         await userStore.SetUserNameAsync(user, registerUserFromJsonModel.Email, CancellationToken.None);
 
-        var password = GeneratePassword();
+        var password = generator.GeneratePassword();
 
         var result = await userManager.CreateAsync(user, password);
 
@@ -316,7 +311,7 @@ public class UserController(
 
         var code = await userManager.GeneratePasswordResetTokenAsync(user);
 
-        var password = GeneratePassword();
+        var password = generator.GeneratePassword();
         var result = await userManager.ResetPasswordAsync(user, code, password);
         if (result.Succeeded)
         {
@@ -416,48 +411,6 @@ public class UserController(
         if (result.Succeeded)
             return Ok("User deleted successfully!");
         return BadRequest(result.Errors);
-    }
-
-    [Obsolete("Obsolete")]
-    public static string GeneratePassword(int length = 12)
-    {
-        if (length < 4) throw new ArgumentException("Min 4 sign", nameof(length));
-
-        var charCategories = new[]
-        {
-            LowerCase,
-            UpperCase,
-            Digits,
-            SpecialChars
-        };
-
-        var data = new byte[length];
-        using var crypto = new RNGCryptoServiceProvider();
-        crypto.GetBytes(data);
-
-        var passwordChars = new char[length];
-        for (var i = 0; i < length; i++)
-        {
-            var categoryIndex = data[i] % charCategories.Length;
-            var charIndex = data[i] % charCategories[categoryIndex].Length;
-
-            passwordChars[i] = charCategories[categoryIndex][charIndex];
-        }
-
-        EnsureEachCategory(passwordChars, charCategories);
-
-        return new string(passwordChars);
-    }
-
-    private static void EnsureEachCategory(char[] passwordChars, string[] charCategories)
-    {
-        var random = new Random();
-        foreach (var t in charCategories)
-            if (!passwordChars.Any(p => t.Contains(p)))
-            {
-                var replaceIndex = random.Next(passwordChars.Length);
-                passwordChars[replaceIndex] = t[random.Next(t.Length)];
-            }
     }
 }
 
