@@ -356,8 +356,7 @@ public class UserController(
             if (academicProgramId.HasValue)
                 query = query.Where(u => u.AcademicProgramId == academicProgramId);
         }
-
-        if (!User.IsInRole("Admin"))
+        else
         {
             if (!academicProgramId.HasValue)
                 return BadRequest("Invalid request parameters or insufficient permissions.");

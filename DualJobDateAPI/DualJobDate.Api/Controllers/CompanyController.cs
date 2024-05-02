@@ -71,7 +71,7 @@ public class CompanyController(ICompanyService companyService, IMapper mapper, U
 
         var company = await companyService.GetCompanyByUser(user);
         var companyDetails = new CompanyDetails
-        { 
+        {
             ShortDescription = model.ShortDescription,
             TeamPictureBase64 = model.TeamPictureBase64,
             JobDescription = model.JobDescription,
@@ -190,7 +190,7 @@ public class CompanyController(ICompanyService companyService, IMapper mapper, U
             return BadRequest(e.Message);
         }
     }
-    
+
     [Authorize("Company")]
     [HttpPost("Locations")]
     public async Task<IActionResult> AddLocations([FromBody] List<AddressDto> resources)
@@ -212,7 +212,7 @@ public class CompanyController(ICompanyService companyService, IMapper mapper, U
             return NotFound(ex.Message);
         }
     }
-    
+
     [HttpGet("Locations")]
     public async Task<ActionResult<IEnumerable<AddressDto>>> GetLocations([FromQuery] int? companyId)
     {
@@ -233,5 +233,5 @@ public class CompanyController(ICompanyService companyService, IMapper mapper, U
         var locationResources = mapper.Map<IEnumerable<Address>, IEnumerable<AddressDto>>(locations);
         return Ok(locationResources);
     }
-    
+
 }
