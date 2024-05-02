@@ -6,15 +6,28 @@ using DualJobDate.BusinessObjects.Dtos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
+using DualJobDate.BusinessObjects.Entities.Enum;
+using DualJobDate.BusinessObjects.Entities.Interface.Helper;
+using Microsoft.EntityFrameworkCore;
 
 namespace DualJobDate.API.Controllers;
 
 [ApiController]
 [Authorize]
 [Route("[controller]")]
-public class CompanyController(ICompanyService companyService, IMapper mapper, UserManager<User> userManager)
+public class CompanyController(
+    ICompanyService companyService,
+    IMapper mapper,
+    UserManager<User> userManager,
+    IUtilService utilService,
+    IPasswordGenerator generator,
+    IUserStore<User> userStore,
+    RoleManager<Role> roleManager)
     : ControllerBase
 {
+    private static readonly EmailAddressAttribute EmailAddressAttribute = new();
+
     [HttpGet]
     public async Task<ActionResult<CompanyDto>> GetCompany([FromQuery] int id)
     {
@@ -174,11 +187,57 @@ public class CompanyController(ICompanyService companyService, IMapper mapper, U
     [HttpPost("Register")]
     public async Task<ActionResult<CompanyDto>> AddCompany([FromBody] RegisterCompanyModel model)
     {
-        var user = await userManager.GetUserAsync(User);
-        if (user == null) return Unauthorized();
+        var loginUser = await userManager.GetUserAsync(User);
+        if (loginUser == null) return Unauthorized();
 
         var companyUser = await userManager.FindByEmailAsync(model.UserEmail);
-        if (companyUser == null) return NotFound("User not found");
+        if (companyUser == null)
+        {
+            int institutionId;
+            int programId = model.AcademicProgramId;
+
+            if (User.IsInRole("Admin"))
+            {
+                if (!model.UserInstitutionId.HasValue)
+                    return BadRequest("InstitutionId cannot be null!");
+
+                institutionId = model.UserInstitutionId.Value;
+            }
+            else
+            {
+                institutionId = loginUser.InstitutionId;
+            }
+
+            var inst = utilService.GetInstitutionsAsync().Result.Where(x => x.Id == institutionId);
+            if (inst == null) return NotFound("Institution not found");
+
+            var ap = utilService.GetAcademicProgramsAsync(null).Result.Where(x => x.Id == programId);
+            if (ap == null) return NotFound("AcademicProgram not found");
+
+            if (string.IsNullOrEmpty(model.UserEmail) || !EmailAddressAttribute.IsValid(model.UserEmail))
+                return BadRequest($"Email '{model.UserEmail}' is invalid.");
+
+            var user = new User
+            {
+                Email = model.UserEmail,
+                UserType = UserTypeEnum.Company,
+                IsNew = true,
+                InstitutionId = institutionId,
+                AcademicProgramId = programId
+            };
+
+            await userStore.SetUserNameAsync(user, model.UserEmail, CancellationToken.None);
+            var password = generator.GeneratePassword();
+
+            var result = await userManager.CreateAsync(user, password);
+            if (!result.Succeeded) return BadRequest(result.Errors);
+
+            var role = await roleManager.Roles.Where(r => r.UserTypeEnum == user.UserType).SingleOrDefaultAsync();
+            if (role == null) return NotFound("Role doesn't exist");
+            await userManager.AddToRoleAsync(user, role.Name);
+            companyUser = await userManager.FindByEmailAsync(model.UserEmail);
+        }
+
         try
         {
             var company = await companyService.AddCompany(model.AcademicProgramId, model.CompanyName, companyUser);
