@@ -19,9 +19,16 @@ public class CompanyController(ICompanyService companyService, IMapper mapper, U
 {
     [Authorize]
     [HttpGet]
-    public async Task<ActionResult<CompanyDto>> GetCompany([FromQuery] int id)
+    public async Task<ActionResult<CompanyDto>> GetCompany([FromQuery] int? id)
     {
-        var company = await companyService.GetCompanyByIdAsync(id);
+        var user = await userManager.GetUserAsync(User);
+        if (user is null)
+            throw new UserNotFoundException();
+
+        var company = User.IsInRole(UserTypeEnum.Company.ToString())
+            ? await companyService.GetCompanyByUser(user)
+            : await companyService.GetCompanyByIdAsync(id ?? throw new CompanyNotFoundException(id));
+        
         if (company is null)
             throw new CompanyNotFoundException(id);
 
@@ -105,22 +112,18 @@ public class CompanyController(ICompanyService companyService, IMapper mapper, U
 
     [Authorize(Policy = "WebApp")]
     [HttpPut("IsActive")]
-    public async Task<IActionResult> UpdateCompanyActivity([FromQuery] int id, [FromQuery] bool isActive)
+    public async Task<IActionResult> UpdateCompanyActivity([FromQuery] int? id, [FromQuery] bool isActive)
     {
         var user = await userManager.GetUserAsync(User);
         if (user is null)
             throw new UserNotFoundException();
 
-        var company = user.UserType switch
-        {
-            UserTypeEnum.Admin => await companyService.GetCompanyByIdAsync(id),
-            UserTypeEnum.Institution => await companyService.GetCompanyByIdAsync(id),
-            UserTypeEnum.Company => await companyService.GetCompanyByUser(user),
-            _ => throw new ArgumentOutOfRangeException()
-        };
-
+        var company = User.IsInRole(UserTypeEnum.Company.ToString())
+            ? await companyService.GetCompanyByUser(user)
+            : await companyService.GetCompanyByIdAsync(id ?? throw new CompanyNotFoundException(id));
+        
         if (company is null)
-            throw new CompanyNotFoundException();
+            throw new CompanyNotFoundException(id);
 
         await companyService.UpdateCompanyActivity(isActive, company);
         return Ok();
@@ -128,14 +131,17 @@ public class CompanyController(ICompanyService companyService, IMapper mapper, U
 
     [Authorize]
     [HttpGet("Details")]
-    public async Task<ActionResult<CompanyDetailsDto>> GetCompanyDetails([FromQuery] int id)
+    public async Task<ActionResult<CompanyDetailsDto>> GetCompanyDetails([FromQuery] int? id)
     {
         var user = await userManager.GetUserAsync(User);
         if (user is null)
             throw new UserNotFoundException();
 
-        var company = await companyService.GetCompanyByIdAsync(id);
-        if (company == null)
+        var company = User.IsInRole(UserTypeEnum.Company.ToString())
+            ? await companyService.GetCompanyByUser(user)
+            : await companyService.GetCompanyByIdAsync(id ?? throw new CompanyNotFoundException(id));
+        
+        if (company is null)
             throw new CompanyNotFoundException(id);
 
         var companyDetail = await companyService.GetCompanyDetailsAsync(company);
@@ -145,14 +151,17 @@ public class CompanyController(ICompanyService companyService, IMapper mapper, U
 
     [Authorize]
     [HttpGet("Activities")]
-    public async Task<ActionResult<IEnumerable<ActivityDto>>> GetCompanyActivities([FromQuery] int id)
+    public async Task<ActionResult<IEnumerable<ActivityDto>>> GetCompanyActivities([FromQuery] int? id)
     {
         var user = await userManager.GetUserAsync(User);
         if (user is null)
             throw new UserNotFoundException();
 
-        var company = await companyService.GetCompanyByIdAsync(id);
-        if (company == null)
+        var company = User.IsInRole(UserTypeEnum.Company.ToString())
+            ? await companyService.GetCompanyByUser(user)
+            : await companyService.GetCompanyByIdAsync(id ?? throw new CompanyNotFoundException(id));
+        
+        if (company is null)
             throw new CompanyNotFoundException(id);
 
         var companyActivities = await companyService.GetCompanyActivitiesAsync(company);
