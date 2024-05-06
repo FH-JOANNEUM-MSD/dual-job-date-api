@@ -5,7 +5,6 @@ using DualJobDate.BusinessObjects.Entities.Models;
 using DualJobDate.BusinessObjects.Dtos;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using MySqlX.XDevAPI.Common;
 
 namespace DualJobDate.BusinessLogic.Services;
 
@@ -15,6 +14,7 @@ public class CompanyService(IUnitOfWork unitOfWork, UserManager<User> userManage
     {
         var result = unitOfWork.CompanyRepository.GetAllAsync().Result.
             Include(x => x.AcademicProgram).
+            Include(x => x.Institution).
             Include(x => x.User).
             Include(x => x.CompanyDetails).
             Include(x => x.Activities).

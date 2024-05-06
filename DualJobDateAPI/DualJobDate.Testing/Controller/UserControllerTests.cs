@@ -1,8 +1,6 @@
 using System.Security.Claims;
 using AutoMapper;
 using DualJobDate.Api.Controllers;
-using DualJobDate.BusinessLogic.Exceptions;
-using DualJobDate.BusinessObjects.Dtos;
 using DualJobDate.BusinessObjects.Entities;
 using DualJobDate.BusinessObjects.Entities.Interface.Helper;
 using DualJobDate.BusinessObjects.Entities.Interface.Service;
@@ -28,9 +26,7 @@ public class UserControllerTests
     private readonly Mock<UserManager<User>> _mockUserManager;
     private readonly Mock<SignInManager<User>> _mockSignInManager;
     private readonly UserController _controller;
-    private readonly Mock<IMapper> _mapperMock;
     private readonly Mock<IJwtAuthManager> _mockAuthenticationManager;
-    private readonly Mock<ICompanyService> _companyServiceMock;
 
     public UserControllerTests(ITestOutputHelper testOutputHelper)
     {
@@ -48,79 +44,13 @@ public class UserControllerTests
         var mockMapper = new Mock<IMapper>();
         var mockRoleManager = MockHelpers.MockRoleManager<Role>();
         _mockAuthenticationManager = new Mock<IJwtAuthManager>();
-        _controller = new UserController(_companyServiceMock.Object,_mockUserManager.Object,
+        _controller = new UserController(_mockUserManager.Object,
             _mockSignInManager.Object,
             mockServiceProvider.Object,
             mockMapper.Object, mockRoleManager.Object,
             _mockAuthenticationManager.Object,
             mockUtilService.Object
             );
-    }
-    
-        [Fact]
-    public async Task AddCompany_ValidData_ReturnsOkResult()
-    {
-        // Arrange
-        var user = new User { };
-        var company = new Company { Id = 1 };
-        var model = new RegisterCompanyModel
-        {
-            AcademicProgramId = 2,
-            CompanyName = "Example Company",
-            UserEmail = "example@example.com"
-        };
-
-        _mockUserManager.Setup(manager => manager.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
-        _companyServiceMock.Setup(service => service.AddCompany(model.AcademicProgramId, model.CompanyName, user)).ReturnsAsync(company);
-        _mapperMock.Setup(mapper => mapper.Map<Company, CompanyDto>(company)).Returns(new CompanyDto());
-
-        // Act
-        var result = await _controller.AddCompany(model);
-
-        // Assert
-        Assert.IsType<OkObjectResult>(result.Result);
-    }
-
-    [Fact]
-    public async Task AddCompany_UnauthorizedUser_ReturnsUnauthorizedResult()
-    {
-        // Arrange
-        var model = new RegisterCompanyModel
-        {
-            AcademicProgramId = 2,
-            CompanyName = "Example Company",
-            UserEmail = "example@example.com"
-        };
-
-        _mockUserManager.Setup(manager => manager.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync((User)null);
-
-        // Act
-        async Task Act() => await _controller.AddCompany(model);
-
-        // Assert
-        await Assert.ThrowsAsync<UserNotFoundException>(Act);
-    }
-
-    [Fact]
-    public async Task AddCompany_UserNotFound_ReturnsNotFoundResult()
-    {
-        // Arrange
-        var user = new User { };
-        var model = new RegisterCompanyModel
-        {
-            AcademicProgramId = 2,
-            CompanyName = "Example Company",
-            UserEmail = "example@example.com"
-        };
-
-        _mockUserManager.Setup(manager => manager.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
-        _mockUserManager.Setup(manager => manager.FindByEmailAsync(It.IsAny<string>())).ReturnsAsync((User)null);
-
-        // Act
-        async Task Act() => await _controller.AddCompany(model);
-
-        // Assert
-        await Assert.ThrowsAsync<CompanyNotFoundException>(Act);
     }
 
     [Fact]
