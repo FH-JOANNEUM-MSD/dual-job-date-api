@@ -42,13 +42,27 @@ public class CompanyControllerTests
     [Fact]
     public async Task GetCompany_ReturnCompanyNotFoundException()
     {
-        async Task Act() => await _controller.GetCompany(1);
+        // Arrange
+        var user = TestHelper.GetTestUser(1, 1, UserTypeEnum.Admin);
+
+        _userManagerMock.Setup(manager =>
+            manager.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+
+        MockClaimUser(user);
+        async Task Act() => await _controller.GetCompany(0);
         await Assert.ThrowsAsync<CompanyNotFoundException>(Act);
     }
 
     [Fact]
     public async Task GetCompany_ReturnsOkObjectResult_WithCompanyResource()
     {
+        // Arrange
+        var user = TestHelper.GetTestUser(1, 1, UserTypeEnum.Admin);
+
+        _userManagerMock.Setup(manager =>
+            manager.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+
+        MockClaimUser(user);
         // Arrange
         var company = new Company { Id = 3 };
         var companyResource = new CompanyDto { Id = company.Id };
@@ -230,7 +244,11 @@ public class CompanyControllerTests
     {
         // Arrange
         var user = TestHelper.GetTestUser(1, 1, userType);
-        _userManagerMock.Setup(manager => manager.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+
+        _userManagerMock.Setup(manager =>
+            manager.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+
+        MockClaimUser(user);
 
         var companyOfUser = new Company { Id = 1, UserId = user.Id};
         var companyOfNotUser = new Company { Id = 2, UserId = "NoUserId" };
@@ -253,7 +271,12 @@ public class CompanyControllerTests
     public async Task GetCompanyActivities_ValidId_ReturnsOkResult()
     {
         // Arrange
-        var user = new User { Id = "98aad5f7-1fdc-45a1-9015-fbbfaf79e351" };
+        var user = TestHelper.GetTestUser(1, 1, UserTypeEnum.Admin);
+
+        _userManagerMock.Setup(manager =>
+            manager.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+
+        MockClaimUser(user);
         var company = new Company { Id = 1 };
 
         var activities = new List<Activity>
@@ -286,8 +309,15 @@ public class CompanyControllerTests
     public async Task GetCompanyActivities_InvalidId_ReturnsBadRequestResult()
     {
         // Arrange
+        var user = TestHelper.GetTestUser(1, 1, UserTypeEnum.Admin);
+
+        _userManagerMock.Setup(manager =>
+            manager.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+
+        MockClaimUser(user);
+
+        // Arrange
         const int invalidCompanyId = -1;
-        var user = new User();
         var company = new Company { Id = invalidCompanyId };
 
         var activities = new List<Activity>
@@ -302,7 +332,6 @@ public class CompanyControllerTests
             Name = activity.Name,
         }).ToList();
 
-        _userManagerMock.Setup(manager => manager.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
         _companyServiceMock.Setup(service => service.GetCompanyByIdAsync(invalidCompanyId)).ReturnsAsync((Company)null);
         _companyServiceMock.Setup(service => service.GetCompanyActivitiesAsync(company)).ReturnsAsync(activityResources);
 
@@ -317,12 +346,15 @@ public class CompanyControllerTests
     public async Task GetCompanyDetails_ValidId_ReturnsCompanyDetails()
     {
         // Arrange
-        var user = TestHelper.GetTestUser();
-        var company = new Company { Id = 1 };
+        var user = TestHelper.GetTestUser(1, 1, UserTypeEnum.Admin);
+
+        _userManagerMock.Setup(manager =>
+            manager.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+
+        MockClaimUser(user);        var company = new Company { Id = 1 };
         var companyDetails = new CompanyDetails();
         var companyDetailsDto = new CompanyDetailsDto();
 
-        _userManagerMock.Setup(manager => manager.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
         _companyServiceMock.Setup(service => service.GetCompanyByIdAsync(company.Id)).ReturnsAsync(company);
         _companyServiceMock.Setup(service => service.GetCompanyDetailsAsync(company)).ReturnsAsync(companyDetails);
         _mapperMock.Setup(mapper => mapper.Map<CompanyDetails, CompanyDetailsDto>(companyDetails)).Returns(companyDetailsDto);
@@ -354,10 +386,15 @@ public class CompanyControllerTests
     public async Task GetCompanyDetails_InvalidId_ReturnsNotFoundResult()
     {
         // Arrange
-        var companyId = -1;
-        var user = new User();
+        var user = TestHelper.GetTestUser(1, 1, UserTypeEnum.Admin);
 
-        _userManagerMock.Setup(manager => manager.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+        _userManagerMock.Setup(manager =>
+            manager.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+
+        MockClaimUser(user);
+        // Arrange
+        var companyId = -1;
+
         _companyServiceMock.Setup(service => service.GetCompanyByIdAsync(companyId)).ReturnsAsync((Company)null);
 
         // Act
