@@ -18,7 +18,7 @@ using Xunit;
 using Xunit.Abstractions;
 using SignInResult = Microsoft.AspNetCore.Identity.SignInResult;
 
-namespace DualJobDate.Testing;
+namespace DualJobDate.Testing.Controller;
 
 public class UserControllerTests
 {
@@ -52,7 +52,7 @@ public class UserControllerTests
             mockUtilService.Object
             );
     }
-    
+
     [Fact]
     public Task TestLogin_GoodResult()
     {
@@ -61,47 +61,47 @@ public class UserControllerTests
             Email = "admin@fh-joanneum.at",
             Password = "Administrator!1"
         };
-        
+
         _mockSignInManager.Setup(x =>
                 x.PasswordSignInAsync(It.IsAny<string>(),
-                    It.IsAny<string>(), 
+                    It.IsAny<string>(),
                     It.IsAny<bool>(),
                     It.IsAny<bool>()))
             .ReturnsAsync(SignInResult.Success);
-        
+
         //Assert
         var result = _controller.Login(loginModel);
         Assert.NotNull(result.Result);
-        Assert.IsType<OkObjectResult>(result.Result.Result); 
+        Assert.IsType<OkObjectResult>(result.Result.Result);
         Assert.IsNotType<UnauthorizedObjectResult>(result.Result.Result);
         return Task.CompletedTask;
     }
-    
+
     [Fact]
     public async Task TestLogin_InvalidEmail()
     {
         // Arrange
         var loginModel = new LoginModel
         {
-            Email = "invalidemail@domain.com", 
+            Email = "invalidemail@domain.com",
             Password = "Administrator!1"
         };
-  
+
         _mockSignInManager.Setup(x =>
                 x.PasswordSignInAsync(It.IsAny<string>(),
                     It.IsAny<string>(),
                     It.IsAny<bool>(),
                     It.IsAny<bool>()))
-            .ReturnsAsync(SignInResult.Failed); 
+            .ReturnsAsync(SignInResult.Failed);
 
         // Act
         var result = await _controller.Login(loginModel);
 
         // Assert
-        Assert.NotNull(result.Result);  
+        Assert.NotNull(result.Result);
         Assert.IsType<UnauthorizedObjectResult>(result.Result);
     }
-        
+
     [Fact]
     public async Task TestChangePassword_Success()
     {
@@ -135,7 +135,7 @@ public class UserControllerTests
         // Assert
         Assert.IsType<OkResult>(result);
     }
-    
+
     [Fact]
     public async Task TestRefresh_Success()
     {

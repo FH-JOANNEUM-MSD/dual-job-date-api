@@ -41,16 +41,16 @@ public class CompanyService(IUnitOfWork unitOfWork, UserManager<User> userManage
 
 
 
-    public Task<List<Company>> GetCompaniesByInstitutionAsync(int institutionId)
+    public async Task<List<Company>> GetCompaniesByInstitutionAsync(int institutionId)
     {
-        var result = unitOfWork.CompanyRepository.GetAllAsync();
-        return result.Result.Where(c => c.InstitutionId == institutionId).ToListAsync();
+        var companies = unitOfWork.CompanyRepository.GetAllAsync();
+        return companies.Result.Where(c => c.InstitutionId == institutionId).ToList();
     }
 
-    public Task<List<Company>> GetCompaniesByAcademicProgramAsync(int academicProgramId)
+    public async Task<List<Company>> GetCompaniesByAcademicProgramAsync(int academicProgramId)
     {
-        var result = unitOfWork.CompanyRepository.GetAllAsync();
-        return result.Result.Where(c => c.AcademicProgramId == academicProgramId).ToListAsync();
+        var companies = await unitOfWork.CompanyRepository.GetAllAsync();
+        return companies.Where(c => c.AcademicProgramId == academicProgramId).ToList();
     }
 
     public async Task UpdateCompany(UpdateCompanyModel model, Company company)
@@ -93,7 +93,6 @@ public class CompanyService(IUnitOfWork unitOfWork, UserManager<User> userManage
         return Convert.TryFromBase64String(base64, buffer, out int bytesParsed);
     }
 
-
     public async Task UpdateCompanyActivity(bool isActive, Company company)
     {
         unitOfWork.BeginTransaction();
@@ -107,7 +106,7 @@ public class CompanyService(IUnitOfWork unitOfWork, UserManager<User> userManage
     {
         if (company.CompanyDetailsId == null)
             return null;
-        return await unitOfWork.CompanyDetailsRepository.GetByIdAsync((int)company.CompanyDetailsId);
+        return await unitOfWork.CompanyDetailsRepository.GetByIdAsync(company.CompanyDetailsId.Value);
     }
 
     public async Task UpdateCompanyDetails(CompanyDetails details, Company company)
@@ -129,7 +128,6 @@ public class CompanyService(IUnitOfWork unitOfWork, UserManager<User> userManage
              throw new ArgumentException("Contact person in company cannot be null or whitespace.");
         }
         
-
         if (!string.IsNullOrWhiteSpace(details.TeamPictureBase64) && !IsBase64String(details.TeamPictureBase64))
         {
             throw new ArgumentException("TeamPictureBase64 must be a valid Base64 string.");
