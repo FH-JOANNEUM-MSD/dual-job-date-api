@@ -222,21 +222,30 @@ public class CompanyControllerTests
         //TODO Write Test
     }
 
-    [Fact]
-    public async Task UpdateCompanyActivity_ValidRequest_ReturnsOkResult()
+    [Theory]
+    [InlineData(UserTypeEnum.Admin)]
+    [InlineData(UserTypeEnum.Institution)]
+    [InlineData(UserTypeEnum.Company)]
+    public async Task UpdateCompanyActivity_ValidRequest_ReturnsOkResult(UserTypeEnum userType)
     {
         // Arrange
-        var user = new User();
+        var user = TestHelper.GetTestUser(1, 1, userType);
         _userManagerMock.Setup(manager => manager.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
 
-        var company = new Company { Id = 1 };
-        _companyServiceMock.Setup(service => service.GetCompanyByUser(user)).ReturnsAsync(company);
-        _companyServiceMock.Setup(service => service.GetCompanyByIdAsync(1)).ReturnsAsync(company);
+        var companyOfUser = new Company { Id = 1, UserId = user.Id};
+        var companyOfNotUser = new Company { Id = 2, UserId = "NoUserId" };
+        _companyServiceMock.Setup(service => service.GetCompanyByUser(user)).ReturnsAsync(companyOfUser);
+        _companyServiceMock.Setup(service => service.GetCompanyByIdAsync(1)).ReturnsAsync(companyOfNotUser);
 
         // Act
         var result = await _controller.UpdateCompanyActivity(id: 1, isActive: true);
 
         // Assert
+        if (userType == UserTypeEnum.Admin || userType == UserTypeEnum.Institution)
+            _companyServiceMock.Verify(service => service.GetCompanyByIdAsync(1), Times.Once);
+        else
+            _companyServiceMock.Verify(service => service.GetCompanyByUser(user), Times.Once);
+        
         Assert.IsType<OkResult>(result);
     }
 

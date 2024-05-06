@@ -103,7 +103,6 @@ public class CompanyController(ICompanyService companyService, IMapper mapper, U
         }
     }
 
-    //TODO Refacotring
     [Authorize(Policy = "WebApp")]
     [HttpPut("IsActive")]
     public async Task<IActionResult> UpdateCompanyActivity([FromQuery] int id, [FromQuery] bool isActive)
@@ -112,7 +111,14 @@ public class CompanyController(ICompanyService companyService, IMapper mapper, U
         if (user is null)
             throw new UserNotFoundException();
 
-        var company = await companyService.GetCompanyByUser(user);
+        var company = user.UserType switch
+        {
+            UserTypeEnum.Admin => await companyService.GetCompanyByIdAsync(id),
+            UserTypeEnum.Institution => await companyService.GetCompanyByIdAsync(id),
+            UserTypeEnum.Company => await companyService.GetCompanyByUser(user),
+            _ => throw new ArgumentOutOfRangeException()
+        };
+
         if (company is null)
             throw new CompanyNotFoundException();
 
