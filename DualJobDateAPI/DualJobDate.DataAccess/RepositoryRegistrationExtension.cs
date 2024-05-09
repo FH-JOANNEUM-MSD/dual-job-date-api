@@ -5,9 +5,9 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace DualJobDate.DataAccess;
 
-public static class RepositoryRegistration
+public static class RepositoryRegistrationExtension
 {
-    public static void RegisterRepository(IServiceCollection services)
+    public static void RegisterRepository(this IServiceCollection services)
     {
         services.AddScoped<IDbContext, AppDbContext>();
         services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));

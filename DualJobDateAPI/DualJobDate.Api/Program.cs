@@ -31,8 +31,6 @@ internal class Program
 
     private static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
-        RepositoryRegistration.RegisterRepository(services);
-        ServiceRegistration.RegisterServices(services, configuration);
         ConfigureCores(services);
         ConfigureDatabase(services, configuration);
         ConfigureIdentity(services);
@@ -40,6 +38,9 @@ internal class Program
         ConfigureAuthorization(services);
         ConfigureSwagger(services);
         ConfigureMapper(services);
+        services.RegisterRepository();
+        services.RegisterServices();
+        services.RegisterHelpers(configuration);
         services.AddControllers();
     }
 
