@@ -235,7 +235,7 @@ public class CompanyController(
             var role = await roleManager.Roles.Where(r => r.UserTypeEnum == user.UserType).SingleOrDefaultAsync();
             if (role == null) return NotFound("Role doesn't exist");
             await userManager.AddToRoleAsync(user, role.Name);
-            companyUser = await userManager.FindByEmailAsync(model.UserEmail);
+            companyUser = user;
         }
 
         try
