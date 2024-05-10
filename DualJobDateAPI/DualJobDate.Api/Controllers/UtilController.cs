@@ -24,9 +24,9 @@ public class UtilController(IUtilService utilService, IMapper mapper) : Controll
     
     [Authorize("AdminOrInstitution")]
     [HttpGet("AcademicPrograms")]
-    public async Task<ActionResult<IEnumerable<AcademicProgramDto>>> GetAcademicPrograms()
+    public async Task<ActionResult<IEnumerable<AcademicProgramDto>>> GetAcademicPrograms(int? institutionId)
     {
-        var academicPrograms = await utilService.GetAcademicProgramsAsync();
+        var academicPrograms = await utilService.GetAcademicProgramsAsync(institutionId);
         var academicProgramResources = mapper.Map<IEnumerable<AcademicProgram>, IEnumerable<AcademicProgramDto>>(academicPrograms);
         return Ok(academicProgramResources);
     }

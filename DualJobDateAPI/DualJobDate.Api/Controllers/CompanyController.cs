@@ -6,6 +6,8 @@ using DualJobDate.BusinessObjects.Dtos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using DualJobDate.BusinessLogic.Exceptions;
+using DualJobDate.BusinessObjects.Entities.Enum;
 
 namespace DualJobDate.API.Controllers;
 
@@ -15,36 +17,44 @@ namespace DualJobDate.API.Controllers;
 public class CompanyController(ICompanyService companyService, IMapper mapper, UserManager<User> userManager)
     : ControllerBase
 {
+    [Authorize]
     [HttpGet]
-    public async Task<ActionResult<CompanyDto>> GetCompany([FromQuery] int id)
+    public async Task<ActionResult<CompanyDto>> GetCompany([FromQuery] int? id)
     {
-        try
-        {
-            var company = await companyService.GetCompanyByIdAsync(id);
-            var companyResource = mapper.Map<Company, CompanyDto>(company);
-            return Ok(companyResource);
-        }
-        catch (Exception ex)
-        {
-            return NotFound(ex.Message);
-        }
+        var user = await userManager.GetUserAsync(User);
+        if (user is null)
+            throw new UserNotFoundException();
+
+        var company = User.IsInRole(UserTypeEnum.Company.ToString())
+            ? await companyService.GetCompanyByUser(user)
+            : await companyService.GetCompanyByIdAsync(id ?? throw new CompanyNotFoundException(id));
+        
+        if (company is null)
+            throw new CompanyNotFoundException(id);
+
+        var companyResource = mapper.Map<Company, CompanyDto>(company);
+        return Ok(companyResource);
     }
 
     [Authorize("AdminOrInstitution")]
     [HttpGet("Companies")]
-    public async Task<ActionResult<IEnumerable<CompanyDto>>> GetCompanies([FromQuery] int? institutionId,
+    public async Task<ActionResult<IEnumerable<CompanyDto>>> GetCompanies(
+        [FromQuery] int? institutionId,
         [FromQuery] int? academicProgramId)
     {
         var user = await userManager.GetUserAsync(User);
-        if (user == null) return Unauthorized();
+        if (user is null)
+            throw new UserNotFoundException();
+
+        if (!academicProgramId.HasValue & !institutionId.HasValue)
+            throw new InvalidParametersException();
 
         var companies = new List<Company>();
-        if (User.IsInRole("Admin") && institutionId.HasValue)
-            companies = await companyService.GetCompaniesByInstitutionAsync((int)institutionId);
-        else if (academicProgramId.HasValue)
-            companies = await companyService.GetCompaniesByAcademicProgramAsync((int)academicProgramId);
-        else
-            return BadRequest("Invalid request parameters or insufficient permissions.");
+        if (User.IsInRole(UserTypeEnum.Admin.ToString()) && institutionId.HasValue)
+            companies = await companyService.GetCompaniesByInstitutionAsync(institutionId.Value);
+
+        if (academicProgramId.HasValue)
+            companies = await companyService.GetCompaniesByAcademicProgramAsync(academicProgramId.Value);
 
         var companyResources = mapper.Map<IEnumerable<Company>, IEnumerable<CompanyDto>>(companies);
         return Ok(companyResources);
@@ -55,7 +65,8 @@ public class CompanyController(ICompanyService companyService, IMapper mapper, U
     public async Task<ActionResult<IEnumerable<CompanyDto>>> GetActiveCompanies()
     {
         var user = await userManager.GetUserAsync(User);
-        if (user == null) return Unauthorized();
+        if (user == null)
+            throw new UserNotFoundException();
 
         var companies = await companyService.GetActiveCompaniesAsync(user);
         var companyResources = mapper.Map<IEnumerable<Company>, IEnumerable<CompanyDto>>(companies);
@@ -67,9 +78,13 @@ public class CompanyController(ICompanyService companyService, IMapper mapper, U
     public async Task<IActionResult> UpdateCompany(UpdateCompanyModel model)
     {
         var user = await userManager.GetUserAsync(User);
-        if (user == null) return Unauthorized();
+        if (user is null)
+            throw new UserNotFoundException();
 
         var company = await companyService.GetCompanyByUser(user);
+        if (company is null)
+            throw new CompanyNotFoundException();
+
         var companyDetails = new CompanyDetails
         { 
             ShortDescription = model.ShortDescription,
@@ -82,7 +97,7 @@ public class CompanyController(ICompanyService companyService, IMapper mapper, U
             TrainerProfessionalExperience = model.TrainerProfessionalExperience,
             TrainerPosition = model.TrainerPosition
         };
-        if (company == null) return NotFound("Company not found");
+
         try
         {
             await companyService.UpdateCompany(model, company);
@@ -97,49 +112,57 @@ public class CompanyController(ICompanyService companyService, IMapper mapper, U
 
     [Authorize(Policy = "WebApp")]
     [HttpPut("IsActive")]
-    public async Task<IActionResult> UpdateCompanyActivity([FromQuery] int id, [FromQuery] bool isActive)
+    public async Task<IActionResult> UpdateCompanyActivity([FromQuery] int? id, [FromQuery] bool isActive)
     {
         var user = await userManager.GetUserAsync(User);
-        if (user == null) return Unauthorized();
+        if (user is null)
+            throw new UserNotFoundException();
 
-        var userCompany = await companyService.GetCompanyByUser(user);
-        if (userCompany != null) id = userCompany.Id;
+        var company = User.IsInRole(UserTypeEnum.Company.ToString())
+            ? await companyService.GetCompanyByUser(user)
+            : await companyService.GetCompanyByIdAsync(id ?? throw new CompanyNotFoundException(id));
+        
+        if (company is null)
+            throw new CompanyNotFoundException(id);
 
-        try
-        {
-            if (id == null)
-                throw new Exception("CompanyId is null");
-            var company = await companyService.GetCompanyByIdAsync(id);
-            await companyService.UpdateCompanyActivity(isActive, company);
-            return Ok();
-        }
-        catch (Exception e)
-        {
-            return BadRequest(e.Message);
-        }
+        await companyService.UpdateCompanyActivity(isActive, company);
+        return Ok();
     }
 
+    [Authorize]
     [HttpGet("Details")]
-    public async Task<ActionResult<CompanyDetailsDto>> GetCompanyDetails([FromQuery] int id)
+    public async Task<ActionResult<CompanyDetailsDto>> GetCompanyDetails([FromQuery] int? id)
     {
         var user = await userManager.GetUserAsync(User);
-        if (user == null) return Unauthorized();
+        if (user is null)
+            throw new UserNotFoundException();
 
-        var company = await companyService.GetCompanyByIdAsync(id);
-        if (company == null) return NotFound("Company not found");
+        var company = User.IsInRole(UserTypeEnum.Company.ToString())
+            ? await companyService.GetCompanyByUser(user)
+            : await companyService.GetCompanyByIdAsync(id ?? throw new CompanyNotFoundException(id));
+        
+        if (company is null)
+            throw new CompanyNotFoundException(id);
 
         var companyDetail = await companyService.GetCompanyDetailsAsync(company);
         var companyDetailResource = mapper.Map<CompanyDetails, CompanyDetailsDto>(companyDetail);
         return Ok(companyDetailResource);
     }
 
+    [Authorize]
     [HttpGet("Activities")]
-    public async Task<ActionResult<IEnumerable<ActivityDto>>> GetCompanyActivities([FromQuery] int id)
+    public async Task<ActionResult<IEnumerable<ActivityDto>>> GetCompanyActivities([FromQuery] int? id)
     {
         var user = await userManager.GetUserAsync(User);
-        if (user == null) return Unauthorized();
-        var company = await companyService.GetCompanyByIdAsync(id);
-        if (company == null) return NotFound("Company not found");
+        if (user is null)
+            throw new UserNotFoundException();
+
+        var company = User.IsInRole(UserTypeEnum.Company.ToString())
+            ? await companyService.GetCompanyByUser(user)
+            : await companyService.GetCompanyByIdAsync(id ?? throw new CompanyNotFoundException(id));
+        
+        if (company is null)
+            throw new CompanyNotFoundException(id);
 
         var companyActivities = await companyService.GetCompanyActivitiesAsync(company);
         return Ok(companyActivities);
@@ -150,24 +173,16 @@ public class CompanyController(ICompanyService companyService, IMapper mapper, U
     public async Task<IActionResult> UpdateCompanyActivities([FromBody] List<ActivityDto> resources)
     {
         var user = await userManager.GetUserAsync(User);
-        if (user == null) return Unauthorized();
+        if (user is null)
+            throw new UserNotFoundException();
 
-        try
-        {
-            if (user.Company == null) return Unauthorized();
+        if (user.Company is null)
+            throw new CompanyNotFoundException();
 
-            var company = await companyService.GetCompanyByIdAsync(user.Company.Id);
-            if (company == null) return NotFound("Company not found");
-
-            var companyActivities =
-                mapper.Map<IEnumerable<ActivityDto>, IEnumerable<CompanyActivity>>(resources);
-            await companyService.UpdateCompanyActivities(companyActivities, company);
-            return Ok();
-        }
-        catch (Exception ex)
-        {
-            return NotFound(ex.Message);
-        }
+        var companyActivities =
+            mapper.Map<IEnumerable<ActivityDto>, IEnumerable<CompanyActivity>>(resources);
+        await companyService.UpdateCompanyActivities(companyActivities, user.Company);
+        return Ok();
     }
 
     [Authorize("AdminOrInstitution")]
@@ -175,19 +190,52 @@ public class CompanyController(ICompanyService companyService, IMapper mapper, U
     public async Task<ActionResult<CompanyDto>> AddCompany([FromBody] RegisterCompanyModel model)
     {
         var user = await userManager.GetUserAsync(User);
-        if (user == null) return Unauthorized();
+        if (user is null)
+            throw new UserNotFoundException();
 
-        var companyUser = await userManager.FindByEmailAsync(model.UserEmail);
-        if (companyUser == null) return NotFound("User not found");
-        try
-        {
-            var company = await companyService.AddCompany(model.AcademicProgramId, model.CompanyName, companyUser);
-            var companyResource = mapper.Map<Company, CompanyDto>(company);
-            return Ok(companyResource);
-        }
-        catch (Exception e)
-        {
-            return BadRequest(e.Message);
-        }
+        var company = await companyService.AddCompany(model.AcademicProgramId, model.CompanyName, user);
+        if (company is null)
+            throw new CompanyNotFoundException();
+
+        var companyResource = mapper.Map<Company, CompanyDto>(company);
+        return Ok(companyResource);
+    }
+    
+    [Authorize("Company")]
+    [HttpPost("Locations")]
+    public async Task<IActionResult> AddLocations([FromBody] List<AddressDto> resources)
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user is null)
+            throw new UserNotFoundException();
+
+
+        var company = await companyService.GetCompanyByUser(user);
+        if (company is null)
+            throw new CompanyNotFoundException();
+
+        var addresses = mapper.Map<IEnumerable<AddressDto>, IEnumerable<Address>>(resources);
+        await companyService.AddLocations(addresses, company);
+        return Ok();
+    }
+
+    [Authorize]
+    [HttpGet("Locations")]
+    public async Task<ActionResult<IEnumerable<AddressDto>>> GetLocations([FromQuery] int? companyId)
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user is null)
+            throw new UserNotFoundException();
+
+        var company = User.IsInRole(UserTypeEnum.Company.ToString())
+            ? await companyService.GetCompanyByUser(user)
+            : await companyService.GetCompanyByIdAsync(companyId ?? throw new CompanyNotFoundException(companyId));
+
+        if (company is null)
+            throw new CompanyNotFoundException(companyId);
+
+        var locations = await companyService.GetLocationsByCompanyAsync(company);
+        var locationResources = mapper.Map<IEnumerable<Address>, IEnumerable<AddressDto>>(locations);
+        return Ok(locationResources);
     }
 }
