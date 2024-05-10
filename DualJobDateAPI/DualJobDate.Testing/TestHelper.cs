@@ -20,9 +20,4 @@ public class TestHelper
             UserType = userType ?? UserTypeEnum.Admin,
         };
     }
-    
-    public static User GetTestAdminUser()
-    {
-        return new User() { UserType = UserTypeEnum.Admin, Id = "98aad5f7-1fdc-45a1-9015-fbbfaf79e351", };
-    }
 }
