@@ -4,6 +4,7 @@ using DualJobDate.BusinessObjects.Entities.Interface.Service;
 using DualJobDate.BusinessObjects.Dtos;
 using DualJobDate.BusinessObjects.Entities.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DualJobDate.Api.Controllers;
@@ -11,7 +12,7 @@ namespace DualJobDate.Api.Controllers;
 [ApiController]
 [Authorize]
 [Route("[controller]")]
-public class UtilController(IUtilService utilService, IMapper mapper) : ControllerBase
+public class UtilController(IUtilService utilService, IMapper mapper, UserManager<User> userManager) : ControllerBase
 {
     [Authorize("Admin")]
     [HttpGet("Institutions")]
@@ -71,4 +72,58 @@ public class UtilController(IUtilService utilService, IMapper mapper) : Controll
             return StatusCode(500, "An unexpected error occurred");
         }
     }
+    
+    [HttpGet("AppointmentsByUserId")]
+    public async Task<ActionResult<IEnumerable<AppointmentDto>>> GetAppointmentsByUserIdAsync()
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null)
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var appointments = await utilService.GetAppointmentsByUserIdAsync(user.Id);
+            var appointmentResources = mapper.Map<IEnumerable<Appointment>, IEnumerable<AppointmentDto>>(appointments);
+            return Ok(appointmentResources);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(204, "No appointments found!");
+        }
+    }
+    
+    //[Authorize("Admin")]
+    [HttpGet("AppointmentsByUserId/{userId}")]
+    public async Task<ActionResult<IEnumerable<AppointmentDto>>> GetAppointmentsByUserIdAsync(string userId)
+    {
+        try
+        {
+            var appointments = await utilService.GetAppointmentsByUserIdAsync(userId);
+            var appointmentResources = mapper.Map<IEnumerable<Appointment>, IEnumerable<AppointmentDto>>(appointments);
+            return Ok(appointmentResources);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(204, "No appointments found for this user!");
+        }
+    }
+    
+    //[Authorize("Admin")]
+    [HttpGet("AppointmentsByCompanyId")]
+    public async Task<ActionResult<IEnumerable<AppointmentDto>>> GetAppointmentsByCompanyIdAsync(int companyId)
+    {
+        try
+        {
+            var appointments = await utilService.GetAppointmentsByCompanyIdAsync(companyId);
+            var appointmentResources = mapper.Map<IEnumerable<Appointment>, IEnumerable<AppointmentDto>>(appointments);
+            return Ok(appointmentResources);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(204, "No appointments found for this company!");
+        }
+    }
+    
 }
