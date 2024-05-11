@@ -250,7 +250,7 @@ public class UserController(
 
     [HttpPost]
     [Route("Login")]
-    public async Task<ActionResult<JwtAuthResultViewModel>> Login(LoginModel model)
+    public async Task<ActionResult<JwtAuthResultViewDto>> Login(LoginModel model)
     {
         var result = await signInManager.PasswordSignInAsync(model.Email, model.Password, false, false);
         if (!result.Succeeded)
@@ -439,15 +439,16 @@ public class UserController(
     [HttpGet]
     [Authorize]
     [Route("GetName")]
-    public async Task<ActionResult<ChangeNameModel>> GetName()
+    public async Task<ActionResult<NameAndEmailDto>> GetName()
     {
         var user = await userManager.GetUserAsync(User);
         if (user is null) return Unauthorized();
         
-        var model = new ChangeNameModel
+        var model = new NameAndEmailDto()
         {
             FirstName = user.FirstName,
-            LastName = user.LastName
+            LastName = user.LastName,
+            Email = user.Email
         };
 
         return Ok(model);

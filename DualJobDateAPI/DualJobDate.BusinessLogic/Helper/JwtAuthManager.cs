@@ -10,12 +10,12 @@ namespace DualJobDate.BusinessLogic.Helper
 {
     public class JwtAuthManager(UserManager<User> userManager, byte[] secret,  string issuer, string audience, int expireDate1, int expireDate2) : IJwtAuthManager
     {
-        public async Task<JwtAuthResultViewModel> GenerateTokens(User user, DateTime now)
+        public async Task<JwtAuthResultViewDto> GenerateTokens(User user, DateTime now)
         {
             var accessToken = await CreateAccessToken(user, now);
             var refreshToken = CreateRefreshToken(user, now);
 
-            var jwtResult = new JwtAuthResultViewModel
+            var jwtResult = new JwtAuthResultViewDto
             {
                 TokenType = "Bearer",
                 AccessToken = new JwtSecurityTokenHandler().WriteToken(accessToken),
