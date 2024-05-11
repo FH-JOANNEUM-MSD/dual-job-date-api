@@ -24,7 +24,9 @@ namespace DualJobDate.BusinessLogic.Helper
                 IsNew = user.IsNew,
                 UserId = user.Id,
                 Email = user.Email,
-                UserType = user.UserType
+                UserType = user.UserType,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
             };
             return jwtResult;
         }

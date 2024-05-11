@@ -8,6 +8,8 @@ public class User : IdentityUser
     public bool IsActive { get; set; }
     public UserTypeEnum UserType { get; set; }
     public bool IsNew { get; set; }
+    public string FirstName { get; set; } = string.Empty;
+    public string LastName { get; set; } = string.Empty;
 
     //navigation properties
     public int AcademicProgramId { get; set; }
