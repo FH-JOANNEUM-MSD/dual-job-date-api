@@ -40,14 +40,18 @@ public class UserControllerTests
             new Mock<IAuthenticationSchemeProvider>().Object,
             new Mock<IUserConfirmation<User>>().Object);
         var mockServiceProvider = new Mock<IServiceProvider>();
+        var mockCompanyManager = new Mock<ICompanyService>();
         var mockUtilService = new Mock<IUtilService>();
         var mockMapper = new Mock<IMapper>();
         var mockRoleManager = MockHelpers.MockRoleManager<Role>();
         _mockAuthenticationManager = new Mock<IJwtAuthManager>();
-        _controller = new UserController(_mockUserManager.Object,
+        _controller = new UserController(
+            mockCompanyManager.Object,
+            _mockUserManager.Object,
             _mockSignInManager.Object,
             mockServiceProvider.Object,
-            mockMapper.Object, mockRoleManager.Object,
+            mockMapper.Object, 
+            mockRoleManager.Object,
             _mockAuthenticationManager.Object,
             mockUtilService.Object
             );

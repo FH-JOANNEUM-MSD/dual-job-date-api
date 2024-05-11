@@ -47,17 +47,30 @@ public class CompanyController(ICompanyService companyService, IMapper mapper, U
         if (user is null)
             throw new UserNotFoundException();
 
-        var companyquerable = companyService.GetCompaniesAsync().Result.Include(x => x.AcademicProgram);
+        IQueryable<Company> companyQueryable = await companyService.GetCompaniesAsync();
+        companyQueryable = companyQueryable.Include(x => x.AcademicProgram);
+        
         IQueryable<Company> companies;
+
         if (User.IsInRole(UserTypeEnum.Admin.ToString()))
         {
-            companies = institutionId.HasValue ? companyquerable.Where(x => x.AcademicProgram.InstitutionId == institutionId) : companyquerable;
+            if (institutionId.HasValue)
+            {
+                companies = companyQueryable.Where(x => x.AcademicProgram.InstitutionId == institutionId);
+            }else if (academicProgramId.HasValue)
+            {
+                companies = companyQueryable.Where(x => x.AcademicProgramId == academicProgramId);
+            }
+            else
+            {
+                companies = companyQueryable;
+            }
         }
         else
         {
-            companies = academicProgramId.HasValue ? companyquerable.Where(x => x.AcademicProgramId == academicProgramId) : companyquerable.Where(x => x.AcademicProgram.InstitutionId == user.InstitutionId);
+            companies = academicProgramId.HasValue ? companyQueryable.Where(x => x.AcademicProgramId == academicProgramId) : companyQueryable.Where(x => x.AcademicProgram.InstitutionId == user.InstitutionId);
         }
-        var companyList = await companies.ToListAsync();
+        var companyList = companies.ToList();
         var companyResources = mapper.Map<IEnumerable<Company>, IEnumerable<CompanyDto>>(companyList);
         return Ok(companyResources);
     }
