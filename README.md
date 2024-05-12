@@ -125,5 +125,5 @@ Create or update database scheme with the following command:
 
 `dotnet ef database update --project DualJobDate.DataAccess --startup-project DualJobDate.Api`
 
-
-## Contribution
+## Architecture
+For more detailed information on the application architecture, please see [architecture documention](DualJobDateAPI/Architecture.md).
