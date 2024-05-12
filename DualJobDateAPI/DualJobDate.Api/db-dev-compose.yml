@@ -2,7 +2,7 @@ version: '3.8'
 services:
   mysql-db:
     image: mysql:8.0
-    container_name: DualJobDate-Database-Container
+    container_name: dual-job-date-db
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: DualJobDate
@@ -11,3 +11,9 @@ services:
     ports:
       - "3306:3306"
     restart: unless-stopped
+    networks:
+      - dual-job-date-network
+
+networks:
+  dual-job-date-network:
+    driver: bridge

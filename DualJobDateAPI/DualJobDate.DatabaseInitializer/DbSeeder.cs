@@ -23,6 +23,8 @@ public static class DbSeeder
         await SeedCompanyUser(services, uow);
         await SeedTestCompany(services, uow);
         await SeedActivities(uow);
+        await SeedAdresses(uow);
+        await SeedCompanyActivities(uow);
         uow.Commit();
         await uow.SaveChanges();
     }
@@ -165,7 +167,6 @@ public static class DbSeeder
                 InstitutionId = institution.Id,
                 AcademicProgram = academicProgram,
                 AcademicProgramId = academicProgram.Id,
-                Activities = activities,
                 User = user,
                 CompanyDetails = companyDetails
             });
@@ -181,10 +182,122 @@ public static class DbSeeder
                 InstitutionId = institution.Id,
                 AcademicProgram = academicProgram,
                 AcademicProgramId = academicProgram.Id,
-                Activities = activities,
                 User = user2,
                 CompanyDetails = companyDetails
             });
+        }
+    }
+
+    private static async Task SeedAdresses(IUnitOfWork unitOfWork)
+    {
+        var institution = await unitOfWork.InstitutionRepository.GetByName("IIT");
+        var academicProgram = await unitOfWork.AcademicProgramRepository.GetByNameAndYear("MSD", 2021);
+        var companies = await unitOfWork.CompanyRepository.GetAllAsync().Result.ToListAsync();
+        if(companies.Count == 2){
+            var location1 = new Address()
+            {
+                Street = "Hauptstraße",
+                BuildingNumber = "1",
+                ApartmentNumber = 10,
+                PostalCode = "8010",
+                City = "Graz",
+                Country = "Austria",
+                InstitutionId = institution.Id,
+                CompanyId = companies[0].Id
+            };
+            var location2 = new Address()
+            {
+                Street = "Hauptstraße",
+                BuildingNumber = "1",
+                ApartmentNumber = 10,
+                PostalCode = "8010",
+                City = "Graz",
+                Country = "Austria",
+                InstitutionId = institution.Id,
+                CompanyId = companies[1].Id
+            };
+            await unitOfWork.AdressRepository.AddAsync(location1);
+            await unitOfWork.AdressRepository.AddAsync(location2);
+        }
+    }
+    
+    private static async Task SeedCompanyActivities(IUnitOfWork unitOfWork)
+    {
+        var institution = await unitOfWork.InstitutionRepository.GetByName("IIT");
+        var academicProgram = await unitOfWork.AcademicProgramRepository.GetByNameAndYear("MSD", 2021);
+        var activities = await unitOfWork.ActivityRepository.GetAllAsync().Result
+            .Where(a => a.AcademicProgramId == academicProgram.Id).ToListAsync();
+        var companies = await unitOfWork.CompanyRepository.GetAllAsync().Result.ToListAsync();
+        if (activities.Count == 5 && companies.Count == 2)
+        {
+            var companyActivites1 = new List<CompanyActivity>()
+            {
+                new CompanyActivity()
+                {
+                    ActivityId = activities[0].Id,
+                    CompanyId = companies[0].Id,
+                    Value = 2
+                },
+                new CompanyActivity()
+                {
+                    ActivityId = activities[1].Id,
+                    CompanyId = companies[0].Id,
+                    Value = 4
+                },
+                new CompanyActivity()
+                {
+                    ActivityId = activities[2].Id,
+                    CompanyId = companies[0].Id,
+                    Value = 5
+                },
+                new CompanyActivity()
+                {
+                    ActivityId = activities[3].Id,
+                    CompanyId = companies[0].Id,
+                    Value = 1
+                },
+                new CompanyActivity()
+                {
+                    ActivityId = activities[4].Id,
+                    CompanyId = companies[0].Id,
+                    Value = 0
+                }
+            };
+            var companyActivites2 = new List<CompanyActivity>()
+            {
+                new CompanyActivity()
+                {
+                    ActivityId = activities[0].Id,
+                    CompanyId = companies[1].Id,
+                    Value = 3
+                },
+                new CompanyActivity()
+                {
+                    ActivityId = activities[1].Id,
+                    CompanyId = companies[1].Id,
+                    Value = 4
+                },
+                new CompanyActivity()
+                {
+                    ActivityId = activities[2].Id,
+                    CompanyId = companies[1].Id,
+                    Value = 1
+                },
+                new CompanyActivity()
+                {
+                    ActivityId = activities[3].Id,
+                    CompanyId = companies[1].Id,
+                    Value = 5
+                },
+                new CompanyActivity()
+                {
+                    ActivityId = activities[4].Id,
+                    CompanyId = companies[1].Id,
+                    Value = 0
+                }
+            };
+            await unitOfWork.CompanyActivityRepository.AddRangeAsync(companyActivites1);
+            await unitOfWork.CompanyActivityRepository.AddRangeAsync(companyActivites2);
         }
     }
 
