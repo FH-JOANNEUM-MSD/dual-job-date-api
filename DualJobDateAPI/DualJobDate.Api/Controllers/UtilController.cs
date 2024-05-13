@@ -130,7 +130,7 @@ public class UtilController(IUtilService utilService, IMapper mapper, UserManage
     [HttpGet("TestTermine")]
     public async Task<ActionResult<IEnumerable<AppointmentDto>>> GetTestTermine()
     {
-        var appointments = await utilService.GetAppointmentsByCompanyIdAsync(1);
+        var appointments = new List<Appointment>();//await utilService.GetAppointmentsByCompanyIdAsync(1);
         var newApp = new Appointment
         {
             AppointmentDate = DateTime.Now,
