@@ -198,6 +198,9 @@ public class CompanyService(IUnitOfWork unitOfWork, UserManager<User> userManage
         var hasUserCompany = await allCompanys.AnyAsync(c => c.UserId == companyUser.Id);
         if (hasUserCompany) throw new ArgumentException("User has a conpany already!");
 
+        var companyExists = await allCompanys.AnyAsync(c => c.Name == companyName);
+        if (companyExists) throw new ArgumentException("Company does already exist!");
+
         unitOfWork.BeginTransaction();
         var company = new Company
         {
