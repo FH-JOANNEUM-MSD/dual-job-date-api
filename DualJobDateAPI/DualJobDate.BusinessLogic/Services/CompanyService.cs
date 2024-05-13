@@ -191,8 +191,8 @@ public class CompanyService(IUnitOfWork unitOfWork, UserManager<User> userManage
 
     public async Task<Company?> AddCompany(int programId, string companyName, User companyUser)
     {
-        var program = await unitOfWork.AcademicProgramRepository.GetByIdAsync(programId);
-        if (program == null) throw new ArgumentOutOfRangeException("ProgramId is not in range!");
+        var program = await unitOfWork.AcademicProgramRepository.GetByIdAsync(programId)
+            ?? throw new ArgumentOutOfRangeException("academicProgramId");
 
         var allCompanys = await unitOfWork.CompanyRepository.GetAllAsync();
         var hasUserCompany = await allCompanys.AnyAsync(c => c.UserId == companyUser.Id);
