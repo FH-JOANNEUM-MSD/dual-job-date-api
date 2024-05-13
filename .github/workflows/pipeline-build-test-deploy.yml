@@ -53,7 +53,7 @@ jobs:
       working-directory: DualJobDateAPI
       run: dotnet restore DualJobDateAPI.sln
     - name: List Packages 
-      run: ls -R ~/.nuget/packages/
+      run: ls -R ~/.nuget/packages/reportgenerator
     - name: Run Tests
       working-directory: DualJobDateAPI
       run: |
