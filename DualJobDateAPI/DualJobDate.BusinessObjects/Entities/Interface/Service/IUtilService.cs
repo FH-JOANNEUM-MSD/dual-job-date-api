@@ -11,6 +11,6 @@ public interface IUtilService
     Task<AcademicProgram?> PostAcademicProgramAsync(int id,AcademicProgramModel model);
     Task<Institution?> PostInstitutionAsync(InstitutionModel model);
     Task<Company?> PutCompanyAsync(string name, int academicProgramId, int institutionId, string userId);
-    Task<List<Appointment>> GetAppointmentsByUserIdAsync(string userId);
-    Task<List<Appointment>> GetAppointmentsByCompanyIdAsync(int companyId);
+    Task<List<Appointment>?> GetAppointmentsByUserIdAsync(string userId);
+    Task<List<Appointment>?> GetAppointmentsByCompanyIdAsync(int companyId);
 }

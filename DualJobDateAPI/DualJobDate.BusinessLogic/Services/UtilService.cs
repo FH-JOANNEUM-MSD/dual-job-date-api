@@ -102,24 +102,25 @@ public class UtilService(IUnitOfWork unitOfWork, UserManager<User> userManager) 
         return company;
     }
 
-    public async Task<List<Appointment>> GetAppointmentsByUserIdAsync(string userId)
+    public async Task<List<Appointment>?> GetAppointmentsByUserIdAsync(string userId)
     {
         var ret = unitOfWork.AppointmentRepository.GetAllAsync().Result.Include(x => x.User).Include(x => x.Company);
         if (ret.Count(x => x.User.Id == userId) == 0)
         {
-            throw new ArgumentException("No appointments found for this user!");
+            return null;
         }
         var list = ret.Where(x => x.User.Id == userId);
         return list.ToList();
     }
 
-    public async Task<List<Appointment>> GetAppointmentsByCompanyIdAsync(int companyId)
+    public async Task<List<Appointment>?> GetAppointmentsByCompanyIdAsync(int companyId)
     {
-        var ret = unitOfWork.AppointmentRepository.GetAllAsync().Result.Include(x => x.User).Include(x => x.Company)
-            .Where(x => x.Company.Id == companyId);
+        var ret = await unitOfWork.AppointmentRepository.GetAllAsync();
+            ret = ret.Include(x => x.User).Include(x => x.Company)
+                .Where(x => x.Company.Id == companyId);
         if (ret.Count(x => x.Company.Id == companyId) == 0)
         {
-            throw new ArgumentException("No appointments found for this company!");
+            return null;
         }
         return ret.ToList();
     }
