@@ -244,6 +244,14 @@ public class CompanyController(
             var companyResource = mapper.Map<Company, CompanyDto>(company);
             return Ok(companyResource);
         }
+        catch (ArgumentOutOfRangeException e)
+        {
+            return BadRequest(e.Message);
+        }
+        catch (ArgumentException e)
+        {
+            return BadRequest(e.Message);
+        }
         catch (Exception e)
         {
             return BadRequest(e.Message);
