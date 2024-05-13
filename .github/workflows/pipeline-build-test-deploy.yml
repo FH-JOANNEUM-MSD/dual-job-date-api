@@ -59,11 +59,14 @@ jobs:
       run: |
         dotnet test DualJobDateAPI.sln --collect:"Xplat Code Coverage" --results-directory ./TestResults
         dotnet ~/.nuget/packages/reportgenerator/5.2.5/tools/net8.0/ReportGenerator.dll -reports:./TestResults/*/coverage.cobertura.xml -targetdir:coveragereport
+    - name: List contents of the coverage report directory
+      working-directory: DualJobDateAPI
+      run: ls -la coveragereport/
     - name: Upload Coverage Report
       uses: actions/upload-artifact@v2
       with:
         name: coverage-report
-        path: coveragereport/
+        path: DualJobDateAPI/coveragereport/
       
   # build-and-push-docker:
   #   permissions:
