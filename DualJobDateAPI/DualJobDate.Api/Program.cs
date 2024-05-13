@@ -3,6 +3,7 @@ using System.Text;
 using AutoMapper;
 using DualJobDate.Api.Extensions;
 using DualJobDate.Api.Mapping;
+using DualJobDate.Api.Middleware;
 using DualJobDate.BusinessLogic;
 using DualJobDate.BusinessLogic.Helper;
 using DualJobDate.BusinessObjects.Entities;
@@ -31,6 +32,7 @@ internal class Program
 
     private static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
+        ConfigureExceptionHandler(services);
         ConfigureCores(services);
         ConfigureDatabase(services, configuration);
         ConfigureIdentity(services);
@@ -42,6 +44,11 @@ internal class Program
         services.RegisterServices();
         services.RegisterHelpers(configuration);
         services.AddControllers();
+    }
+
+    private static void ConfigureExceptionHandler(IServiceCollection services)
+    {
+        services.AddTransient<ExceptionHandlingMiddleware>();
     }
 
     private static void ConfigureDatabase(IServiceCollection services, IConfiguration configuration)
@@ -167,8 +174,31 @@ internal class Program
         using var scope = app.Services.CreateScope();
         var services = scope.ServiceProvider;
         var loggerFactory = services.GetRequiredService<ILoggerFactory>();
-        if (app.Environment.IsDevelopment()) DbInitializer.InitializeDb(loggerFactory);
+        if (app.Environment.IsDevelopment())
+        {
+            try
+            {
+                DbInitializer.InitializeDb(loggerFactory);
+            }catch(Exception e)
+            {
+                var logger = loggerFactory.CreateLogger("DbInitializer");
+                logger.LogError(e, "An error occurred while initializing the database.");
+            }
+        }
         DatabaseConnectionTester.TestDbConnection(app).Wait();
+        if (app.Environment.IsDevelopment())
+        {
+            try
+            {
+                var dbContext = services.GetRequiredService<AppDbContext>();
+                dbContext.Database.Migrate();
+            }
+            catch (Exception e)
+            {
+                var logger = loggerFactory.CreateLogger("DbInitializer");
+                logger.LogError(e, "An error occurred while migrating the database.");
+            }
+        }
         DbSeeder.SeedData(services).Wait();
         app.UseCors();
 
