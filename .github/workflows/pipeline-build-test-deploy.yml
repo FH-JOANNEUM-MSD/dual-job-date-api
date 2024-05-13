@@ -50,7 +50,7 @@ jobs:
       with:
         dotnet-version: '8.0'
     - name: List ReportGenerator directory
-      run: ls -R "${{ github.workspace }}/.nuget/packages/reportgenerator/"
+      run: ls -R "~/.nuget/packages/reportgenerator/"
     - name: Run Tests
       working-directory: DualJobDateAPI
       run: |
