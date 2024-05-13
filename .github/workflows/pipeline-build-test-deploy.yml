@@ -57,7 +57,7 @@ jobs:
     - name: Run Tests
       working-directory: DualJobDateAPI
       run: |
-        dotnet test DualJobDateAPI.sln --collect:"Xplat Code Coverage"
+        dotnet test DualJobDateAPI.sln --collect:"Xplat Code Coverage" --results-directory ./TestResults
         dotnet ~/.nuget/packages/reportgenerator/5.2.5/tools/net8.0/ReportGenerator.dll -reports:./TestResults/*/coverage.cobertura.xml -targetdir:coveragereport
       
   # build-and-push-docker:
