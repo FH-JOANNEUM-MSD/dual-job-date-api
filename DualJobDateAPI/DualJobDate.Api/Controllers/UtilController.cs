@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using DualJobDate.BusinessLogic.Exceptions;
 using DualJobDate.BusinessObjects.Entities;
 using DualJobDate.BusinessObjects.Entities.Interface.Service;
 using DualJobDate.BusinessObjects.Dtos;
@@ -90,11 +91,11 @@ public class UtilController(IUtilService utilService, IMapper mapper, UserManage
         }
         catch (Exception ex)
         {
-            return StatusCode(204, "No appointments found!");
+            throw new AppointmentNotFoundException("user");
         }
     }
     
-    //[Authorize("Admin")]
+    [Authorize("Admin")]
     [HttpGet("AppointmentsByUserId/{userId}")]
     public async Task<ActionResult<IEnumerable<AppointmentDto>>> GetAppointmentsByUserIdAsync(string userId)
     {
@@ -106,11 +107,11 @@ public class UtilController(IUtilService utilService, IMapper mapper, UserManage
         }
         catch (Exception ex)
         {
-            return StatusCode(204, "No appointments found for this user!");
+            throw new AppointmentNotFoundException(userId);
         }
     }
     
-    //[Authorize("Admin")]
+    [Authorize("Admin")]
     [HttpGet("AppointmentsByCompanyId")]
     public async Task<ActionResult<IEnumerable<AppointmentDto>>> GetAppointmentsByCompanyIdAsync(int companyId)
     {
@@ -122,8 +123,29 @@ public class UtilController(IUtilService utilService, IMapper mapper, UserManage
         }
         catch (Exception ex)
         {
-            return StatusCode(204, "No appointments found for this company!");
+            throw new AppointmentNotFoundException($"Company: {companyId}");
         }
     }
     
+    [HttpGet("TestTermine")]
+    public async Task<ActionResult<IEnumerable<AppointmentDto>>> GetTestTermine()
+    {
+        var appointments = await utilService.GetAppointmentsByCompanyIdAsync(1);
+        var newApp = new Appointment
+        {
+            AppointmentDate = DateTime.Now,
+            CompanyId = 2,
+            UserId = "8e778201-2c4e-4243-91eb-1eb8b895f004"
+        };
+        var newApp2 = new Appointment
+        {
+            AppointmentDate = DateTime.Now.Add(TimeSpan.FromDays(1)),
+            CompanyId = 1,
+            UserId = "8e778201-2c4e-4243-91eb-1eb8b895f004"
+        };
+        appointments.Add(newApp);
+        appointments.Add(newApp2);
+        var appointmentResources = mapper.Map<IEnumerable<Appointment>, IEnumerable<AppointmentDto>>(appointments);
+        return Ok(appointmentResources);
+    }
 }
