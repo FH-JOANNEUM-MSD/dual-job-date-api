@@ -157,14 +157,14 @@ public class UserControllerTests
 
         _mockAuthenticationManager.Setup(j =>
             j.GenerateTokens(It.IsAny<User>(), It.IsAny<DateTime>()))
-            .ReturnsAsync(new JwtAuthResultViewModel());
+            .ReturnsAsync(new JwtAuthResultViewDto());
 
         // Act
         var result = await _controller.Refresh(refreshRequest);
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
-        var newTokens = Assert.IsType<JwtAuthResultViewModel>(okResult.Value);
+        var newTokens = Assert.IsType<JwtAuthResultViewDto>(okResult.Value);
         Assert.NotNull(newTokens);
     }
 
