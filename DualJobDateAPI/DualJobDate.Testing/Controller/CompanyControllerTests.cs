@@ -522,6 +522,56 @@ public class CompanyControllerTests
         // Assert
         await Assert.ThrowsAsync<CompanyNotFoundException>(Act);
     }
+    
+    [Fact]
+    public async Task AddLocations_ValidData_ReturnsOkResult()
+    {
+        // Arrange
+        var user = new User();
+        var company = new Company { Name = "Magna", Id = 1 };
+        user.Company = company;
+        var addressDtos = new List<AddressDto>();
+
+        _userManagerMock.Setup(manager => manager.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+        _companyServiceMock.Setup(service => service.GetCompanyByUser(user)).ReturnsAsync(company);
+        _mapperMock.Setup(mapper => mapper.Map<IEnumerable<AddressDto>, IEnumerable<Address>>(addressDtos))
+            .Returns(new List<Address>());
+
+        // Act
+        var result = await _controller.AddLocations(addressDtos);
+
+        // Assert
+        Assert.IsType<OkResult>(result);
+    }
+
+    [Fact]
+    public async Task GetLocations_ValidData_ReturnsOkResult()
+    {
+        // Arrange
+        var user = new User();
+        var company = new Company { Name = "Magna", Id = 1 };
+        user.Company = company;
+        var addressDtos = new List<AddressDto>();
+
+        _userManagerMock.Setup(manager => manager.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+        _companyServiceMock.Setup(service => service.GetCompanyByUser(user)).ReturnsAsync(company);
+        _mapperMock.Setup(mapper => mapper.Map<IEnumerable<Address>, IEnumerable<AddressDto>>(new List<Address>()))
+            .Returns(new List<AddressDto>());
+
+        var claims = new List<Claim> { new Claim(ClaimTypes.Role, "Company") };
+        var identity = new ClaimsIdentity(claims);
+        var principal = new ClaimsPrincipal(identity);
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = principal }
+        };
+
+        // Act
+        var result = await _controller.GetLocations(companyId: 1);
+
+        // Assert
+        Assert.IsType<OkObjectResult>(result.Result);
+    }
 
 
     private void SetupMapper()
