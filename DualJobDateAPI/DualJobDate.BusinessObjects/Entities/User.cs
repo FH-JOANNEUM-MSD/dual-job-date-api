@@ -19,4 +19,5 @@ public class User : IdentityUser
     public Company? Company { get; set; }
     public ICollection<Company> Likes { get; set; } = [];
     public ICollection<StudentCompany> StudentCompanies { get; set; } = [];
+    public ICollection<Appointment> Appointments { get; set; } = [];
 }
