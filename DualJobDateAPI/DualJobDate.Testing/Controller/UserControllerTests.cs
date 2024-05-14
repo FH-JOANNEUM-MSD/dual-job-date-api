@@ -2,6 +2,7 @@ using System.Security.Claims;
 using AutoMapper;
 using DualJobDate.Api.Controllers;
 using DualJobDate.BusinessObjects.Entities;
+using DualJobDate.BusinessObjects.Entities.Enum;
 using DualJobDate.BusinessObjects.Entities.Interface.Helper;
 using DualJobDate.BusinessObjects.Entities.Interface.Service;
 using DualJobDate.BusinessObjects.Entities.Models;
@@ -13,6 +14,7 @@ using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using MockQueryable.Moq;
 using Moq;
 using Xunit;
 using Xunit.Abstractions;
@@ -27,6 +29,9 @@ public class UserControllerTests
     private readonly Mock<SignInManager<User>> _mockSignInManager;
     private readonly UserController _controller;
     private readonly Mock<IJwtAuthManager> _mockAuthenticationManager;
+    private readonly Mock<IUtilService> _mockUtilService;
+    private readonly Mock<IServiceProvider> _mockServiceProvider;
+    private readonly Mock<RoleManager<Role>> _mockRoleManager;
 
     public UserControllerTests(ITestOutputHelper testOutputHelper)
     {
@@ -39,18 +44,18 @@ public class UserControllerTests
             new Mock<ILogger<SignInManager<User>>>().Object,
             new Mock<IAuthenticationSchemeProvider>().Object,
             new Mock<IUserConfirmation<User>>().Object);
-        var mockServiceProvider = new Mock<IServiceProvider>();
-        var mockUtilService = new Mock<IUtilService>();
+        _mockServiceProvider = new Mock<IServiceProvider>();
+        _mockUtilService = new Mock<IUtilService>();
         var mockMapper = new Mock<IMapper>();
-        var mockRoleManager = MockHelpers.MockRoleManager<Role>();
+        _mockRoleManager = MockHelpers.MockRoleManager<Role>();
         _mockAuthenticationManager = new Mock<IJwtAuthManager>();
         _controller = new UserController(_mockUserManager.Object,
             _mockSignInManager.Object,
-            mockServiceProvider.Object,
-            mockMapper.Object, mockRoleManager.Object,
+            _mockServiceProvider.Object,
+            mockMapper.Object, _mockRoleManager.Object,
             _mockAuthenticationManager.Object,
-            mockUtilService.Object
-            );
+            _mockUtilService.Object
+        );
     }
 
     [Fact]
@@ -211,4 +216,51 @@ public class UserControllerTests
         var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
         Assert.Equal("User not found", notFoundResult.Value);
     }
+    
+    [Fact]
+    public async Task RegisterUser_Success()
+    {
+        // Arrange
+        var registerUserModel = new RegisterUserModel { Email = "test@test.com", Role = UserTypeEnum.Student, InstitutionId = 1, AcademicProgramId = 1 };
+        _mockUserManager.Setup(x => x.CreateAsync(It.IsAny<User>(), It.IsAny<string>()))
+            .ReturnsAsync(IdentityResult.Success);
+        _mockUserManager.Setup(x => x.AddToRoleAsync(It.IsAny<User>(), It.IsAny<string>()))
+            .ReturnsAsync(IdentityResult.Success);
+        _mockUtilService.Setup(x => x.GetInstitutionsAsync())
+            .ReturnsAsync(new List<Institution> { new Institution { Id = 1, Name = "Test Institution" } }.AsQueryable());
+        _mockUtilService.Setup(x => x.GetAcademicProgramsAsync(null))
+            .ReturnsAsync(new List<AcademicProgram> { new AcademicProgram { Id = 1, Name = "Test Program" } }.AsQueryable());
+
+        _mockServiceProvider.Setup(x => x.GetService(typeof(IUserStore<User>)))
+            .Returns(new FakeUserStore());
+        _mockRoleManager.Setup(x => x.FindByNameAsync(It.IsAny<string>()))
+            .ReturnsAsync(new Role { Name = "Student" });
+        
+        var mockData = new List<Role>
+        {
+            new Role { UserTypeEnum = UserTypeEnum.Admin },
+            new Role { UserTypeEnum = UserTypeEnum.Company },
+            new Role { UserTypeEnum = UserTypeEnum.Student, Name = "Student"}
+        };
+
+        var mockSet = mockData.AsQueryable().BuildMockDbSet();
+
+        _mockRoleManager.Setup(rm => rm.Roles).Returns(mockSet.Object);
+
+        var claims = new List<Claim> { new Claim(ClaimTypes.Role, "Admin") };
+        var identity = new ClaimsIdentity(claims);
+        var principal = new ClaimsPrincipal(identity);
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = principal }
+        };
+        
+        // Act
+        var result = await _controller.RegisterUser(registerUserModel);
+
+        // Assert
+        Assert.IsType<OkObjectResult>(result);
+        Assert.Contains("created successfully", ((OkObjectResult)result).Value.ToString());
+    }
+
 }
