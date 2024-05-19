@@ -1,9 +1,7 @@
 ﻿using DualJobDate.BusinessObjects.Entities;
 using DualJobDate.BusinessObjects.Entities.Interface;
 using DualJobDate.BusinessObjects.Entities.Interface.Service;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Mysqlx;
 
 namespace DualJobDate.BusinessLogic.Services;
 
@@ -76,5 +74,11 @@ public class StudentCompanyService(IUnitOfWork unitOfWork) : IStudentCompanyServ
             return false;
         }
         
+    }
+
+    public Dictionary<User, List<Company>> MatchCompaniesToStudents(List<User> students, List<Company> companies,
+        List<StudentCompany> votes, int matchesPerStudent = 6)
+    {
+        return null;
     }
 }
