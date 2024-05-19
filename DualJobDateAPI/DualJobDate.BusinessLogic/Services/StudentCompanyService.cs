@@ -113,6 +113,11 @@ public class StudentCompanyService(IUnitOfWork unitOfWork) : IStudentCompanyServ
             selectCompanies.AddRange(likedCompanies.Take(matchesPerStudent / 2));
             selectCompanies.AddRange(neutralCompanies.Take(matchesPerStudent / 2));
 
+            if (selectCompanies.Count < matchesPerStudent)
+            {
+                selectCompanies.AddRange(dislikedCompanies.Take(matchesPerStudent - selectCompanies.Count));
+            }
+
             dictionary.Add(student, selectCompanies);
 
             selectCompanies.ForEach(x => companyPickCount[x]++);
