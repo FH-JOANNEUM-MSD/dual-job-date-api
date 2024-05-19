@@ -12,21 +12,23 @@ public class StudentCompanyService(IUnitOfWork unitOfWork) : IStudentCompanyServ
         var result = (await unitOfWork.StudentCompanyRepository.GetAllAsync());
         return await result.ToListAsync();
     }
-    
+
     public async Task<List<StudentCompany>> GetStudentCompaniesByStudentIdAsync(string studentId)
     {
         var result = (await unitOfWork.StudentCompanyRepository.GetAllAsync()).Where(x => x.StudentId == studentId);
         return await result.ToListAsync();
     }
-    
+
     public async Task<StudentCompany?> GetStudentCompanyByIdAsync(int id)
     {
         return await (await unitOfWork.StudentCompanyRepository.GetAllAsync()).FirstOrDefaultAsync(x => x.Id == id);
     }
-    
+
     public async Task<StudentCompany?> CreateStudentCompanyAsync(bool like, int companyId, string studentId)
     {
-        var studentCompany = (await unitOfWork.StudentCompanyRepository.GetAllAsync()).FirstOrDefault(x => x.StudentId == studentId && x.CompanyId == companyId);
+        var studentCompany =
+            (await unitOfWork.StudentCompanyRepository.GetAllAsync()).FirstOrDefault(x =>
+                x.StudentId == studentId && x.CompanyId == companyId);
 
         try
         {
@@ -56,9 +58,9 @@ public class StudentCompanyService(IUnitOfWork unitOfWork) : IStudentCompanyServ
         {
             return null;
         }
-        
+
     }
-    
+
     public async Task<bool> DeleteStudentCompanyAsync(int id)
     {
         try
@@ -73,12 +75,49 @@ public class StudentCompanyService(IUnitOfWork unitOfWork) : IStudentCompanyServ
         {
             return false;
         }
-        
+
     }
 
     public Dictionary<User, List<Company>> MatchCompaniesToStudents(List<User> students, List<Company> companies,
-        List<StudentCompany> votes, int matchesPerStudent = 6)
+        int matchesPerStudent = 6)
     {
-        return null;
+        var companyPickCount = companies.ToDictionary(company => company, company => 0);
+        var sortedCompanies = companies.OrderBy(x => companyPickCount[x]).ToList();
+        var dictionary = new Dictionary<User, List<Company>>();
+        foreach (var student in students)
+        {
+            var availableCompanies = companyPickCount.Keys.OrderBy(x => companyPickCount[x]).ToList();
+
+            var likedCompanyIds = student.StudentCompanies
+                .Where(x => x.Like)
+                .Select(x => x.CompanyId)
+                .ToList();
+
+            var likedCompanies = availableCompanies
+                .Where(x => likedCompanyIds.Contains(x.Id))
+                .ToList();
+
+            var dislikedCompanyIds = student.StudentCompanies
+                .Where(x => !x.Like)
+                .Select(x => x.CompanyId)
+                .ToList();
+
+            var dislikedCompanies = availableCompanies
+                .Where(x => dislikedCompanyIds.Contains(x.Id))
+                .ToList();
+
+            var neutralCompanies = availableCompanies
+                .Except(likedCompanies.Concat(dislikedCompanies)).ToList();
+
+            var selectCompanies = new List<Company>();
+            selectCompanies.AddRange(likedCompanies.Take(matchesPerStudent / 2));
+            selectCompanies.AddRange(neutralCompanies.Take(matchesPerStudent / 2));
+
+            dictionary.Add(student, selectCompanies);
+
+            selectCompanies.ForEach(x => companyPickCount[x]++);
+        }
+
+        return dictionary;
     }
 }

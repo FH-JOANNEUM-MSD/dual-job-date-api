@@ -21,17 +21,17 @@ namespace DualJobDate.Testing.Service
         [Fact]
         public void MatchStudentWithCompanyTest()
         {
-            var companies = GetCompanies();
             var students = GetStudent();
-            var votes = CreateStudentCompany();
+            var companies = GetCompanies();
             var matchPerStudent = 6;
-            var matches = _service.MatchCompaniesToStudents(students, companies, votes, matchPerStudent);
+            var matches = _service.MatchCompaniesToStudents(students, companies, matchPerStudent);
 
             foreach (var student in students)
             {
                 Assert.True(matches.ContainsKey(student));
                 var matchedCompanies = matches[student];
                 Assert.Equal(matchPerStudent, matchedCompanies.Count);
+                var votes = student.StudentCompanies;
 
                 var likedCompanies = votes
                     .Where(x => x.StudentId == student.Id && x.Like)
@@ -41,10 +41,8 @@ namespace DualJobDate.Testing.Service
                     .Where(x => x.StudentId == student.Id && !x.Like)
                     .Select(x => x.CompanyId).ToList();
 
-                var eligibleCompanies = companies
-                    .Where(c => c.AcademicProgramId == student.AcademicProgramId && c.InstitutionId == student.InstitutionId)
-                    .Select(c => c.Id)
-                    .ToList();
+                var eligibleCompanies = companies.Select(x => x.Id)
+                    .Except(likedCompanies.Concat(dislikedCompanies)).ToList();
 
                 var neutralCompanies = eligibleCompanies
                     .Where(x => !likedCompanies.Contains(x) && !dislikedCompanies.Contains(x))
@@ -68,32 +66,47 @@ namespace DualJobDate.Testing.Service
             new Company { Id = 1, Name = "Company1", AcademicProgramId = 1, InstitutionId = 1 },
             new Company { Id = 2, Name = "Company2", AcademicProgramId = 1, InstitutionId = 1 },
             new Company { Id = 3, Name = "Company3", AcademicProgramId = 1, InstitutionId = 1 },
-            new Company { Id = 4, Name = "Company4", AcademicProgramId = 2, InstitutionId = 1 },
-            new Company { Id = 5, Name = "Company5", AcademicProgramId = 2, InstitutionId = 1 },
-            new Company { Id = 6, Name = "Company6", AcademicProgramId = 2, InstitutionId = 1 },
-            new Company { Id = 7, Name = "Company7", AcademicProgramId = 1, InstitutionId = 2 },
-            new Company { Id = 8, Name = "Company8", AcademicProgramId = 2, InstitutionId = 2 }
+            new Company { Id = 4, Name = "Company4", AcademicProgramId = 1, InstitutionId = 1 },
+            new Company { Id = 5, Name = "Company5", AcademicProgramId = 1, InstitutionId = 1 },
+            new Company { Id = 6, Name = "Company6", AcademicProgramId = 1, InstitutionId = 1 },
+            new Company { Id = 7, Name = "Company7", AcademicProgramId = 1, InstitutionId = 1 },
+            new Company { Id = 8, Name = "Company8", AcademicProgramId = 1, InstitutionId = 1 },
+            new Company { Id = 9, Name = "Company9", AcademicProgramId = 1, InstitutionId = 1 },
+            new Company { Id = 10, Name = "Company10", AcademicProgramId = 1, InstitutionId = 1 },
+            new Company { Id = 11, Name = "Company11", AcademicProgramId = 1, InstitutionId = 1 },
+            new Company { Id = 12, Name = "Company12", AcademicProgramId = 1, InstitutionId = 1 },
+            new Company { Id = 13, Name = "Company13", AcademicProgramId = 1, InstitutionId = 1 },
+            new Company { Id = 14, Name = "Company14", AcademicProgramId = 1, InstitutionId = 1 },
+            new Company { Id = 15, Name = "Company15", AcademicProgramId = 1, InstitutionId = 1 },
         ];
 
-        private static List<User> GetStudent() =>
-        [
-            new User { Id = "1", AcademicProgramId = 1, InstitutionId = 1 },
-            new User { Id = "2", AcademicProgramId = 1, InstitutionId = 1 },
-            new User { Id = "3", AcademicProgramId = 2, InstitutionId = 1 }
-        ];
+        private static List<User> GetStudent()
+        {
+            var students = new List<User>();
+            for (int i = 0; i < 10; i++)
+            {
+                students.Add(new User
+                {
+                    Id = i.ToString(),
+                    StudentCompanies = CreateStudentCompany(i.ToString())
+                });
+            }
 
-        private List<StudentCompany> CreateStudentCompany() =>
+            return students;
+        }
+            
+        private static List<StudentCompany> CreateStudentCompany(string studentId) =>
         [
-            new StudentCompany { StudentId = "1", CompanyId = 1, Like = true },
-            new StudentCompany { StudentId = "1", CompanyId = 2, Like = true },
-            new StudentCompany { StudentId = "1", CompanyId = 3, Like = true },
-            new StudentCompany { StudentId = "2", CompanyId = 1, Like = true },
-            new StudentCompany { StudentId = "2", CompanyId = 2, Like = true },
-            new StudentCompany { StudentId = "3", CompanyId = 4, Like = true },
-            new StudentCompany { StudentId = "3", CompanyId = 5, Like = true },
-            new StudentCompany { StudentId = "3", CompanyId = 6, Like = true },
-            new StudentCompany { StudentId = "1", CompanyId = 4, Like = false },
-            new StudentCompany { StudentId = "2", CompanyId = 5, Like = false }
+            new StudentCompany { StudentId = studentId, CompanyId = 1, Like = true },
+            new StudentCompany { StudentId = studentId, CompanyId = 2, Like = true },
+            new StudentCompany { StudentId = studentId, CompanyId = 3, Like = true },
+            new StudentCompany { StudentId = studentId, CompanyId = 4, Like = true },
+            new StudentCompany { StudentId = studentId, CompanyId = 5, Like = true },
+            new StudentCompany { StudentId = studentId, CompanyId = 6, Like = false },
+            new StudentCompany { StudentId = studentId, CompanyId = 7, Like = false },
+            new StudentCompany { StudentId = studentId, CompanyId = 8, Like = false },
+            new StudentCompany { StudentId = studentId, CompanyId = 9, Like = false },
+            new StudentCompany { StudentId = studentId, CompanyId = 10, Like = false }
         ];
     }
 }
