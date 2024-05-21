@@ -13,7 +13,7 @@ public class UnitOfWork(
     ICompanyRepository companyRepository,
     ICompanyDetailsRepository companyDetailsRepository,
     ICompanyActivityRepository companyActivityRepository,
-    IAdressRepository adressRepository,
+    IAdressRepository addressRepository,
     IStudentCompanyRepository studentCompanyRepository) : IUnitOfWork, IDisposable
 {
     private readonly AppDbContext _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
@@ -41,8 +41,8 @@ public class UnitOfWork(
                                                                    throw new ArgumentNullException(
                                                                        nameof(companyActivityRepository));
 
-    public IAdressRepository AdressRepository =>
-        adressRepository ?? throw new ArgumentNullException(nameof(adressRepository));
+    public IAdressRepository AddressRepository =>
+        addressRepository ?? throw new ArgumentNullException(nameof(addressRepository));
     
     public IStudentCompanyRepository StudentCompanyRepository =>
         studentCompanyRepository ?? throw new ArgumentNullException(nameof(studentCompanyRepository));
