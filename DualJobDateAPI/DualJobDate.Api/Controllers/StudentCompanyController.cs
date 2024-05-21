@@ -1,11 +1,12 @@
-﻿using DualJobDate.BusinessObjects.Entities;
-using DualJobDate.BusinessObjects.Entities.Interface.Repository;
+﻿using AutoMapper;
+using DualJobDate.BusinessLogic.Exceptions;
+using DualJobDate.BusinessObjects.Dtos;
+using DualJobDate.BusinessObjects.Entities;
+using DualJobDate.BusinessObjects.Entities.Enum;
 using DualJobDate.BusinessObjects.Entities.Interface.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using AutoMapper;
-using DualJobDate.BusinessObjects.Dtos;
 
 namespace DualJobDate.Api.Controllers;
 
@@ -95,5 +96,21 @@ public class StudentCompanyController(UserManager<User> userManager, ICompanySer
         }
 
         return StatusCode(500, "Removing like or dislike failed.");
+    }
+
+    public async Task<ActionResult> MatchCompaniesToStudent([FromQuery] int academicProgramId)
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user is null)
+        {
+            throw new UserNotFoundException();
+        }
+
+        var companies = await companyService.GetActiveCompaniesAsync(user);
+        var students = userManager.Users.Where(x =>
+            x.InstitutionId == user.InstitutionId && x.AcademicProgramId == academicProgramId && x.IsActive &&
+            x.UserType == UserTypeEnum.Student).ToList();
+        var matches = studentCompanyService.MatchCompaniesToStudents(students, companies);
+        return Ok(matches);
     }
 }
