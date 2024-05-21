@@ -82,7 +82,7 @@ jobs:
   notify_failure:
     name: Benachrichtigung bei Build-Fehler
     runs-on: ubuntu-latest
-    needs: build
+    needs: [build, test, build-and-push-docker]
     if: failure()
     steps:
       - name: Send Discord Notification on Failure
@@ -91,16 +91,17 @@ jobs:
           -X POST \
           -d "{\"content\": \" **Workflow Failed:** ${{ github.workflow }}\n**Branch:** ${{ github.ref_name }}\n**Repository:** ${{ github.repository }}\n**Duration:** ${{ env.duration }} seconds\"}" \
           ${{ secrets.WEBHOOK_URL }}
+
   notify_success:
     name: Benachrichtigung bei Build-Success
     runs-on: ubuntu-latest
-    needs: build
+    needs: [build, test, build-and-push-docker]
     if: success()
     steps:
       - name: Send Discord Notification on Success
         run: |
           curl -H "Content-Type: application/json" \
           -X POST \
-          -d "{\"content\": \"✅ **Workflow Failed:** ${{ github.workflow }}\n**Branch:** ${{ github.ref_name }}\n**Repository:** ${{ github.repository }}\n**Duration:** ${{ env.duration }} seconds\"}" \
+          -d "{\"content\": \"✅ **Workflow succeded:** ${{ github.workflow }}\n**Branch:** ${{ github.ref_name }}\n**Repository:** ${{ github.repository }}\n**Duration:** ${{ env.duration }} seconds\"}" \
           ${{ secrets.WEBHOOK_URL }}
   
