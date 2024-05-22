@@ -103,4 +103,4 @@ jobs:
           curl -H "Content-Type: application/json" \
           -X POST \
           -d "{\"content\": \"✅ **Workflow succeeded:** ${{ github.workflow }}\n**Branch:** ${{ github.ref_name }}\n**Repository:** ${{ github.repository }}\n**Link:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
-          https://discord.com/api/webhooks/1239289178211225620/vc4Kd8AK6JGGe39rDXDXRSskBwgz8ThF2u3NyF980PrLhOLeb3Mo78Jk6-ZcsbnLb48Z
+          ${{ secrets.WEBHOOK_URL }}
