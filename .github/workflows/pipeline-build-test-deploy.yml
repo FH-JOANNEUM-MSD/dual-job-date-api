@@ -89,7 +89,7 @@ jobs:
         run: |
           curl -H "Content-Type: application/json" \
           -X POST \
-          -d "{\"content\": \" **Workflow Failed:** ${{ github.workflow }}\n**Branch:** ${{ github.ref_name }}\n**Repository:** ${{ github.repository }}\n**Duration:** ${{ env.duration }} seconds\"}" \
+          -d "{\"content\": \" **Workflow Failed:** ${{ github.workflow }}\n**Branch:** ${{ github.ref_name }}\n**Repository:** ${{ github.repository }}\"}" \
           ${{ secrets.WEBHOOK_URL }}
 
   notify_success:
@@ -102,6 +102,6 @@ jobs:
         run: |
           curl -H "Content-Type: application/json" \
           -X POST \
-          -d "{\"content\": \"✅ **Workflow succeded:** ${{ github.workflow }}\n**Branch:** ${{ github.ref_name }}\n**Repository:** ${{ github.repository }}\n**Duration:** ${{ env.duration }} seconds\"}" \
+          -d "{\"content\": \"✅ **Workflow succeded:** ${{ github.workflow }}\n**Branch:** ${{ github.ref_name }}\n**Repository:** ${{ github.repository }}\"}" \
           ${{ secrets.WEBHOOK_URL }}
   
