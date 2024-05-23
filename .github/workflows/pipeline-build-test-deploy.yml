@@ -3,10 +3,10 @@ name: .NET CI/CD Pipeline
 on:
   push:
     branches: 
-      - feature/tests-cicd #change to dev when merging
+      - dev
   pull_request:
     branches:
-      - feature/tests-cicd #change to dev when merging
+      - dev
 
 env:
   REGISTRY: ghcr.io
