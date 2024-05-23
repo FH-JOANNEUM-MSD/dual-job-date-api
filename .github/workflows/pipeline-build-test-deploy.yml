@@ -49,11 +49,19 @@ jobs:
       uses: actions/setup-dotnet@v2
       with:
         dotnet-version: '8.0'
-
+    - name: Restore dependencies
+      working-directory: DualJobDateAPI
+      run: dotnet restore DualJobDateAPI.sln
     - name: Run Tests
       working-directory: DualJobDateAPI
       run: |
-        dotnet test -c Release DualJobDateAPI.sln --verbosity detailed
+        dotnet test DualJobDateAPI.sln --collect:"Xplat Code Coverage" --results-directory ./TestResults
+        dotnet ~/.nuget/packages/reportgenerator/5.2.5/tools/net8.0/ReportGenerator.dll -reports:./TestResults/*/coverage.cobertura.xml -targetdir:coveragereport
+    - name: Upload Coverage Report
+      uses: actions/upload-artifact@v2
+      with:
+        name: coverage-report
+        path: DualJobDateAPI/coveragereport/
       
   build-and-push-docker:
     permissions:
