@@ -17,6 +17,11 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
+
+    # This step intentionally fails to simulate a build failure
+    - name: Simulate build failure
+      run: exit 1
+
     - name: Checkout code
       uses: actions/checkout@v2
 
@@ -80,27 +85,51 @@ jobs:
         tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:build-develop
 
   notify_failure:
-    name: Benachrichtigung bei Build-Fehler
+    name: Notify on Build, Test or Dockerization Failure
     runs-on: ubuntu-latest
     needs: [build, test, build-and-push-docker]
     if: failure()
     steps:
+      - name: Get Committer Username
+        id: commit_info
+        run: echo "::set-output name=COMMITTER::$(git log -1 --pretty=format:'%an')"
       - name: Send Discord Notification on Failure
+        env:
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+          WORKFLOW: ${{ github.workflow }}
+          BRANCH: ${{ github.ref_name }}
+          REPOSITORY: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+          SERVER_URL: ${{ github.server_url }}
+          AUTHOR: ${{ github.event.head_commit.author.name }}
         run: |
+          set -e
           curl -H "Content-Type: application/json" \
           -X POST \
-          -d "{\"content\": \" **Workflow Failed:** ${{ github.workflow }}\n**Branch:** ${{ github.ref_name }}\n**Repository:** ${{ github.repository }}\n**Link:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
-          ${{ secrets.WEBHOOK_URL }}
+          -d "{\"content\": \"❌❌ **Workflow Failed:** $WORKFLOW\n**Branch:** $BRANCH\n**Repository:** $REPOSITORY\n**Link:** $SERVER_URL/$REPOSITORY/actions/runs/$RUN_ID\n**Committer:** @$AUTHOR\"}" \
+          $WEBHOOK_URL || exit 1
 
   notify_success:
-    name: Benachrichtigung bei Build-Success
+    name: Notify on Build, Test or Dockerization Success
     runs-on: ubuntu-latest
     needs: [build, test, build-and-push-docker]
     if: success()
     steps:
+      - name: Get Committer Username
+        id: commit_info
+        run: echo "::set-output name=COMMITTER::$(git log -1 --pretty=format:'%an')"
+      
       - name: Send Discord Notification on Success
+        env:
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+          WORKFLOW: ${{ github.workflow }}
+          BRANCH: ${{ github.ref_name }}
+          REPOSITORY: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+          SERVER_URL: ${{ github.server_url }}
+          AUTHOR: ${{ github.event.head_commit.author.name }}
         run: |
           curl -H "Content-Type: application/json" \
           -X POST \
-          -d "{\"content\": \"✅ **Workflow succeeded:** ${{ github.workflow }}\n**Branch:** ${{ github.ref_name }}\n**Repository:** ${{ github.repository }}\n**Link:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
-          ${{ secrets.WEBHOOK_URL }}
+          -d "{\"content\": \"✅ **Workflow succeeded:** $WORKFLOW\n**Branch:** $BRANCH\n**Repository:** $REPOSITORY\n**Link:** $SERVER_URL/$REPOSITORY/actions/runs/$RUN_ID\n**Committer:** $AUTHOR\"}" \
+          $WEBHOOK_URL
