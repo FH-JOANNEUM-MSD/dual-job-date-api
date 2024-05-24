@@ -98,6 +98,8 @@ public class StudentCompanyController(UserManager<User> userManager, ICompanySer
         return StatusCode(500, "Removing like or dislike failed.");
     }
 
+    [Authorize(Policy = "AdminOrInstitution")]
+    [HttpGet("MatchCompaniesToStudent")]
     public async Task<ActionResult> MatchCompaniesToStudent([FromQuery] int academicProgramId)
     {
         var user = await userManager.GetUserAsync(User);
