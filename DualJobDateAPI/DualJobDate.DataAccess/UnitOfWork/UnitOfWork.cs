@@ -15,8 +15,7 @@ public class UnitOfWork(
     ICompanyActivityRepository companyActivityRepository,
     IStudentCompanyRepository studentCompanyRepository,
     IAppointmentRepository appointmentRepository,
-    IAdressRepository addressRepository,
-    IStudentCompanyRepository studentCompanyRepository) : IUnitOfWork, IDisposable
+    IAdressRepository addressRepository) : IUnitOfWork, IDisposable
 {
     private readonly AppDbContext _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
 

@@ -23,7 +23,7 @@ public static class DbSeeder
         await SeedCompanyUser(services, uow);
         await SeedTestCompany(services, uow);
         await SeedActivities(uow);
-        await SeedAdresses(uow);
+        await SeedAddresses(uow);
         await SeedCompanyActivities(uow);
         uow.Commit();
         await uow.SaveChanges();
@@ -188,7 +188,7 @@ public static class DbSeeder
         }
     }
 
-    private static async Task SeedAdresses(IUnitOfWork unitOfWork)
+    private static async Task SeedAddresses(IUnitOfWork unitOfWork)
     {
         var institution = await unitOfWork.InstitutionRepository.GetByName("IIT");
         var academicProgram = await unitOfWork.AcademicProgramRepository.GetByNameAndYear("MSD", 2021);
@@ -216,8 +216,8 @@ public static class DbSeeder
                 InstitutionId = institution.Id,
                 CompanyId = companies[1].Id
             };
-            await unitOfWork.AdressRepository.AddAsync(location1);
-            await unitOfWork.AdressRepository.AddAsync(location2);
+            await unitOfWork.AddressRepository.AddAsync(location1);
+            await unitOfWork.AddressRepository.AddAsync(location2);
         }
     }
     
