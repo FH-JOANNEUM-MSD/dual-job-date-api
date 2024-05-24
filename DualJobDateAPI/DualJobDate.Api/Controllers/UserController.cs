@@ -249,7 +249,7 @@ public class UserController(
 
     [HttpPost]
     [Route("Login")]
-    public async Task<ActionResult<JwtAuthResultViewModel>> Login(LoginModel model)
+    public async Task<ActionResult<JwtAuthResultViewDto>> Login(LoginModel model)
     {
         var result = await signInManager.PasswordSignInAsync(model.Email, model.Password, false, false);
         if (!result.Succeeded)
@@ -418,6 +418,43 @@ public class UserController(
         return BadRequest(result.Errors);
     }
 
+    [HttpPost]
+    [Authorize]
+    [Route("ChangeName")]
+    public async Task<IActionResult> ChangeName([FromBody] ChangeNameModel model)
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user is null) return Unauthorized();
+
+        user.FirstName = model.FirstName;
+        user.LastName = model.LastName;
+
+        var result = await userManager.UpdateAsync(user);
+        if (result.Succeeded) return Ok("Name changed successfully!");
+
+        return BadRequest(result.Errors);
+    }
+    
+    [HttpGet]
+    [Authorize]
+    [Route("GetName")]
+    public async Task<ActionResult<NameAndEmailDto>> GetName()
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user is null) return Unauthorized();
+        
+        var model = new NameAndEmailDto()
+        {
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            Email = user.Email
+        };
+
+        return Ok(model);
+    }
+    
+    
+    
     [Obsolete("Obsolete")]
     public static string GeneratePassword(int length = 12)
     {

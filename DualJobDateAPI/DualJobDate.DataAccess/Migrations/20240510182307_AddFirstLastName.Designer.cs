@@ -3,6 +3,7 @@ using System;
 using DualJobDate.DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DualJobDate.DataAccess.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240510182307_AddFirstLastName")]
+    partial class AddFirstLastName
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -122,31 +125,6 @@ namespace DualJobDate.DataAccess.Migrations
                     b.HasIndex("InstitutionId");
 
                     b.ToTable("Addresses");
-                });
-
-            modelBuilder.Entity("DualJobDate.BusinessObjects.Entities.Appointment", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("AppointmentDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("CompanyId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("varchar(255)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CompanyId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Appointments");
                 });
 
             modelBuilder.Entity("DualJobDate.BusinessObjects.Entities.Company", b =>
@@ -552,25 +530,6 @@ namespace DualJobDate.DataAccess.Migrations
                     b.Navigation("Institution");
                 });
 
-            modelBuilder.Entity("DualJobDate.BusinessObjects.Entities.Appointment", b =>
-                {
-                    b.HasOne("DualJobDate.BusinessObjects.Entities.Company", "Company")
-                        .WithMany("Appointments")
-                        .HasForeignKey("CompanyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("DualJobDate.BusinessObjects.Entities.User", "User")
-                        .WithMany("Appointments")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Company");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("DualJobDate.BusinessObjects.Entities.Company", b =>
                 {
                     b.HasOne("DualJobDate.BusinessObjects.Entities.AcademicProgram", "AcademicProgram")
@@ -679,8 +638,6 @@ namespace DualJobDate.DataAccess.Migrations
                 {
                     b.Navigation("Addresses");
 
-                    b.Navigation("Appointments");
-
                     b.Navigation("CompanyActivities");
 
                     b.Navigation("StudentCompanies");
@@ -695,8 +652,6 @@ namespace DualJobDate.DataAccess.Migrations
 
             modelBuilder.Entity("DualJobDate.BusinessObjects.Entities.User", b =>
                 {
-                    b.Navigation("Appointments");
-
                     b.Navigation("Company");
 
                     b.Navigation("StudentCompanies");

@@ -1,9 +1,11 @@
 ﻿using AutoMapper;
+using DualJobDate.BusinessLogic.Exceptions;
 using DualJobDate.BusinessObjects.Entities;
 using DualJobDate.BusinessObjects.Entities.Interface.Service;
 using DualJobDate.BusinessObjects.Dtos;
 using DualJobDate.BusinessObjects.Entities.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DualJobDate.Api.Controllers;
@@ -11,7 +13,7 @@ namespace DualJobDate.Api.Controllers;
 [ApiController]
 [Authorize]
 [Route("[controller]")]
-public class UtilController(IUtilService utilService, IMapper mapper) : ControllerBase
+public class UtilController(IUtilService utilService, IMapper mapper, UserManager<User> userManager) : ControllerBase
 {
     [Authorize("Admin")]
     [HttpGet("Institutions")]
@@ -70,5 +72,73 @@ public class UtilController(IUtilService utilService, IMapper mapper) : Controll
         {
             return StatusCode(500, "An unexpected error occurred");
         }
+    }
+    
+    [HttpGet("AppointmentsByUserId")]
+    public async Task<ActionResult<IEnumerable<AppointmentDto>>> GetAppointmentsByUserIdAsync()
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null)
+        {
+            throw new UserNotFoundException();
+        }
+        
+        var appointments = await utilService.GetAppointmentsByUserIdAsync(user.Id);
+        if (appointments == null)
+        {
+            throw new AppointmentNotFoundException($"user: {user.Id}");
+        }
+        var appointmentResources = mapper.Map<IEnumerable<Appointment>, IEnumerable<AppointmentDto>>(appointments);
+        return Ok(appointmentResources);
+    }
+    
+    [Authorize("Admin")]
+    [HttpGet("AppointmentsByUserId/{userId}")]
+    public async Task<ActionResult<IEnumerable<AppointmentDto>>> GetAppointmentsByUserIdAsync(string userId)
+    {
+        var appointments = await utilService.GetAppointmentsByUserIdAsync(userId);
+        if (appointments == null)
+        {
+            throw new AppointmentNotFoundException($"user: {userId}");
+        }
+        var appointmentResources = mapper.Map<IEnumerable<Appointment>, IEnumerable<AppointmentDto>>(appointments);
+        return Ok(appointmentResources);
+
+    }
+    
+    [Authorize("Admin")]
+    [HttpGet("AppointmentsByCompanyId")]
+    public async Task<ActionResult<IEnumerable<AppointmentDto>>> GetAppointmentsByCompanyIdAsync(int companyId)
+    {
+            var appointments = await utilService.GetAppointmentsByCompanyIdAsync(companyId);
+            if (appointments == null)
+            {
+                throw new AppointmentNotFoundException($"Company: {companyId}");
+            }
+            var appointmentResources = mapper.Map<IEnumerable<Appointment>, IEnumerable<AppointmentDto>>(appointments);
+            return Ok(appointmentResources);
+    }
+    
+    [Authorize("Admin")]
+    [HttpGet("TestTermine")]
+    public async Task<ActionResult<IEnumerable<AppointmentDto>>> GetTestTermine()
+    {
+        var appointments = new List<Appointment>();//await utilService.GetAppointmentsByCompanyIdAsync(1);
+        var newApp = new Appointment
+        {
+            AppointmentDate = DateTime.Now,
+            CompanyId = 2,
+            UserId = "8e778201-2c4e-4243-91eb-1eb8b895f004"
+        };
+        var newApp2 = new Appointment
+        {
+            AppointmentDate = DateTime.Now.Add(TimeSpan.FromDays(1)),
+            CompanyId = 1,
+            UserId = "8e778201-2c4e-4243-91eb-1eb8b895f004"
+        };
+        appointments.Add(newApp);
+        appointments.Add(newApp2);
+        var appointmentResources = mapper.Map<IEnumerable<Appointment>, IEnumerable<AppointmentDto>>(appointments);
+        return Ok(appointmentResources);
     }
 }
