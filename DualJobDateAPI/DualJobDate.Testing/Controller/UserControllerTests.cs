@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using AutoMapper;
 using DualJobDate.Api.Controllers;
+using DualJobDate.BusinessObjects.Dtos;
 using DualJobDate.BusinessObjects.Entities;
 using DualJobDate.BusinessObjects.Entities.Enum;
 using DualJobDate.BusinessObjects.Entities.Interface.Helper;
@@ -32,6 +33,7 @@ public class UserControllerTests
     private readonly Mock<IUtilService> _mockUtilService;
     private readonly Mock<IServiceProvider> _mockServiceProvider;
     private readonly Mock<RoleManager<Role>> _mockRoleManager;
+    private readonly Mock<IMapper> _mockMapper;
 
     public UserControllerTests(ITestOutputHelper testOutputHelper)
     {
@@ -46,13 +48,13 @@ public class UserControllerTests
             new Mock<IUserConfirmation<User>>().Object);
         _mockServiceProvider = new Mock<IServiceProvider>();
         _mockUtilService = new Mock<IUtilService>();
-        var mockMapper = new Mock<IMapper>();
+        _mockMapper = new Mock<IMapper>();
         _mockRoleManager = MockHelpers.MockRoleManager<Role>();
         _mockAuthenticationManager = new Mock<IJwtAuthManager>();
         _controller = new UserController(_mockUserManager.Object,
             _mockSignInManager.Object,
             _mockServiceProvider.Object,
-            mockMapper.Object, _mockRoleManager.Object,
+            _mockMapper.Object, _mockRoleManager.Object,
             _mockAuthenticationManager.Object,
             _mockUtilService.Object
         );
@@ -261,6 +263,146 @@ public class UserControllerTests
         // Assert
         Assert.IsType<OkObjectResult>(result);
         Assert.Contains("created successfully", ((OkObjectResult)result).Value.ToString());
+    }
+    
+    [Fact]
+    public async Task GetName_Test()
+    {
+        // Arrange
+        var user = new User { FirstName = "Test", LastName = "User", Email = "t.t@test.com"};
+        _mockUserManager.Setup(x => x.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+            .ReturnsAsync(user);
+
+        // Act
+        var result = await _controller.GetName();
+
+        // Assert
+        Assert.IsType<OkObjectResult>(result.Result);
+        var okResult = (OkObjectResult)result.Result;
+        NameAndEmailDto value = (NameAndEmailDto)okResult.Value;
+        Assert.Equal(user.FirstName, value.FirstName);
+        Assert.Equal(user.LastName, value.LastName);
+        Assert.Equal(user.Email, value.Email);
+    }
+    
+    [Fact]
+    public async Task GetName_Test_UserNotFound()
+    {
+        // Arrange
+        _mockUserManager.Setup(x => x.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+            .ReturnsAsync((User)null);
+
+        // Act
+        var result = await _controller.GetName();
+
+        // Assert
+        Assert.IsType<UnauthorizedResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task ChangeName_Test()
+    {
+        // Arrange
+        var user = new User { FirstName = "Test", LastName = "User", Email = "t.t@test.com" };
+        var nameModel = new ChangeNameModel { FirstName = "New", LastName = "Name" };
+        _mockUserManager.Setup(x => x.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+            .ReturnsAsync(user);
+        _mockUserManager.Setup(x => x.UpdateAsync(It.IsAny<User>()))
+            .ReturnsAsync(IdentityResult.Success);
+        
+        // Act
+        var result = await _controller.ChangeName(nameModel);
+        
+        // Assert
+        Assert.IsType<OkObjectResult>(result);
+        var okResult = (OkObjectResult)result;
+        
+        Assert.Contains("Name changed successfully", okResult.Value.ToString());
+    }
+
+    [Fact]
+    public async Task DeleteUserWithPassword_Test()
+    {
+        // Arrange
+        var user = new User { FirstName = "Test", LastName = "User", Email = "t.t@test.com" };
+        var passwordModel = new DeleteUserModel
+        {
+            Password = "TestPassword!1",
+            Email = user.Email
+        };
+
+        _mockUserManager.Setup(x => x.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+            .ReturnsAsync(user);
+        _mockSignInManager.Setup(x => x.CheckPasswordSignInAsync(user, passwordModel.Password, false))
+            .ReturnsAsync(SignInResult.Success);
+
+        _mockUserManager.Setup(x => x.DeleteAsync(It.IsAny<User>()))
+            .ReturnsAsync(IdentityResult.Success);
+
+        // Act
+        var result = await _controller.DeleteUserWithPassword(passwordModel);
+
+        // Assert
+        Assert.IsType<OkObjectResult>(result);
+        var okResult = (OkObjectResult)result;
+
+        Assert.Contains("User deleted successfully", okResult.Value.ToString());
+    }
+
+    [Fact]
+    public async Task DeleteUser_Test()
+    {
+        // Arrange
+        var user = new User { FirstName = "Test", LastName = "User", Email = "t.t@test.com" };
+        _mockUserManager.Setup(x => x.FindByIdAsync(It.IsAny<string>()))
+            .ReturnsAsync(user);
+        _mockUserManager.Setup(x => x.DeleteAsync(It.IsAny<User>()))
+            .ReturnsAsync(IdentityResult.Success);
+
+        // Act
+        var result = await _controller.DeleteUser(user.Id);
+
+        // Assert
+        Assert.IsType<OkObjectResult>(result);
+        var okResult = (OkObjectResult)result;
+
+        Assert.Contains("User deleted successfully", okResult.Value.ToString());
+    }
+    
+    [Fact]
+    public async Task DeleteUser_Test_UserNotFound()
+    {
+        // Arrange
+        _mockUserManager.Setup(x => x.FindByIdAsync(It.IsAny<string>()))
+            .ReturnsAsync((User)null);
+
+        // Act
+        var result = await _controller.DeleteUser("1");
+
+        // Assert
+        Assert.IsType<NotFoundResult>(result);
+    }
+
+    [Fact]
+    public async Task GetUser_Test()
+    {
+        // Arrange
+        var users = new List<User>
+        {
+            new User { Id = "1", FirstName = "Test", LastName = "User", Email = "t.t@test.com", IsNew = false, UserType = UserTypeEnum.Admin, InstitutionId = 1, AcademicProgramId = 1 }
+        }.AsQueryable().BuildMockDbSet().Object;
+        _mockUserManager.Setup(x => x.Users)
+            .Returns(users);
+        _mockMapper.Setup(x => x.Map<User, UserDto>(It.IsAny<User>()))
+            .Returns(new UserDto { Id = "1", Institution = new InstitutionDto { Id = 1, Name = "Test Institution", KeyName = "Test "}, AcademicProgram = new AcademicProgramDto { Id = 1, Name = "Test Program" }, UserType = UserTypeEnum.Admin, IsNew = false, Email = "t.t@test.com" });
+
+        // Act
+        var result = await _controller.GetUser(users.First().Id);
+
+        // Assert
+        var resultResult = (OkObjectResult)result.Result;
+        Assert.IsType<UserDto>(resultResult.Value);
+        Assert.Equal(users.First().Id, ((UserDto)resultResult.Value).Id);
     }
 
 }
