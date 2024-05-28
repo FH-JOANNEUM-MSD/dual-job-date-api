@@ -160,8 +160,8 @@ public class UtilControllerTests {
 
         var appointmentDtos = new List<AppointmentDto>
         {
-            new AppointmentDto { CompanyId = 1, UserId = user.Id },
-            new AppointmentDto { CompanyId = 2, UserId = user.Id }
+            new AppointmentDto { Company = new CompanyDto(), UserId = user.Id },
+            new AppointmentDto { Company = new CompanyDto(), UserId = user.Id }
         };
 
         _mapperMock.Setup(mapper => mapper.Map<IEnumerable<Appointment>, IEnumerable<AppointmentDto>>(appointments))
@@ -191,8 +191,8 @@ public class UtilControllerTests {
 
         var appointmentDtos = new List<AppointmentDto>
         {
-            new AppointmentDto { CompanyId = 1, UserId = userId },
-            new AppointmentDto { CompanyId = 2, UserId = userId }
+            new AppointmentDto { Company = new CompanyDto(), UserId = userId },
+            new AppointmentDto { Company = new CompanyDto(), UserId = userId }
         };
 
         _mapperMock.Setup(mapper => mapper.Map<IEnumerable<Appointment>, IEnumerable<AppointmentDto>>(appointments))
@@ -258,8 +258,8 @@ public class UtilControllerTests {
 
         var appointmentDtos = new List<AppointmentDto>
         {
-            new AppointmentDto { CompanyId = companyId },
-            new AppointmentDto { CompanyId = companyId }
+            new AppointmentDto { Company = new CompanyDto() },
+            new AppointmentDto { Company = new CompanyDto() }
         };
 
         _mapperMock.Setup(mapper => mapper.Map<IEnumerable<Appointment>, IEnumerable<AppointmentDto>>(appointments)).Returns(appointmentDtos);
