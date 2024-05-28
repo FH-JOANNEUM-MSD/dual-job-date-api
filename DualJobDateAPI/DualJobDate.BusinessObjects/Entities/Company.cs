@@ -26,4 +26,5 @@ public class Company : BaseEntity, IBaseAcademicProgramEntity
     public int AcademicProgramId { get; set; }
     public Institution? Institution { get; set; }
     public int InstitutionId { get; set; }
+    public ICollection<Appointment> Appointments { get; set; } = [];
 }

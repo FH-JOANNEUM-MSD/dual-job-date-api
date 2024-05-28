@@ -25,5 +25,6 @@ public class ModelToResourceProfile : Profile
                 Name = ca.Activity.Name,
                 Value = ca.Value
             }).ToList()));
+        CreateMap<Appointment, AppointmentDto>();
     }
 }

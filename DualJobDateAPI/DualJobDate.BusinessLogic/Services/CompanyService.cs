@@ -17,7 +17,8 @@ public class CompanyService(IUnitOfWork unitOfWork, UserManager<User> userManage
             Include(x => x.Institution).
             Include(x => x.User).
             Include(x => x.CompanyDetails).
-            Include(x => x.Activities).
+            Include(x => x.Activities)
+            .Include(x => x.CompanyActivities).
             Include(x => x.Addresses).
             Where(x => x.Id == id).SingleOrDefaultAsync();
         return result;
@@ -215,8 +216,13 @@ public class CompanyService(IUnitOfWork unitOfWork, UserManager<User> userManage
 
     public async Task<Company?> GetCompanyByUser(User user)
     {
-        var company = await unitOfWork.CompanyRepository.GetAllAsync().Result.Where(c => c.UserId == user.Id)
-            .SingleOrDefaultAsync();
+        var company = await unitOfWork.CompanyRepository.GetAllAsync().Result.            
+            Include(x => x.CompanyDetails).
+            Include(x => x.Activities).
+            Include(x => x.CompanyActivities).
+            Include(x => x.Addresses).
+            Where(c => c.UserId == user.Id).
+            SingleOrDefaultAsync();
         return company;
     }
 

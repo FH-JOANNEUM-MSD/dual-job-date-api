@@ -20,5 +20,6 @@ public static class RepositoryRegistrationExtension
         services.AddScoped<ICompanyActivityRepository, CompanyActivityRepository>();
         services.AddScoped<IAdressRepository, AddressRepository>();
         services.AddScoped<IStudentCompanyRepository, StudentCompanyRepository>();
+        services.AddScoped<IAppointmentRepository, AppointmentRepository>();
     }
 }
