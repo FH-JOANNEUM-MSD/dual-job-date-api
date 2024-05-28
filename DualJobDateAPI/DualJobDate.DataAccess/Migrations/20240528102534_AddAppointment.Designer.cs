@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DualJobDate.DataAccess.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20240510205736_AddAppointment")]
+    [Migration("20240528102534_AddAppointment")]
     partial class AddAppointment
     {
         /// <inheritdoc />
@@ -140,6 +140,7 @@ namespace DualJobDate.DataAccess.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("UserId")
+                        .IsRequired()
                         .HasColumnType("varchar(255)");
 
                     b.HasKey("Id");
@@ -357,6 +358,10 @@ namespace DualJobDate.DataAccess.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("tinyint(1)");
 
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
                     b.Property<int>("InstitutionId")
                         .HasColumnType("int");
 
@@ -365,6 +370,10 @@ namespace DualJobDate.DataAccess.Migrations
 
                     b.Property<bool>("IsNew")
                         .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasColumnType("longtext");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("tinyint(1)");
@@ -556,7 +565,9 @@ namespace DualJobDate.DataAccess.Migrations
 
                     b.HasOne("DualJobDate.BusinessObjects.Entities.User", "User")
                         .WithMany("Appointments")
-                        .HasForeignKey("UserId");
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Company");
 
