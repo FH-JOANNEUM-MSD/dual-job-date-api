@@ -21,14 +21,9 @@ public class CompanyController(
     ICompanyService companyService,
     IMapper mapper,
     UserManager<User> userManager,
-    IUtilService utilService,
-    IPasswordGenerator generator,
-    IUserStore<User> userStore,
-    RoleManager<Role> roleManager)
+    IUserService userService)
     : ControllerBase
 {
-    private static readonly EmailAddressAttribute EmailAddressAttribute = new();
-    
     [Authorize]
     [HttpGet]
     public async Task<ActionResult<CompanyDto>> GetCompany([FromQuery] int? id)
@@ -221,15 +216,6 @@ public class CompanyController(
                 institutionId = loginUser.InstitutionId;
             }
 
-            var inst = utilService.GetInstitutionsAsync().Result.Where(x => x.Id == institutionId);
-            if (inst == null) return NotFound("Institution not found");
-
-            var ap = utilService.GetAcademicProgramsAsync(null).Result.Where(x => x.Id == programId);
-            if (ap == null) return NotFound("AcademicProgram not found");
-
-            if (string.IsNullOrEmpty(model.UserEmail) || !EmailAddressAttribute.IsValid(model.UserEmail))
-                return BadRequest($"Email '{model.UserEmail}' is invalid.");
-
             var user = new User
             {
                 Email = model.UserEmail,
@@ -239,16 +225,18 @@ public class CompanyController(
                 AcademicProgramId = programId
             };
 
-            await userStore.SetUserNameAsync(user, model.UserEmail, CancellationToken.None);
-            var password = generator.GeneratePassword();
-
-            var result = await userManager.CreateAsync(user, password);
-            if (!result.Succeeded) return BadRequest(result.Errors);
-
-            var role = await roleManager.Roles.Where(r => r.UserTypeEnum == user.UserType).SingleOrDefaultAsync();
-            if (role == null) return NotFound("Role doesn't exist");
-            await userManager.AddToRoleAsync(user, role.Name);
-            companyUser = user;
+            try
+            {
+                companyUser = await userService.CreateAsync(user);
+            }
+            catch (ArgumentOutOfRangeException e)
+            {
+                NotFound(e.Message);
+            }
+            catch (ArgumentException e)
+            {
+                BadRequest(e.Message);
+            }
         }
 
         try

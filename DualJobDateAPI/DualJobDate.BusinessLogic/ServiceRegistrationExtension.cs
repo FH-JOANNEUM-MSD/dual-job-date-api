@@ -13,5 +13,6 @@ public static class ServiceRegistrationExtension
         services.AddTransient<ICompanyService, CompanyService>();
         services.AddTransient<IStudentCompanyService, StudentCompanyService>();
         services.AddTransient<IUtilService, UtilService>();
+        services.AddTransient<IUserService, UserService>();
     }
 }

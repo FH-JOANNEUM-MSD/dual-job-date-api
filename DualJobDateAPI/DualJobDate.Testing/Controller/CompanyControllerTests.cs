@@ -23,6 +23,7 @@ public class CompanyControllerTests
     private readonly Mock<IMapper> _mapperMock;
     private readonly Mock<UserManager<User>> _userManagerMock;
     private readonly Mock<User> _user;
+    private readonly Mock<IUserService> _userServiceMock;
     private IMapper? mapper;
 
     public CompanyControllerTests()
@@ -31,10 +32,12 @@ public class CompanyControllerTests
         _mapperMock = new Mock<IMapper>();
         _userManagerMock = MockHelpers.MockUserManager<User>();
         _user = new Mock<User>();
+        _userServiceMock = new Mock<IUserService>();
         _controller = new CompanyController(
             _companyServiceMock.Object,
             _mapperMock.Object,
-            _userManagerMock.Object
+            _userManagerMock.Object,
+            _userServiceMock.Object
         );
         SetupMapper();
     }
@@ -461,7 +464,8 @@ public class CompanyControllerTests
     public async Task AddCompany_ValidData_ReturnsOkResult()
     {
         // Arrange
-        var user = new User { };
+        var user = new User { InstitutionId = 2 };
+        MockClaimUser(user);
         var company = new Company { Id = 1 };
         var model = new RegisterCompanyModel
         {
@@ -470,9 +474,21 @@ public class CompanyControllerTests
             UserEmail = "example@example.com"
         };
 
+        var dummyPassword = "ThisIsAPassword";
+        var dummyIdentity = IdentityResult.Success;
+        var dummyUser = new User
+        {
+            InstitutionId = 2,
+            AcademicProgramId = model.AcademicProgramId,
+            Company = company,
+            Email = model.UserEmail,
+        };
+
         _userManagerMock.Setup(manager => manager.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
-        _companyServiceMock.Setup(service => service.AddCompany(model.AcademicProgramId, model.CompanyName, user)).ReturnsAsync(company);
+        _userManagerMock.Setup(manager => manager.CreateAsync(It.IsAny<User>(), dummyPassword)).ReturnsAsync(dummyIdentity);
+        _companyServiceMock.Setup(service => service.AddCompany(model.AcademicProgramId, model.CompanyName, dummyUser)).ReturnsAsync(company);
         _mapperMock.Setup(mapper => mapper.Map<Company, CompanyDto>(company)).Returns(new CompanyDto());
+        _userServiceMock.Setup(mapper => mapper.CreateAsync(It.IsAny<User>())).ReturnsAsync(dummyUser);
 
         // Act
         var result = await _controller.AddCompany(model);
@@ -506,6 +522,7 @@ public class CompanyControllerTests
     {
         // Arrange
         var user = new User { };
+        MockClaimUser(user);
         var model = new RegisterCompanyModel
         {
             AcademicProgramId = 2,
@@ -515,6 +532,7 @@ public class CompanyControllerTests
 
         _userManagerMock.Setup(manager => manager.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
         _userManagerMock.Setup(manager => manager.FindByEmailAsync(It.IsAny<string>())).ReturnsAsync((User)null);
+        _userServiceMock.Setup(manager => manager.CreateAsync(It.IsAny<User>())).ReturnsAsync(user);
 
         // Act
         async Task Act() => await _controller.AddCompany(model);
