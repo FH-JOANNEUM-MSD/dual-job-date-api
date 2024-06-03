@@ -6,7 +6,7 @@ public class Appointment : BaseEntity
 {
     public DateTime StartTime { get; set; }
     public DateTime EndTime { get; set; }
-    public String UserId { get; set; }
+    public string UserId { get; set; }
     public int CompanyId { get; set; }
     
     // Navigation properties

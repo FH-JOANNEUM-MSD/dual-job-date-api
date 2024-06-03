@@ -4,9 +4,12 @@ using DualJobDate.BusinessObjects.Dtos;
 using DualJobDate.BusinessObjects.Entities;
 using DualJobDate.BusinessObjects.Entities.Enum;
 using DualJobDate.BusinessObjects.Entities.Interface.Service;
+using DualJobDate.BusinessObjects.Entities.Models;
+using DualJobDate.DataAccess;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Org.BouncyCastle.Crypto.Engines;
 
 namespace DualJobDate.Api.Controllers;
 
@@ -97,22 +100,53 @@ public class StudentCompanyController(UserManager<User> userManager, ICompanySer
 
         return StatusCode(500, "Removing like or dislike failed.");
     }
+    
+    // public async Task<ActionResult> Match([FromBody]  MatchModel model)
+    // {
+    //     var user = await userManager.GetUserAsync(User);
+    //     if (user is null)
+    //     {
+    //         throw new UserNotFoundException();
+    //     }
+    //
+    //     var students = userManager.Users.Where(x =>
+    //         x.InstitutionId == user.InstitutionId && x.AcademicProgramId == model.AcademicProgramId && x.IsActive &&
+    //         x.UserType == UserTypeEnum.Student).ToList();
+    //     
+    //     var companies = companyService.GetCompaniesByAcademicProgramAsync(model.AcademicProgramId).Result
+    //         .Where(company => company.IsActive).ToList();
+    //     
+    //     var appointments = await studentCompanyService.GetMatches(model, students, companies);
+    // }
 
     [Authorize(Policy = "AdminOrInstitution")]
     [HttpGet("MatchCompaniesToStudent")]
-    public async Task<ActionResult> MatchCompaniesToStudent([FromQuery] int academicProgramId)
+    public async Task<ActionResult> MatchCompaniesToStudent([FromQuery] MatchModel model)
     {
-        var user = await userManager.GetUserAsync(User);
-        if (user is null)
+        
+        var companies = companyService.GetCompaniesByAcademicProgramAsync(model.AcademicProgramId).Result
+            .Where(company => company.IsActive).ToList();        
+        var students = userManager.Users.Where(x => x.AcademicProgramId == model.AcademicProgramId &&
+                                                    x.UserType == UserTypeEnum.Student).ToList();
+
+        var appointments = new List<Appointment>();
+        var matches = studentCompanyService.MatchCompaniesToStudents(students, companies);
+        var duration = (model.EndTime - model.StartTime) / model.MatchesPerStudent;
+        foreach (var match in matches)
         {
-            throw new UserNotFoundException();
+            for (int i = 0; i < match.Value.Count; i++)
+            {
+                appointments.Add(new Appointment
+                {
+                    StartTime = model.StartTime + duration * i,
+                    EndTime = model.StartTime + duration * (i + 1),
+                    User = match.Key,
+                    Company = match.Value[i],
+                });
+            }
         }
 
-        var companies = await companyService.GetActiveCompaniesAsync(user);
-        var students = userManager.Users.Where(x =>
-            x.InstitutionId == user.InstitutionId && x.AcademicProgramId == academicProgramId && x.IsActive &&
-            x.UserType == UserTypeEnum.Student).ToList();
-        var matches = studentCompanyService.MatchCompaniesToStudents(students, companies);
-        return Ok(matches);
+        await studentCompanyService.SaveAppointments(appointments);
+        return Ok();
     }
 }

@@ -1,6 +1,8 @@
 ﻿using DualJobDate.BusinessObjects.Entities;
 using DualJobDate.BusinessObjects.Entities.Interface;
 using DualJobDate.BusinessObjects.Entities.Interface.Service;
+using DualJobDate.BusinessObjects.Entities.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace DualJobDate.BusinessLogic.Services;
@@ -115,14 +117,31 @@ public class StudentCompanyService(IUnitOfWork unitOfWork) : IStudentCompanyServ
 
             if (selectCompanies.Count < matchesPerStudent)
             {
-                selectCompanies.AddRange(dislikedCompanies.Take(matchesPerStudent - selectCompanies.Count));
+                selectCompanies.AddRange(neutralCompanies.Except(selectCompanies).Take(matchesPerStudent - selectCompanies.Count));
+            }
+            
+            if (selectCompanies.Count < matchesPerStudent)
+            {
+                selectCompanies.AddRange(dislikedCompanies.Except(selectCompanies).Take(matchesPerStudent - selectCompanies.Count));
             }
 
             dictionary.Add(student, selectCompanies);
 
             selectCompanies.ForEach(x => companyPickCount[x]++);
         }
+        
 
         return dictionary;
     }
+
+    public async Task SaveAppointments(List<Appointment> appointments)
+    {
+        unitOfWork.BeginTransaction();
+        await unitOfWork.AppointmentRepository.AddRangeAsync(appointments);
+        unitOfWork.Commit();
+        await unitOfWork.SaveChanges(); 
+    }
+
+   
+
 }
