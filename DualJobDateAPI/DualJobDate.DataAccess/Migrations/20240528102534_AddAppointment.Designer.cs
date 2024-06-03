@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DualJobDate.DataAccess.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20240513161916_LastMigrationAppointment")]
-    partial class LastMigrationAppointment
+    [Migration("20240528102534_AddAppointment")]
+    partial class AddAppointment
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -358,6 +358,10 @@ namespace DualJobDate.DataAccess.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("tinyint(1)");
 
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
                     b.Property<int>("InstitutionId")
                         .HasColumnType("int");
 
@@ -366,6 +370,10 @@ namespace DualJobDate.DataAccess.Migrations
 
                     b.Property<bool>("IsNew")
                         .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasColumnType("longtext");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("tinyint(1)");

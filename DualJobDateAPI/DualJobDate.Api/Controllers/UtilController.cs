@@ -23,19 +23,21 @@ public class UtilController(IUtilService utilService, IMapper mapper, UserManage
         var institutionResources = mapper.Map<IEnumerable<Institution>, IEnumerable<InstitutionDto>>(institutions);
         return Ok(institutionResources);
     }
-    
+
     [Authorize("AdminOrInstitution")]
     [HttpGet("AcademicPrograms")]
     public async Task<ActionResult<IEnumerable<AcademicProgramDto>>> GetAcademicPrograms(int? institutionId)
     {
         var academicPrograms = await utilService.GetAcademicProgramsAsync(institutionId);
-        var academicProgramResources = mapper.Map<IEnumerable<AcademicProgram>, IEnumerable<AcademicProgramDto>>(academicPrograms);
+        var academicProgramResources =
+            mapper.Map<IEnumerable<AcademicProgram>, IEnumerable<AcademicProgramDto>>(academicPrograms);
         return Ok(academicProgramResources);
     }
-    
+
     [Authorize("AdminOrInstitution")]
     [HttpPost("AcademicProgram")]
-    public async Task<ActionResult<AcademicProgramDto>> PostAcademicProgram([FromQuery] int id, [FromBody] AcademicProgramModel model)
+    public async Task<ActionResult<AcademicProgramDto>> PostAcademicProgram([FromQuery] int id,
+        [FromBody] AcademicProgramModel model)
     {
         try
         {
@@ -53,7 +55,7 @@ public class UtilController(IUtilService utilService, IMapper mapper, UserManage
         }
     }
 
-    
+
     [Authorize("Admin")]
     [HttpPost("Institution")]
     public async Task<ActionResult<InstitutionDto>> PostInstitution([FromBody] InstitutionModel model)
@@ -73,7 +75,7 @@ public class UtilController(IUtilService utilService, IMapper mapper, UserManage
             return StatusCode(500, "An unexpected error occurred");
         }
     }
-    
+
     [HttpGet("AppointmentsByUserId")]
     public async Task<ActionResult<IEnumerable<AppointmentDto>>> GetAppointmentsByUserIdAsync()
     {
@@ -82,16 +84,12 @@ public class UtilController(IUtilService utilService, IMapper mapper, UserManage
         {
             throw new UserNotFoundException();
         }
-        
+
         var appointments = await utilService.GetAppointmentsByUserIdAsync(user.Id);
-        if (appointments == null)
-        {
-            throw new AppointmentNotFoundException($"user: {user.Id}");
-        }
         var appointmentResources = mapper.Map<IEnumerable<Appointment>, IEnumerable<AppointmentDto>>(appointments);
         return Ok(appointmentResources);
     }
-    
+
     [Authorize("Admin")]
     [HttpGet("AppointmentsByUserId/{userId}")]
     public async Task<ActionResult<IEnumerable<AppointmentDto>>> GetAppointmentsByUserIdAsync(string userId)
@@ -101,27 +99,36 @@ public class UtilController(IUtilService utilService, IMapper mapper, UserManage
         {
             throw new AppointmentNotFoundException($"user: {userId}");
         }
+
         var appointmentResources = mapper.Map<IEnumerable<Appointment>, IEnumerable<AppointmentDto>>(appointments);
         return Ok(appointmentResources);
 
     }
-    
+
     [Authorize("Admin")]
     [HttpGet("AppointmentsByCompanyId")]
     public async Task<ActionResult<IEnumerable<AppointmentDto>>> GetAppointmentsByCompanyIdAsync(int companyId)
     {
-            var appointments = await utilService.GetAppointmentsByCompanyIdAsync(companyId);
-            if (appointments == null)
-            {
-                throw new AppointmentNotFoundException($"Company: {companyId}");
-            }
-            var appointmentResources = mapper.Map<IEnumerable<Appointment>, IEnumerable<AppointmentDto>>(appointments);
-            return Ok(appointmentResources);
+        var appointments = await utilService.GetAppointmentsByCompanyIdAsync(companyId);
+        if (appointments == null)
+        {
+            throw new AppointmentNotFoundException($"Company: {companyId}");
+        }
+
+        var appointmentResources = mapper.Map<IEnumerable<Appointment>, IEnumerable<AppointmentDto>>(appointments);
+        return Ok(appointmentResources);
     }
     
-    [Authorize("Admin")]
-    [HttpGet("TestTermine")]
-    public async Task<ActionResult<IEnumerable<AppointmentDto>>> GetTestTermine()
+    
+    [HttpGet("GetActivitiesByAcademicProgram")]
+    public async Task<ActionResult<IEnumerable<ActivityDto>>> GetActivitiesByAcademicProgramAsync(int academicProgramId)
+    {
+        var activities = await utilService.GetActivitiesByAcademicProgramAsync(academicProgramId);
+        var activityResources = mapper.Map<IEnumerable<Activity>, IEnumerable<ActivityDto>>(activities);
+        return Ok(activityResources);
+    }
+
+    private async Task<ActionResult<IEnumerable<AppointmentDto>>> GetTestTermine()
     {
         var appointments = new List<Appointment>();//await utilService.GetAppointmentsByCompanyIdAsync(1);
         var newApp = new Appointment

@@ -77,53 +77,6 @@ namespace DualJobDate.DataAccess.Migrations
                     b.ToTable("Activities");
                 });
 
-            modelBuilder.Entity("DualJobDate.BusinessObjects.Entities.Address", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    b.Property<int?>("ApartmentNumber")
-                        .HasColumnType("int");
-
-                    b.Property<string>("BuildingNumber")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("City")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<int?>("CompanyId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Country")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<float?>("Floor")
-                        .HasColumnType("float");
-
-                    b.Property<int?>("InstitutionId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("PostalCode")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("Street")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CompanyId");
-
-                    b.HasIndex("InstitutionId");
-
-                    b.ToTable("Addresses");
-                });
-
             modelBuilder.Entity("DualJobDate.BusinessObjects.Entities.Appointment", b =>
                 {
                     b.Property<int>("Id")
@@ -230,6 +183,9 @@ namespace DualJobDate.DataAccess.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    b.Property<string>("Addresses")
+                        .HasColumnType("longtext");
 
                     b.Property<string>("ContactPersonHRM")
                         .HasColumnType("longtext");
@@ -537,21 +493,6 @@ namespace DualJobDate.DataAccess.Migrations
                     b.Navigation("Institution");
                 });
 
-            modelBuilder.Entity("DualJobDate.BusinessObjects.Entities.Address", b =>
-                {
-                    b.HasOne("DualJobDate.BusinessObjects.Entities.Company", "Company")
-                        .WithMany("Addresses")
-                        .HasForeignKey("CompanyId");
-
-                    b.HasOne("DualJobDate.BusinessObjects.Entities.Institution", "Institution")
-                        .WithMany("Addresses")
-                        .HasForeignKey("InstitutionId");
-
-                    b.Navigation("Company");
-
-                    b.Navigation("Institution");
-                });
-
             modelBuilder.Entity("DualJobDate.BusinessObjects.Entities.Appointment", b =>
                 {
                     b.HasOne("DualJobDate.BusinessObjects.Entities.Company", "Company")
@@ -677,8 +618,6 @@ namespace DualJobDate.DataAccess.Migrations
 
             modelBuilder.Entity("DualJobDate.BusinessObjects.Entities.Company", b =>
                 {
-                    b.Navigation("Addresses");
-
                     b.Navigation("Appointments");
 
                     b.Navigation("CompanyActivities");
@@ -688,8 +627,6 @@ namespace DualJobDate.DataAccess.Migrations
 
             modelBuilder.Entity("DualJobDate.BusinessObjects.Entities.Institution", b =>
                 {
-                    b.Navigation("Addresses");
-
                     b.Navigation("Users");
                 });
 
