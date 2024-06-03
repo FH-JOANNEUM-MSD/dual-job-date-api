@@ -4,8 +4,9 @@ namespace DualJobDate.BusinessObjects.Entities;
 
 public class Appointment : BaseEntity
 {
-    public DateTime AppointmentDate { get; set; }
-    public string UserId { get; set; }
+    public DateTime StartTime { get; set; }
+    public DateTime EndTime { get; set; }
+    public String UserId { get; set; }
     public int CompanyId { get; set; }
     
     // Navigation properties
