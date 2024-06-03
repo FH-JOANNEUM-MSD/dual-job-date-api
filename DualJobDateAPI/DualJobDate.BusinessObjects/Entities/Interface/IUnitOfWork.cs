@@ -10,7 +10,7 @@ public interface IUnitOfWork : IDisposable
     ICompanyRepository CompanyRepository { get; }
     ICompanyDetailsRepository CompanyDetailsRepository { get; }
     ICompanyActivityRepository CompanyActivityRepository { get; }
-    IAdressRepository AdressRepository { get; }
+    // IAdressRepository AdressRepository { get; }
     IStudentCompanyRepository StudentCompanyRepository { get; }
     IAppointmentRepository AppointmentRepository { get; }
 

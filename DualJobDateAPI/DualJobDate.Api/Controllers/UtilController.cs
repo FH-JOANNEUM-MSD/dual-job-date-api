@@ -118,7 +118,15 @@ public class UtilController(IUtilService utilService, IMapper mapper, UserManage
         var appointmentResources = mapper.Map<IEnumerable<Appointment>, IEnumerable<AppointmentDto>>(appointments);
         return Ok(appointmentResources);
     }
-
+    
+    
+    [HttpGet("GetActivitiesByAcademicProgram")]
+    public async Task<ActionResult<IEnumerable<ActivityDto>>> GetActivitiesByAcademicProgramAsync(int academicProgramId)
+    {
+        var activities = await utilService.GetActivitiesByAcademicProgramAsync(academicProgramId);
+        var activityResources = mapper.Map<IEnumerable<Activity>, IEnumerable<ActivityDto>>(activities);
+        return Ok(activityResources);
+    }
 
     private async Task<ActionResult<IEnumerable<AppointmentDto>>> GetTestTermine()
     {

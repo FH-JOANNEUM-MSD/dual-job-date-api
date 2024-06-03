@@ -5,6 +5,7 @@ using DualJobDate.BusinessObjects.Entities;
 using DualJobDate.BusinessObjects.Entities.Interface.Helper;
 using DualJobDate.BusinessObjects.Entities.Interface.Service;
 using DualJobDate.BusinessObjects.Entities.Models;
+using DualJobDate.DataAccess;
 using DualJobDate.Testing.Fake;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
@@ -27,6 +28,7 @@ public class UserControllerTests
     private readonly Mock<SignInManager<User>> _mockSignInManager;
     private readonly UserController _controller;
     private readonly Mock<IJwtAuthManager> _mockAuthenticationManager;
+    private readonly Mock<UnitOfWork> _unitOfWorkMock;
 
     public UserControllerTests(ITestOutputHelper testOutputHelper)
     {
@@ -49,7 +51,8 @@ public class UserControllerTests
             mockServiceProvider.Object,
             mockMapper.Object, mockRoleManager.Object,
             _mockAuthenticationManager.Object,
-            mockUtilService.Object
+            mockUtilService.Object,
+            _unitOfWorkMock.Object
             );
     }
 

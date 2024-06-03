@@ -13,6 +13,9 @@ using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Xunit;
 using DualJobDate.BusinessLogic.Exceptions;
+using DualJobDate.BusinessLogic.Services;
+using DualJobDate.DataAccess;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DualJobDate.Testing.Controller;
 
@@ -22,7 +25,11 @@ public class CompanyControllerTests
     private readonly Mock<ICompanyService> _companyServiceMock;
     private readonly Mock<IMapper> _mapperMock;
     private readonly Mock<UserManager<User>> _userManagerMock;
+    private readonly Mock<UtilService> _utilServiceMock;
     private readonly Mock<User> _user;
+    private readonly Mock<ServiceProvider> _serviceProviderMock;
+    private readonly Mock<RoleManager<Role>> _roleManagerMock;
+    private readonly Mock<UnitOfWork> _unitOfWorkMock;
     private IMapper? mapper;
 
     public CompanyControllerTests()
@@ -33,8 +40,12 @@ public class CompanyControllerTests
         _user = new Mock<User>();
         _controller = new CompanyController(
             _companyServiceMock.Object,
+            _roleManagerMock.Object,
+            _serviceProviderMock.Object,
             _mapperMock.Object,
-            _userManagerMock.Object
+            _userManagerMock.Object,
+            _utilServiceMock.Object,
+            _unitOfWorkMock.Object
         );
         SetupMapper();
     }

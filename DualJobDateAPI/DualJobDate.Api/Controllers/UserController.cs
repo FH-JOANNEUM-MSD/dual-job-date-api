@@ -10,7 +10,6 @@ using DualJobDate.BusinessObjects.Entities.Models;
 using DualJobDate.BusinessObjects.Dtos;
 using DualJobDate.BusinessObjects.Entities.Interface;
 using DualJobDate.BusinessObjects.Entities.Interface.Service;
-using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
@@ -29,7 +28,8 @@ public class UserController(
     IMapper mapper,
     RoleManager<Role> roleManager, 
     IJwtAuthManager jwtAuthManager,
-    IUtilService utilService)
+    IUtilService utilService,
+    IUnitOfWork unitOfWork)
     : ControllerBase
 {
     private const string LowerCase = "abcdefghijklmnopqrstuvwxyz";
@@ -154,8 +154,24 @@ public class UserController(
 
                 if (user != null)
                 {
-                    await utilService.PutCompanyAsync(registerCompanyUser.CompanyName, user.AcademicProgramId, user.InstitutionId,
+                    var company = await utilService.PutCompanyAsync(registerCompanyUser.CompanyName, user.AcademicProgramId, user.InstitutionId,
                         user.Id);
+                    
+                    var activites = await utilService.GetActivitiesByAcademicProgramAsync(academicProgramId);
+                    var companyActivites = new List<CompanyActivity>();
+
+                    foreach (var activity in activites)
+                    {
+
+                        companyActivites.Add(new CompanyActivity()
+                        {
+                            ActivityId = activity.Id,
+                            CompanyId = company.Id,
+                            Value = 1
+                        });
+                    }
+        
+                    await unitOfWork.CompanyActivityRepository.AddRangeAsync(companyActivites);
                 }
             } catch (AuthenticationException exc)
             {
@@ -170,6 +186,7 @@ public class UserController(
                 errorMessages.Add($"Error for email {registerCompanyUser.Email} occurred.");
             }
         }
+        
         
         return new Json { SuccesfullyRegistered = successMessages, FailedToRegister = errorMessages };
 
