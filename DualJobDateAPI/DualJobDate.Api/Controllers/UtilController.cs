@@ -128,24 +128,24 @@ public class UtilController(IUtilService utilService, IMapper mapper, UserManage
         return Ok(activityResources);
     }
 
-    private async Task<ActionResult<IEnumerable<AppointmentDto>>> GetTestTermine()
-    {
-        var appointments = new List<Appointment>();//await utilService.GetAppointmentsByCompanyIdAsync(1);
-        var newApp = new Appointment
-        {
-            AppointmentDate = DateTime.Now,
-            CompanyId = 2,
-            UserId = "8e778201-2c4e-4243-91eb-1eb8b895f004"
-        };
-        var newApp2 = new Appointment
-        {
-            AppointmentDate = DateTime.Now.Add(TimeSpan.FromDays(1)),
-            CompanyId = 1,
-            UserId = "8e778201-2c4e-4243-91eb-1eb8b895f004"
-        };
-        appointments.Add(newApp);
-        appointments.Add(newApp2);
-        var appointmentResources = mapper.Map<IEnumerable<Appointment>, IEnumerable<AppointmentDto>>(appointments);
-        return Ok(appointmentResources);
-    }
+    // private async Task<ActionResult<IEnumerable<AppointmentDto>>> GetTestTermine()
+    // {
+    //     var appointments = new List<Appointment>();//await utilService.GetAppointmentsByCompanyIdAsync(1);
+    //     var newApp = new Appointment
+    //     {
+    //         AppointmentDate = DateTime.Now,
+    //         CompanyId = 2,
+    //         UserId = "8e778201-2c4e-4243-91eb-1eb8b895f004"
+    //     };
+    //     var newApp2 = new Appointment
+    //     {
+    //         AppointmentDate = DateTime.Now.Add(TimeSpan.FromDays(1)),
+    //         CompanyId = 1,
+    //         UserId = "8e778201-2c4e-4243-91eb-1eb8b895f004"
+    //     };
+    //     appointments.Add(newApp);
+    //     appointments.Add(newApp2);
+    //     var appointmentResources = mapper.Map<IEnumerable<Appointment>, IEnumerable<AppointmentDto>>(appointments);
+    //     return Ok(appointmentResources);
+    // }
 }
