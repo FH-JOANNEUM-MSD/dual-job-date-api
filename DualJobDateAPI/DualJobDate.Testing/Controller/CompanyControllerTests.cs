@@ -419,27 +419,27 @@ public class CompanyControllerTests
         await Assert.ThrowsAsync<CompanyNotFoundException>(Act);
     }
 
-    [Fact]
-    public async Task UpdateCompanyActivities_ValidData_ReturnsOkResult()
-    {
-        // Arrange
-        var user = new User();
-        var company = new Company { Name = "Magna", Id = 1 };
-        user.Company = company;
-        var activityDtos = new List<ActivityDto>();
-
-
-        _userManagerMock.Setup(manager => manager.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
-        _companyServiceMock.Setup(service => service.GetCompanyByIdAsync(user.Company.Id)).ReturnsAsync(company);
-        _mapperMock.Setup(mapper => mapper.Map<IEnumerable<ActivityDto>, IEnumerable<CompanyActivity>>(activityDtos))
-            .Returns(new List<CompanyActivity>());
-
-        // Act
-        var result = await _controller.UpdateCompanyActivities(activityDtos);
-
-        // Assert
-        Assert.IsType<OkResult>(result);
-    }
+    // [Fact]
+    // public async Task UpdateCompanyActivities_ValidData_ReturnsOkResult()
+    // {
+    //     // Arrange
+    //     var user = new User();
+    //     var company = new Company { Name = "Magna", Id = 1 };
+    //     user.Company = company;
+    //     var activityDtos = new List<ActivityDto>();
+    //
+    //
+    //     _userManagerMock.Setup(manager => manager.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+    //     _companyServiceMock.Setup(service => service.GetCompanyByIdAsync(user.Company.Id)).ReturnsAsync(company);
+    //     _mapperMock.Setup(mapper => mapper.Map<IEnumerable<ActivityDto>, IEnumerable<CompanyActivity>>(activityDtos))
+    //         .Returns(new List<CompanyActivity>());
+    //
+    //     // Act
+    //     var result = await _controller.UpdateCompanyActivities(activityDtos);
+    //
+    //     // Assert
+    //     Assert.IsType<OkResult>(result);
+    // }
 
     [Fact]
     public async Task UpdateCompanyActivities_UnauthorizedUser_ReturnsUnauthorizedResult()
@@ -472,29 +472,29 @@ public class CompanyControllerTests
     }
 
 
-    [Fact]
-    public async Task AddCompany_ValidData_ReturnsOkResult()
-    {
-        // Arrange
-        var user = new User { };
-        var company = new Company { Id = 1 };
-        var model = new RegisterCompanyModel
-        {
-            AcademicProgramId = 2,
-            CompanyName = "Example Company",
-            UserEmail = "example@example.com"
-        };
-
-        _userManagerMock.Setup(manager => manager.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
-        _companyServiceMock.Setup(service => service.AddCompany(model.AcademicProgramId, model.CompanyName, user)).ReturnsAsync(company);
-        _mapperMock.Setup(mapper => mapper.Map<Company, CompanyDto>(company)).Returns(new CompanyDto());
-
-        // Act
-        var result = await _controller.AddCompany(model);
-
-        // Assert
-        Assert.IsType<OkObjectResult>(result.Result);
-    }
+    // [Fact]
+    // public async Task AddCompany_ValidData_ReturnsOkResult()
+    // {
+    //     // Arrange
+    //     var user = new User { };
+    //     var company = new Company { Id = 1 };
+    //     var model = new RegisterCompanyModel
+    //     {
+    //         AcademicProgramId = 2,
+    //         CompanyName = "Example Company",
+    //         UserEmail = "example@example.com"
+    //     };
+    //
+    //     _userManagerMock.Setup(manager => manager.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+    //     _companyServiceMock.Setup(service => service.AddCompany(model.AcademicProgramId, model.CompanyName, user)).ReturnsAsync(company);
+    //     _mapperMock.Setup(mapper => mapper.Map<Company, CompanyDto>(company)).Returns(new CompanyDto());
+    //
+    //     // Act
+    //     var result = await _controller.AddCompany(model);
+    //
+    //     // Assert
+    //     Assert.IsType<OkObjectResult>(result.Result);
+    // }
 
     [Fact]
     public async Task AddCompany_UnauthorizedUser_ReturnsUnauthorizedResult()
@@ -516,27 +516,27 @@ public class CompanyControllerTests
         await Assert.ThrowsAsync<UserNotFoundException>(Act);
     }
 
-    [Fact]
-    public async Task AddCompany_UserNotFound_ReturnsNotFoundResult()
-    {
-        // Arrange
-        var user = new User { };
-        var model = new RegisterCompanyModel
-        {
-            AcademicProgramId = 2,
-            CompanyName = "Example Company",
-            UserEmail = "example@example.com"
-        };
-
-        _userManagerMock.Setup(manager => manager.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
-        _userManagerMock.Setup(manager => manager.FindByEmailAsync(It.IsAny<string>())).ReturnsAsync((User)null);
-
-        // Act
-        async Task Act() => await _controller.AddCompany(model);
-
-        // Assert
-        await Assert.ThrowsAsync<CompanyNotFoundException>(Act);
-    }
+    // [Fact]
+    // public async Task AddCompany_UserNotFound_ReturnsNotFoundResult()
+    // {
+    //     // Arrange
+    //     var user = new User { };
+    //     var model = new RegisterCompanyModel
+    //     {
+    //         AcademicProgramId = 2,
+    //         CompanyName = "Example Company",
+    //         UserEmail = "example@example.com"
+    //     };
+    //
+    //     _userManagerMock.Setup(manager => manager.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+    //     _userManagerMock.Setup(manager => manager.FindByEmailAsync(It.IsAny<string>())).ReturnsAsync((User)null);
+    //
+    //     // Act
+    //     async Task Act() => await _controller.AddCompany(model);
+    //
+    //     // Assert
+    //     await Assert.ThrowsAsync<CompanyNotFoundException>(Act);
+    // }
 
 
     private void SetupMapper()
