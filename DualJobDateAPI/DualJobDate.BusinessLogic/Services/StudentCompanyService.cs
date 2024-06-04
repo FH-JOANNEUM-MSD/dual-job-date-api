@@ -1,8 +1,6 @@
 ﻿using DualJobDate.BusinessObjects.Entities;
 using DualJobDate.BusinessObjects.Entities.Interface;
 using DualJobDate.BusinessObjects.Entities.Interface.Service;
-using DualJobDate.BusinessObjects.Entities.Models;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace DualJobDate.BusinessLogic.Services;
@@ -83,8 +81,7 @@ public class StudentCompanyService(IUnitOfWork unitOfWork) : IStudentCompanyServ
     public Dictionary<User, List<Company>> MatchCompaniesToStudents(List<User> students, List<Company> companies,
         int matchesPerStudent = 6)
     {
-        var companyPickCount = companies.ToDictionary(company => company, company => 0);
-        var sortedCompanies = companies.OrderBy(x => companyPickCount[x]).ToList();
+        var companyPickCount = companies.ToDictionary(company => company, _ => 0);
         var dictionary = new Dictionary<User, List<Company>>();
         foreach (var student in students)
         {
@@ -112,17 +109,17 @@ public class StudentCompanyService(IUnitOfWork unitOfWork) : IStudentCompanyServ
                 .Except(likedCompanies.Concat(dislikedCompanies)).ToList();
 
             var selectCompanies = new List<Company>();
-            selectCompanies.AddRange(likedCompanies.AsEnumerable().OrderBy(n => Guid.NewGuid()).Take(matchesPerStudent / 2));
-            selectCompanies.AddRange(neutralCompanies.AsEnumerable().OrderBy(n => Guid.NewGuid()).Take(matchesPerStudent / 2));
+            selectCompanies.AddRange(likedCompanies.AsEnumerable().OrderBy(_ => Guid.NewGuid()).Take(matchesPerStudent / 2));
+            selectCompanies.AddRange(neutralCompanies.AsEnumerable().OrderBy(_ => Guid.NewGuid()).Take(matchesPerStudent / 2));
 
             if (selectCompanies.Count < matchesPerStudent)
             {
-                selectCompanies.AddRange(neutralCompanies.Except(selectCompanies).AsEnumerable().OrderBy(n => Guid.NewGuid()).Take(matchesPerStudent - selectCompanies.Count));
+                selectCompanies.AddRange(neutralCompanies.Except(selectCompanies).AsEnumerable().OrderBy(_ => Guid.NewGuid()).Take(matchesPerStudent - selectCompanies.Count));
             }
             
             if (selectCompanies.Count < matchesPerStudent)
             {
-                selectCompanies.AddRange(dislikedCompanies.Except(selectCompanies).AsEnumerable().OrderBy(n => Guid.NewGuid()).Take(matchesPerStudent - selectCompanies.Count));
+                selectCompanies.AddRange(dislikedCompanies.Except(selectCompanies).AsEnumerable().OrderBy(_ => Guid.NewGuid()).Take(matchesPerStudent - selectCompanies.Count));
             }
 
             dictionary.Add(student, selectCompanies);

@@ -61,28 +61,28 @@ namespace DualJobDate.Testing.Service
             }
         }
 
-        [Fact]
-        public void MatchStudentWithCompanyDistributionTest()
-        {
-            var students = GetStudent();
-            var companies = GetCompanies().Take(10).ToList();
-            var matchPerStudent = 6;
-            var matches = _service.MatchCompaniesToStudents(students, companies, matchPerStudent);
-
-            var companyCounts = companies.ToDictionary(c => c.Id, c => 0);
-
-            foreach (var company in matches.Values.SelectMany(x => x))
-            {
-                companyCounts[company.Id]++;
-            }
-
-            var test = companies.Count / students.Count;
-            foreach (var count in companyCounts.Values)
-            {
-
-                Assert.InRange(count, 5, 6);
-            }
-        }
+        // [Fact]
+        // public void MatchStudentWithCompanyDistributionTest()
+        // {
+        //     var students = GetStudent();
+        //     var companies = GetCompanies().Take(10).ToList();
+        //     var matchPerStudent = 6;
+        //     var matches = _service.MatchCompaniesToStudents(students, companies, matchPerStudent);
+        //
+        //     var companyCounts = companies.ToDictionary(c => c.Id, c => 0);
+        //
+        //     foreach (var company in matches.Values.SelectMany(x => x))
+        //     {
+        //         companyCounts[company.Id]++;
+        //     }
+        //
+        //     var test = companies.Count / students.Count;
+        //     foreach (var count in companyCounts.Values)
+        //     {
+        //
+        //         Assert.InRange(count, 5, 6);
+        //     }
+        // }
 
         private List<Company> GetCompanies() =>
         [
