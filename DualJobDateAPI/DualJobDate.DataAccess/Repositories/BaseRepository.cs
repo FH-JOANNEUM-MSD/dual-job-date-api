@@ -19,7 +19,7 @@ public class BaseRepository<T>(AppDbContext dbContextProvider) : IBaseRepository
     {
         return await Task.FromResult(_dbContext.Set<T>().AsQueryable());
     }
-
+    
     public async Task AddAsync(T entity)
     {
         _dbContext.Set<T>().Add(entity);
@@ -46,7 +46,13 @@ public class BaseRepository<T>(AppDbContext dbContextProvider) : IBaseRepository
         _dbContext.Set<T>().Remove(entity);
         await SaveAsync();
     }
-
+    
+    public async Task DeleteRangeAsync(IEnumerable<T> entities)
+    {
+        _dbContext.Set<T>().RemoveRange(entities);
+        await SaveAsync();
+    }
+    
     public async Task SaveAsync()
     {
         await _dbContext.SaveChangesAsync();

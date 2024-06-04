@@ -14,4 +14,6 @@ public interface IStudentCompanyService
 
     Task SaveAppointments(List<Appointment> appointments);
 
+    Task DeleteAppointments(int academicProgramId);
+
 }

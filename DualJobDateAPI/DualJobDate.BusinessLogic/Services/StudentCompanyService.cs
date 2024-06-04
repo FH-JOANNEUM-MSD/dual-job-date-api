@@ -112,17 +112,17 @@ public class StudentCompanyService(IUnitOfWork unitOfWork) : IStudentCompanyServ
                 .Except(likedCompanies.Concat(dislikedCompanies)).ToList();
 
             var selectCompanies = new List<Company>();
-            selectCompanies.AddRange(likedCompanies.Take(matchesPerStudent / 2));
-            selectCompanies.AddRange(neutralCompanies.Take(matchesPerStudent / 2));
+            selectCompanies.AddRange(likedCompanies.AsEnumerable().OrderBy(n => Guid.NewGuid()).Take(matchesPerStudent / 2));
+            selectCompanies.AddRange(neutralCompanies.AsEnumerable().OrderBy(n => Guid.NewGuid()).Take(matchesPerStudent / 2));
 
             if (selectCompanies.Count < matchesPerStudent)
             {
-                selectCompanies.AddRange(neutralCompanies.Except(selectCompanies).Take(matchesPerStudent - selectCompanies.Count));
+                selectCompanies.AddRange(neutralCompanies.Except(selectCompanies).AsEnumerable().OrderBy(n => Guid.NewGuid()).Take(matchesPerStudent - selectCompanies.Count));
             }
             
             if (selectCompanies.Count < matchesPerStudent)
             {
-                selectCompanies.AddRange(dislikedCompanies.Except(selectCompanies).Take(matchesPerStudent - selectCompanies.Count));
+                selectCompanies.AddRange(dislikedCompanies.Except(selectCompanies).AsEnumerable().OrderBy(n => Guid.NewGuid()).Take(matchesPerStudent - selectCompanies.Count));
             }
 
             dictionary.Add(student, selectCompanies);
@@ -142,6 +142,12 @@ public class StudentCompanyService(IUnitOfWork unitOfWork) : IStudentCompanyServ
         await unitOfWork.SaveChanges(); 
     }
 
-   
-
+    public async Task DeleteAppointments(int academicProgramId)
+    {
+        unitOfWork.BeginTransaction();
+        var appointments = (await unitOfWork.AppointmentRepository.GetAllAsync()).Where(x => x.User.AcademicProgramId == academicProgramId);
+        await unitOfWork.AppointmentRepository.DeleteRangeAsync(appointments);
+        unitOfWork.Commit();
+        await unitOfWork.SaveChanges();
+    }
 }

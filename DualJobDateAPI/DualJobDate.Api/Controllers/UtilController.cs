@@ -97,10 +97,6 @@ public class UtilController(IUtilService utilService,    ICompanyService company
     public async Task<ActionResult<IEnumerable<AppointmentDto>>> GetAppointmentsByUserIdAsync(string userId)
     {
         var appointments = await utilService.GetAppointmentsByUserIdAsync(userId);
-        if (appointments == null)
-        {
-            throw new AppointmentNotFoundException($"user: {userId}");
-        }
 
         var appointmentResources = mapper.Map<IEnumerable<Appointment>, IEnumerable<AppointmentDto>>(appointments);
         return Ok(appointmentResources);
@@ -120,10 +116,6 @@ public class UtilController(IUtilService utilService,    ICompanyService company
             : await companyService.GetCompanyByIdAsync(companyId ?? throw new CompanyNotFoundException(companyId));
         
         var appointments = await utilService.GetAppointmentsByCompanyIdAsync(company.Id);
-        if (appointments == null)
-        {
-            throw new AppointmentNotFoundException($"Company: {companyId}");
-        }
 
         var appointmentResources = mapper.Map<IEnumerable<Appointment>, IEnumerable<AppointmentDto>>(appointments);
         return Ok(appointmentResources);

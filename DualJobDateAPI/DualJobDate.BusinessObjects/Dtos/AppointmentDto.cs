@@ -8,7 +8,7 @@ public class AppointmentDto
     public DateTime StartTime { get; set; }
     public DateTime EndTime { get; set; }
     public string UserId { get; set; }
-    public string Student { get; set; }
+    public UserDto User { get; set; }
     public string CompanyId { get; set; }
-    public string Company { get; set; }
+    public CompanyDto Company { get; set; }
 }

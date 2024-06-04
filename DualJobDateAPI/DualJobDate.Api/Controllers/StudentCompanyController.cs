@@ -146,6 +146,8 @@ public class StudentCompanyController(UserManager<User> userManager, ICompanySer
             }
         }
 
+        await studentCompanyService.DeleteAppointments(model.AcademicProgramId);
+        
         await studentCompanyService.SaveAppointments(appointments);
         return Ok();
     }
