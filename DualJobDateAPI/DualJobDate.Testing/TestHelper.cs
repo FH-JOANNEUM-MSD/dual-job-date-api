@@ -1,7 +1,5 @@
-using System.Diagnostics;
 using DualJobDate.BusinessObjects.Entities;
 using DualJobDate.BusinessObjects.Entities.Enum;
-using Microsoft.AspNetCore.Identity;
 
 namespace DualJobDate.Testing;
 
