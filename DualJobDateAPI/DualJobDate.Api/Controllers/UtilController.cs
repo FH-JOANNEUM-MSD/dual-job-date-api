@@ -3,6 +3,7 @@ using DualJobDate.BusinessLogic.Exceptions;
 using DualJobDate.BusinessObjects.Entities;
 using DualJobDate.BusinessObjects.Entities.Interface.Service;
 using DualJobDate.BusinessObjects.Dtos;
+using DualJobDate.BusinessObjects.Entities.Enum;
 using DualJobDate.BusinessObjects.Entities.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -13,7 +14,8 @@ namespace DualJobDate.Api.Controllers;
 [ApiController]
 [Authorize]
 [Route("[controller]")]
-public class UtilController(IUtilService utilService, IMapper mapper, UserManager<User> userManager) : ControllerBase
+public class UtilController(IUtilService utilService,    ICompanyService companyService,
+    IMapper mapper, UserManager<User> userManager) : ControllerBase
 {
     [Authorize("Admin")]
     [HttpGet("Institutions")]
@@ -105,11 +107,19 @@ public class UtilController(IUtilService utilService, IMapper mapper, UserManage
 
     }
 
-    [Authorize("Admin")]
+    [Authorize(Policy = "WebApp")]
     [HttpGet("AppointmentsByCompanyId")]
-    public async Task<ActionResult<IEnumerable<AppointmentDto>>> GetAppointmentsByCompanyIdAsync(int companyId)
+    public async Task<ActionResult<IEnumerable<AppointmentDto>>> GetAppointmentsByCompanyIdAsync(int? companyId)
     {
-        var appointments = await utilService.GetAppointmentsByCompanyIdAsync(companyId);
+        var user = await userManager.GetUserAsync(User);
+        if (user is null)
+            throw new UserNotFoundException();
+
+        var company = User.IsInRole(UserTypeEnum.Company.ToString())
+            ? await companyService.GetCompanyByUser(user)
+            : await companyService.GetCompanyByIdAsync(companyId ?? throw new CompanyNotFoundException(companyId));
+        
+        var appointments = await utilService.GetAppointmentsByCompanyIdAsync(company.Id);
         if (appointments == null)
         {
             throw new AppointmentNotFoundException($"Company: {companyId}");
@@ -118,26 +128,34 @@ public class UtilController(IUtilService utilService, IMapper mapper, UserManage
         var appointmentResources = mapper.Map<IEnumerable<Appointment>, IEnumerable<AppointmentDto>>(appointments);
         return Ok(appointmentResources);
     }
-
-
-    private async Task<ActionResult<IEnumerable<AppointmentDto>>> GetTestTermine()
+    
+    
+    [HttpGet("GetActivitiesByAcademicProgram")]
+    public async Task<ActionResult<IEnumerable<ActivityDto>>> GetActivitiesByAcademicProgramAsync(int academicProgramId)
     {
-        var appointments = new List<Appointment>();//await utilService.GetAppointmentsByCompanyIdAsync(1);
-        var newApp = new Appointment
-        {
-            AppointmentDate = DateTime.Now,
-            CompanyId = 2,
-            UserId = "8e778201-2c4e-4243-91eb-1eb8b895f004"
-        };
-        var newApp2 = new Appointment
-        {
-            AppointmentDate = DateTime.Now.Add(TimeSpan.FromDays(1)),
-            CompanyId = 1,
-            UserId = "8e778201-2c4e-4243-91eb-1eb8b895f004"
-        };
-        appointments.Add(newApp);
-        appointments.Add(newApp2);
-        var appointmentResources = mapper.Map<IEnumerable<Appointment>, IEnumerable<AppointmentDto>>(appointments);
-        return Ok(appointmentResources);
+        var activities = await utilService.GetActivitiesByAcademicProgramAsync(academicProgramId);
+        var activityResources = mapper.Map<IEnumerable<Activity>, IEnumerable<ActivityDto>>(activities);
+        return Ok(activityResources);
     }
+
+    // private async Task<ActionResult<IEnumerable<AppointmentDto>>> GetTestTermine()
+    // {
+    //     var appointments = new List<Appointment>();//await utilService.GetAppointmentsByCompanyIdAsync(1);
+    //     var newApp = new Appointment
+    //     {
+    //         AppointmentDate = DateTime.Now,
+    //         CompanyId = 2,
+    //         UserId = "8e778201-2c4e-4243-91eb-1eb8b895f004"
+    //     };
+    //     var newApp2 = new Appointment
+    //     {
+    //         AppointmentDate = DateTime.Now.Add(TimeSpan.FromDays(1)),
+    //         CompanyId = 1,
+    //         UserId = "8e778201-2c4e-4243-91eb-1eb8b895f004"
+    //     };
+    //     appointments.Add(newApp);
+    //     appointments.Add(newApp2);
+    //     var appointmentResources = mapper.Map<IEnumerable<Appointment>, IEnumerable<AppointmentDto>>(appointments);
+    //     return Ok(appointmentResources);
+    // }
 }

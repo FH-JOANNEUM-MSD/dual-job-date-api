@@ -35,7 +35,7 @@ internal class Program
         RepositoryRegistration.RegisterRepository(services);
         ServiceRegistration.RegisterServices(services, configuration);
         ConfigureExceptionHandler(services);
-        ConfigureCores(services);
+        ConfigureCors(services);
         ConfigureDatabase(services, configuration);
         ConfigureIdentity(services);
         ConfigureJwtAuthentication(services, configuration);
@@ -155,7 +155,7 @@ internal class Program
         services.AddSingleton(mapper);
     }
 
-    private static void ConfigureCores(IServiceCollection services)
+    private static void ConfigureCors(IServiceCollection services)
     {
         services.AddCors(options =>
         {

@@ -23,7 +23,7 @@ public static class DbSeeder
         await SeedCompanyUser(services, uow);
         await SeedTestCompany(services, uow);
         await SeedActivities(uow);
-        await SeedAdresses(uow);
+        // await SeedAdresses(uow);
         await SeedCompanyActivities(uow);
         uow.Commit();
         await uow.SaveChanges();
@@ -188,38 +188,38 @@ public static class DbSeeder
         }
     }
 
-    private static async Task SeedAdresses(IUnitOfWork unitOfWork)
-    {
-        var institution = await unitOfWork.InstitutionRepository.GetByName("IIT");
-        var academicProgram = await unitOfWork.AcademicProgramRepository.GetByNameAndYear("MSD", 2021);
-        var companies = await unitOfWork.CompanyRepository.GetAllAsync().Result.ToListAsync();
-        if(companies.Count == 2){
-            var location1 = new Address()
-            {
-                Street = "Hauptstraße",
-                BuildingNumber = "1",
-                ApartmentNumber = 10,
-                PostalCode = "8010",
-                City = "Graz",
-                Country = "Austria",
-                InstitutionId = institution.Id,
-                CompanyId = companies[0].Id
-            };
-            var location2 = new Address()
-            {
-                Street = "Hauptstraße",
-                BuildingNumber = "1",
-                ApartmentNumber = 10,
-                PostalCode = "8010",
-                City = "Graz",
-                Country = "Austria",
-                InstitutionId = institution.Id,
-                CompanyId = companies[1].Id
-            };
-            await unitOfWork.AdressRepository.AddAsync(location1);
-            await unitOfWork.AdressRepository.AddAsync(location2);
-        }
-    }
+    // private static async Task SeedAdresses(IUnitOfWork unitOfWork)
+    // {
+    //     var institution = await unitOfWork.InstitutionRepository.GetByName("IIT");
+    //     var academicProgram = await unitOfWork.AcademicProgramRepository.GetByNameAndYear("MSD", 2021);
+    //     var companies = await unitOfWork.CompanyRepository.GetAllAsync().Result.ToListAsync();
+    //     if(companies.Count == 2){
+    //         var location1 = new Address()
+    //         {
+    //             Street = "Hauptstraße",
+    //             BuildingNumber = "1",
+    //             ApartmentNumber = 10,
+    //             PostalCode = "8010",
+    //             City = "Graz",
+    //             Country = "Austria",
+    //             InstitutionId = institution.Id,
+    //             CompanyId = companies[0].Id
+    //         };
+    //         var location2 = new Address()
+    //         {
+    //             Street = "Hauptstraße",
+    //             BuildingNumber = "1",
+    //             ApartmentNumber = 10,
+    //             PostalCode = "8010",
+    //             City = "Graz",
+    //             Country = "Austria",
+    //             InstitutionId = institution.Id,
+    //             CompanyId = companies[1].Id
+    //         };
+    //         await unitOfWork.AdressRepository.AddAsync(location1);
+    //         await unitOfWork.AdressRepository.AddAsync(location2);
+    //     }
+    // }
     
     private static async Task SeedCompanyActivities(IUnitOfWork unitOfWork)
     {

@@ -122,4 +122,9 @@ public class UtilService(IUnitOfWork unitOfWork) : IUtilService
         }
         return ret.ToList();
     }
+    
+    public async Task<List<Activity>> GetActivitiesByAcademicProgramAsync(int academicProgramId)
+    {
+        return await unitOfWork.ActivityRepository.GetAllAsync().Result.Where(activity => activity.AcademicProgramId == academicProgramId).ToListAsync();
+    }
 }

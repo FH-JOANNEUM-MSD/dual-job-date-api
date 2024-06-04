@@ -13,4 +13,5 @@ public class CompanyDetails : BaseEntity
     public string? TrainerTraining { get; set; }
     public string? TrainerProfessionalExperience { get; set; }
     public string? TrainerPosition { get; set; }
+    public string? Addresses { get; set; }
 }

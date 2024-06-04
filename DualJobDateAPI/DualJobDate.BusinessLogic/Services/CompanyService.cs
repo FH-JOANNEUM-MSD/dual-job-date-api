@@ -19,7 +19,7 @@ public class CompanyService(IUnitOfWork unitOfWork, UserManager<User> userManage
             Include(x => x.CompanyDetails).
             Include(x => x.Activities)
             .Include(x => x.CompanyActivities).
-            Include(x => x.Addresses).
+            // Include(x => x.Addresses).
             Where(x => x.Id == id).SingleOrDefaultAsync();
         return result;
     }
@@ -33,8 +33,8 @@ public class CompanyService(IUnitOfWork unitOfWork, UserManager<User> userManage
             .Include(c => c.StudentCompanies.Where(sc => sc.StudentId == user.Id)). // Include only StudentCompany for the given user
             Include(x => x.CompanyDetails).
             Include(x => x.Activities)
-            .Include(x => x.CompanyActivities).
-            Include(x => x.Addresses)
+            .Include(x => x.CompanyActivities)
+            // .Include(x => x.Addresses)
             .Where(c => c.AcademicProgramId == user.AcademicProgramId && c.IsActive)
             .ToListAsync();
         return result;
@@ -78,6 +78,7 @@ public class CompanyService(IUnitOfWork unitOfWork, UserManager<User> userManage
             throw new ArgumentException("LogoBase64 must be a valid Base64 string.");
         }
 
+        company.Name = model.Name;
         company.Industry = model.Industry;
         company.LogoBase64 = model.LogoBase64;
         company.Website = model.Website;
@@ -152,6 +153,7 @@ public class CompanyService(IUnitOfWork unitOfWork, UserManager<User> userManage
             companyDetails.TeamPictureBase64 = details.TeamPictureBase64;
             companyDetails.ContactPersonHRM = details.ContactPersonHRM;
             companyDetails.TrainerProfessionalExperience = details.TrainerProfessionalExperience;
+            companyDetails.Addresses = details.Addresses;
             await unitOfWork.CompanyDetailsRepository.UpdateAsync(companyDetails);
         }
         unitOfWork.Commit();
@@ -213,7 +215,7 @@ public class CompanyService(IUnitOfWork unitOfWork, UserManager<User> userManage
             Include(x => x.CompanyDetails).
             Include(x => x.Activities).
             Include(x => x.CompanyActivities).
-            Include(x => x.Addresses).
+            // Include(x => x.Addresses).
             Where(c => c.UserId == user.Id).
             SingleOrDefaultAsync();
         return company;
@@ -224,19 +226,19 @@ public class CompanyService(IUnitOfWork unitOfWork, UserManager<User> userManage
         await unitOfWork.CompanyRepository.DeleteAsync(id);
     }
 
-    public async Task AddLocations(IEnumerable<Address> addresses, Company company)
-    {
-        unitOfWork.BeginTransaction();
-        foreach (var address in addresses)
-        {
-            address.Company = company;
-            await unitOfWork.AdressRepository.AddAsync(address);
-        }
-        unitOfWork.Commit();
-    }
-
-    public async Task<IEnumerable<Address>> GetLocationsByCompanyAsync(Company company)
-    {
-        return await unitOfWork.AdressRepository.GetAllAsync().Result.Where(a => a.CompanyId == company.Id).ToListAsync();
-    }
+    // public async Task AddLocations(IEnumerable<Address> addresses, Company company)
+    // {
+    //     unitOfWork.BeginTransaction();
+    //     foreach (var address in addresses)
+    //     {
+    //         address.Company = company;
+    //         await unitOfWork.AdressRepository.AddAsync(address);
+    //     }
+    //     unitOfWork.Commit();
+    // }
+    //
+    // public async Task<IEnumerable<Address>> GetLocationsByCompanyAsync(Company company)
+    // {
+    //     return await unitOfWork.AdressRepository.GetAllAsync().Result.Where(a => a.CompanyId == company.Id).ToListAsync();
+    // }
 }

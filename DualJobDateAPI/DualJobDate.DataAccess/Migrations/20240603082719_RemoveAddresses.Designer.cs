@@ -3,6 +3,7 @@ using System;
 using DualJobDate.DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DualJobDate.DataAccess.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240603082719_RemoveAddresses")]
+    partial class RemoveAddresses
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -83,14 +86,11 @@ namespace DualJobDate.DataAccess.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
+                    b.Property<DateTime>("AppointmentDate")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<int>("CompanyId")
                         .HasColumnType("int");
-
-                    b.Property<DateTime>("EndTime")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<DateTime>("StartTime")
-                        .HasColumnType("datetime(6)");
 
                     b.Property<string>("UserId")
                         .IsRequired()

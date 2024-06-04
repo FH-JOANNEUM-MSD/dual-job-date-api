@@ -1,4 +1,6 @@
-﻿using AutoMapper;
+﻿using System.ComponentModel.DataAnnotations;
+using AutoMapper;
+using DualJobDate.Api.Controllers;
 using DualJobDate.BusinessObjects.Entities;
 using DualJobDate.BusinessObjects.Entities.Interface.Service;
 using DualJobDate.BusinessObjects.Entities.Models;
@@ -8,15 +10,26 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using DualJobDate.BusinessLogic.Exceptions;
 using DualJobDate.BusinessObjects.Entities.Enum;
+using DualJobDate.BusinessObjects.Entities.Interface;
+using Microsoft.EntityFrameworkCore;
 
 namespace DualJobDate.API.Controllers;
 
 [ApiController]
 [Authorize]
 [Route("[controller]")]
-public class CompanyController(ICompanyService companyService, IMapper mapper, UserManager<User> userManager)
+public class CompanyController(
+    ICompanyService companyService,
+    RoleManager<Role> roleManager, 
+    IServiceProvider serviceProvider,
+    IMapper mapper, 
+    UserManager<User> userManager,    
+    IUtilService utilService,
+    IUnitOfWork unitOfWork)
     : ControllerBase
 {
+    private static readonly EmailAddressAttribute EmailAddressAttribute = new();
+
     [Authorize]
     [HttpGet]
     public async Task<ActionResult<CompanyDto>> GetCompany([FromQuery] int? id)
@@ -84,9 +97,9 @@ public class CompanyController(ICompanyService companyService, IMapper mapper, U
         var company = await companyService.GetCompanyByUser(user);
         if (company is null)
             throw new CompanyNotFoundException();
-
+        
         var companyDetails = new CompanyDetails
-        { 
+        {
             ShortDescription = model.ShortDescription,
             TeamPictureBase64 = model.TeamPictureBase64,
             JobDescription = model.JobDescription,
@@ -95,7 +108,8 @@ public class CompanyController(ICompanyService companyService, IMapper mapper, U
             Trainer = model.Trainer,
             TrainerTraining = model.TrainerTraining,
             TrainerProfessionalExperience = model.TrainerProfessionalExperience,
-            TrainerPosition = model.TrainerPosition
+            TrainerPosition = model.TrainerPosition,
+            Addresses = model.Addresses
         };
 
         try
@@ -176,7 +190,9 @@ public class CompanyController(ICompanyService companyService, IMapper mapper, U
         if (user is null)
             throw new UserNotFoundException();
 
-        if (user.Company is null)
+        var company = await companyService.GetCompanyByUser(user);
+        
+        if (company is null)
             throw new CompanyNotFoundException();
 
         var companyActivities =
@@ -189,53 +205,102 @@ public class CompanyController(ICompanyService companyService, IMapper mapper, U
     [HttpPost("Register")]
     public async Task<ActionResult<CompanyDto>> AddCompany([FromBody] RegisterCompanyModel model)
     {
-        var user = await userManager.GetUserAsync(User);
-        if (user is null)
+        var adminUser = await userManager.GetUserAsync(User);
+        if (adminUser is null)
             throw new UserNotFoundException();
+        
+        if (model.AcademicProgramId == null)
+            return BadRequest("InstitutionId or AcademicProgramId cannot be null!");
+        int program = (int)model.AcademicProgramId;
+        
+        var userStore = serviceProvider.GetRequiredService<IUserStore<User>>();
+
+        if (string.IsNullOrEmpty(model.UserEmail) || !EmailAddressAttribute.IsValid(model.UserEmail))
+            return BadRequest($"Email '{model.UserEmail}' is invalid.");
+
+        var academicProgram = await utilService.GetAcademicProgramsAsync(null).Result
+            .Where(ac => ac.Id == model.AcademicProgramId).FirstOrDefaultAsync();       
+
+        var user = new User
+        {
+            Email = model.UserEmail,
+            UserType = UserTypeEnum.Company,
+            IsNew = true,
+            InstitutionId = academicProgram.InstitutionId,
+            AcademicProgramId = program
+        };
+
+        await userStore.SetUserNameAsync(user, model.UserEmail, CancellationToken.None);
+
+        var password = UserController.GeneratePassword();
+
+        var result = await userManager.CreateAsync(user, password);
+
+        if (!result.Succeeded) return BadRequest(result.Errors);
+        var role = await roleManager.Roles.Where(r => r.UserTypeEnum == UserTypeEnum.Company).SingleOrDefaultAsync();
+        if (role == null) return NotFound("Role doesn't exist");
+        await userManager.AddToRoleAsync(user, role.Name);
+        
 
         var company = await companyService.AddCompany(model.AcademicProgramId, model.CompanyName, user);
         if (company is null)
             throw new CompanyNotFoundException();
 
+        var activites = await utilService.GetActivitiesByAcademicProgramAsync(model.AcademicProgramId);
+        var companyActivites = new List<CompanyActivity>();
+
+        foreach (var activity in activites)
+        {
+
+            companyActivites.Add(new CompanyActivity()
+            {
+                ActivityId = activity.Id,
+                CompanyId = company.Id,
+                Value = 0
+            });
+        }
+        
+        await unitOfWork.CompanyActivityRepository.AddRangeAsync(companyActivites);
+
         var companyResource = mapper.Map<Company, CompanyDto>(company);
         return Ok(companyResource);
     }
     
-    [Authorize("Company")]
-    [HttpPost("Locations")]
-    public async Task<IActionResult> AddLocations([FromBody] List<AddressDto> resources)
-    {
-        var user = await userManager.GetUserAsync(User);
-        if (user is null)
-            throw new UserNotFoundException();
-
-
-        var company = await companyService.GetCompanyByUser(user);
-        if (company is null)
-            throw new CompanyNotFoundException();
-
-        var addresses = mapper.Map<IEnumerable<AddressDto>, IEnumerable<Address>>(resources);
-        await companyService.AddLocations(addresses, company);
-        return Ok();
-    }
-
-    [Authorize]
-    [HttpGet("Locations")]
-    public async Task<ActionResult<IEnumerable<AddressDto>>> GetLocations([FromQuery] int? companyId)
-    {
-        var user = await userManager.GetUserAsync(User);
-        if (user is null)
-            throw new UserNotFoundException();
-
-        var company = User.IsInRole(UserTypeEnum.Company.ToString())
-            ? await companyService.GetCompanyByUser(user)
-            : await companyService.GetCompanyByIdAsync(companyId ?? throw new CompanyNotFoundException(companyId));
-
-        if (company is null)
-            throw new CompanyNotFoundException(companyId);
-
-        var locations = await companyService.GetLocationsByCompanyAsync(company);
-        var locationResources = mapper.Map<IEnumerable<Address>, IEnumerable<AddressDto>>(locations);
-        return Ok(locationResources);
-    }
+    // [Authorize("Company")]
+    // [HttpPost("Locations")]
+    // public async Task<IActionResult> AddLocations([FromBody] List<AddressDto> resources)
+    // {
+    //     var user = await userManager.GetUserAsync(User);
+    //     if (user is null)
+    //         throw new UserNotFoundException();
+    //
+    //
+    //     var company = await companyService.GetCompanyByUser(user);
+    //     if (company is null)
+    //         throw new CompanyNotFoundException();
+    //
+    //     var addresses = mapper.Map<IEnumerable<AddressDto>, IEnumerable<Address>>(resources);
+    //     await companyService.AddLocations(addresses, company);
+    //     return Ok();
+    // }
+    //
+    // [Authorize]
+    // [HttpGet("Locations")]
+    // public async Task<ActionResult<IEnumerable<AddressDto>>> GetLocations([FromQuery] int? companyId)
+    // {
+    //     var user = await userManager.GetUserAsync(User);
+    //     if (user is null)
+    //         throw new UserNotFoundException();
+    //
+    //     var company = User.IsInRole(UserTypeEnum.Company.ToString())
+    //         ? await companyService.GetCompanyByUser(user)
+    //         : await companyService.GetCompanyByIdAsync(companyId ?? throw new CompanyNotFoundException(companyId));
+    //
+    //     if (company is null)
+    //         throw new CompanyNotFoundException(companyId);
+    //
+    //     var locations = await companyService.GetLocationsByCompanyAsync(company);
+    //     var locationResources = mapper.Map<IEnumerable<Address>, IEnumerable<AddressDto>>(locations);
+    //     return Ok(locationResources);
+    // }
 }
