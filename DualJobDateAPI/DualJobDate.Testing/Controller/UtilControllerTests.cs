@@ -1,4 +1,5 @@
 
+using System.Security.Claims;
 using AutoMapper;
 using DualJobDate.Api.Controllers;
 using DualJobDate.BusinessObjects.Dtos;
@@ -6,6 +7,7 @@ using DualJobDate.BusinessObjects.Entities;
 using DualJobDate.BusinessObjects.Entities.Enum;
 using DualJobDate.BusinessObjects.Entities.Interface.Service;
 using DualJobDate.BusinessObjects.Entities.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using MockQueryable.Moq;
@@ -20,11 +22,12 @@ public class UtilControllerTests {
     private readonly Mock<IUtilService> _utilServiceMock = new();
     private readonly Mock<IMapper> _mapperMock = new();
     private readonly Mock<UserManager<User>> _userManagerMock;
+    private readonly Mock<ICompanyService> _companyServiceMock = new();
     
     public UtilControllerTests()
     {
         _userManagerMock = MockHelpers.MockUserManager<User>();
-        _controller = new UtilController(_utilServiceMock.Object, _mapperMock.Object, _userManagerMock.Object);
+        _controller = new UtilController(_utilServiceMock.Object, _companyServiceMock.Object, _mapperMock.Object, _userManagerMock.Object);
     }
     
     [Fact]
@@ -160,8 +163,8 @@ public class UtilControllerTests {
 
         var appointmentDtos = new List<AppointmentDto>
         {
-            new AppointmentDto { Company = new CompanyDto(), UserId = user.Id },
-            new AppointmentDto { Company = new CompanyDto(), UserId = user.Id }
+            new AppointmentDto { Company = "1", UserId = user.Id },
+            new AppointmentDto { Company = "2", UserId = user.Id }
         };
 
         _mapperMock.Setup(mapper => mapper.Map<IEnumerable<Appointment>, IEnumerable<AppointmentDto>>(appointments))
@@ -191,8 +194,8 @@ public class UtilControllerTests {
 
         var appointmentDtos = new List<AppointmentDto>
         {
-            new AppointmentDto { Company = new CompanyDto(), UserId = userId },
-            new AppointmentDto { Company = new CompanyDto(), UserId = userId }
+            new AppointmentDto { Company = "1", UserId = userId },
+            new AppointmentDto { Company = "1", UserId = userId }
         };
 
         _mapperMock.Setup(mapper => mapper.Map<IEnumerable<Appointment>, IEnumerable<AppointmentDto>>(appointments))
@@ -258,9 +261,21 @@ public class UtilControllerTests {
 
         var appointmentDtos = new List<AppointmentDto>
         {
-            new AppointmentDto { Company = new CompanyDto() },
-            new AppointmentDto { Company = new CompanyDto() }
+            new AppointmentDto { Id = 1, CompanyId = "1" },
+            new AppointmentDto { Id = 2, CompanyId = "2" }
         };
+        var company = new Company()
+        {
+            Id = 1
+        };
+        var user = TestHelper.GetTestUser(1, 1, UserTypeEnum.Company);
+        _userManagerMock.Setup(manager => manager.GetUserAsync(_controller.User)).ReturnsAsync(user);
+        _userManagerMock.Setup(manager =>
+            manager.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+
+        MockClaimUser(user);
+
+        _companyServiceMock.Setup(t => t.GetCompanyByUser(user)).ReturnsAsync(company);
 
         _mapperMock.Setup(mapper => mapper.Map<IEnumerable<Appointment>, IEnumerable<AppointmentDto>>(appointments)).Returns(appointmentDtos);
 
@@ -271,6 +286,22 @@ public class UtilControllerTests {
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
         var returnedAppointments = Assert.IsAssignableFrom<IEnumerable<AppointmentDto>>(okResult.Value);
         Assert.Equal(appointmentDtos.Count, returnedAppointments.Count());
+    }
+    
+    private void MockClaimUser(User user)
+    {
+        var httpContext = new DefaultHttpContext
+        {
+            User = new ClaimsPrincipal(new ClaimsIdentity(
+            [
+                new Claim(ClaimTypes.NameIdentifier, user.Id),
+                new Claim(ClaimTypes.Role, user.UserType.ToString())
+            ], "mock"))
+        };
+        _controller.ControllerContext = new ControllerContext()
+        {
+            HttpContext = httpContext,
+        };
     }
 }
 
