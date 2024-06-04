@@ -2,13 +2,11 @@
 using DualJobDate.BusinessObjects.Entities.Interface;
 using DualJobDate.BusinessObjects.Entities.Interface.Service;
 using DualJobDate.BusinessObjects.Entities.Models;
-using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace DualJobDate.BusinessLogic.Services;
 
-public class UtilService(IUnitOfWork unitOfWork, UserManager<User> userManager) : IUtilService
+public class UtilService(IUnitOfWork unitOfWork) : IUtilService
 {
     public Task<IQueryable<Institution>> GetInstitutionsAsync()
     {
