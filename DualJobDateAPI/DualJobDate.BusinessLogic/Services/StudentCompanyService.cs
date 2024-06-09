@@ -1,6 +1,7 @@
 ﻿using DualJobDate.BusinessObjects.Entities;
 using DualJobDate.BusinessObjects.Entities.Interface;
 using DualJobDate.BusinessObjects.Entities.Interface.Service;
+using DualJobDate.BusinessObjects.Entities.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace DualJobDate.BusinessLogic.Services;
@@ -78,58 +79,114 @@ public class StudentCompanyService(IUnitOfWork unitOfWork) : IStudentCompanyServ
 
     }
 
-    public Dictionary<User, List<Company>> MatchCompaniesToStudents(List<User> students, List<Company> companies,
-        int matchesPerStudent = 6)
+public Dictionary<User, List<Tuple<Company, DateTime>>> MatchCompaniesToStudents(List<User> students, List<Company> companies, MatchModel model)
+{
+    var companyPickCount = companies.ToDictionary(company => company, _ => 0);
+    var companySchedules = companies.ToDictionary(company => company, _ => new List<DateTime>());
+    var dictionary = new Dictionary<User, List<Tuple<Company, DateTime>>>();
+
+    int totalSlots = (int)(model.EndTime - model.StartTime).TotalHours;
+    var duration = TimeSpan.FromHours(1);
+
+    foreach (var student in students)
     {
-        var companyPickCount = companies.ToDictionary(company => company, _ => 0);
-        var dictionary = new Dictionary<User, List<Company>>();
-        foreach (var student in students)
+        var availableCompanies = companyPickCount.Keys.OrderBy(x => companyPickCount[x]).ToList();
+
+        var likedCompanyIds = student.StudentCompanies
+            .Where(x => x.Like)
+            .Select(x => x.CompanyId)
+            .ToList();
+
+        var likedCompanies = availableCompanies
+            .Where(x => likedCompanyIds.Contains(x.Id))
+            .ToList();
+
+        var dislikedCompanyIds = student.StudentCompanies
+            .Where(x => !x.Like)
+            .Select(x => x.CompanyId)
+            .ToList();
+
+        var dislikedCompanies = availableCompanies
+            .Where(x => dislikedCompanyIds.Contains(x.Id))
+            .ToList();
+
+        var neutralCompanies = availableCompanies
+            .Except(likedCompanies.Concat(dislikedCompanies)).ToList();
+
+        var selectCompanies = new List<Company>();
+        selectCompanies.AddRange(likedCompanies.AsEnumerable().OrderBy(_ => Guid.NewGuid()).Take(model.MatchesPerStudent / 2));
+        selectCompanies.AddRange(neutralCompanies.AsEnumerable().OrderBy(_ => Guid.NewGuid()).Take(model.MatchesPerStudent / 2));
+
+        if (selectCompanies.Count < model.MatchesPerStudent)
         {
-            var availableCompanies = companyPickCount.Keys.OrderBy(x => companyPickCount[x]).ToList();
-
-            var likedCompanyIds = student.StudentCompanies
-                .Where(x => x.Like)
-                .Select(x => x.CompanyId)
-                .ToList();
-
-            var likedCompanies = availableCompanies
-                .Where(x => likedCompanyIds.Contains(x.Id))
-                .ToList();
-
-            var dislikedCompanyIds = student.StudentCompanies
-                .Where(x => !x.Like)
-                .Select(x => x.CompanyId)
-                .ToList();
-
-            var dislikedCompanies = availableCompanies
-                .Where(x => dislikedCompanyIds.Contains(x.Id))
-                .ToList();
-
-            var neutralCompanies = availableCompanies
-                .Except(likedCompanies.Concat(dislikedCompanies)).ToList();
-
-            var selectCompanies = new List<Company>();
-            selectCompanies.AddRange(likedCompanies.AsEnumerable().OrderBy(_ => Guid.NewGuid()).Take(matchesPerStudent / 2));
-            selectCompanies.AddRange(neutralCompanies.AsEnumerable().OrderBy(_ => Guid.NewGuid()).Take(matchesPerStudent / 2));
-
-            if (selectCompanies.Count < matchesPerStudent)
-            {
-                selectCompanies.AddRange(neutralCompanies.Except(selectCompanies).AsEnumerable().OrderBy(_ => Guid.NewGuid()).Take(matchesPerStudent - selectCompanies.Count));
-            }
-            
-            if (selectCompanies.Count < matchesPerStudent)
-            {
-                selectCompanies.AddRange(dislikedCompanies.Except(selectCompanies).AsEnumerable().OrderBy(_ => Guid.NewGuid()).Take(matchesPerStudent - selectCompanies.Count));
-            }
-
-            dictionary.Add(student, selectCompanies);
-
-            selectCompanies.ForEach(x => companyPickCount[x]++);
+            selectCompanies.AddRange(neutralCompanies.Except(selectCompanies).AsEnumerable().OrderBy(_ => Guid.NewGuid()).Take(model.MatchesPerStudent - selectCompanies.Count));
         }
-        
 
-        return dictionary;
+        var studentSchedule = new List<Tuple<Company, DateTime>>();
+        DateTime currentTime = model.StartTime;
+
+        for (int i = 0; i < model.MatchesPerStudent; i++)
+        {
+            Company assignedCompany = null;
+            foreach (var company in selectCompanies)
+            {
+                if (!studentSchedule.Any(s => s.Item1 == company) && !companySchedules[company].Contains(currentTime))
+                {
+                    assignedCompany = company;
+                    break;
+                }
+            }
+
+            if (assignedCompany == null)
+            {
+                foreach (var company in neutralCompanies)
+                {
+                    if (!studentSchedule.Any(s => s.Item1 == company) && !companySchedules[company].Contains(currentTime))
+                    {
+                        assignedCompany = company;
+                        selectCompanies.Add(company); // Add to selected to prevent re-adding
+                        break;
+                    }
+                }
+            }
+
+            if (assignedCompany != null)
+            {
+                studentSchedule.Add(new Tuple<Company, DateTime>(assignedCompany, currentTime));
+                companySchedules[assignedCompany].Add(currentTime);
+                companyPickCount[assignedCompany]++;
+            }
+            currentTime = currentTime.Add(duration);
+        }
+
+        while (studentSchedule.Count < model.MatchesPerStudent && studentSchedule.Count < totalSlots)
+        {
+            bool slotFound = false;
+            foreach (var company in availableCompanies.Except(dislikedCompanies))
+            {
+                if (studentSchedule.Count >= model.MatchesPerStudent) break;
+                currentTime = model.StartTime + duration * studentSchedule.Count;
+                if (currentTime >= model.EndTime) break;
+                if (!studentSchedule.Any(s => s.Item1 == company) && !companySchedules[company].Contains(currentTime))
+                {
+                    studentSchedule.Add(new Tuple<Company, DateTime>(company, currentTime));
+                    companySchedules[company].Add(currentTime);
+                    companyPickCount[company]++;
+                    slotFound = true;
+                }
+            }
+            if (!slotFound) break;
+        }
+
+        dictionary.Add(student, studentSchedule);
     }
+
+    return dictionary;
+}
+
+
+
+
 
     public async Task SaveAppointments(List<Appointment> appointments)
     {
