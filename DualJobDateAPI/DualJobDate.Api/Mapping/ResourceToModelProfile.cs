@@ -1,14 +1,20 @@
 using AutoMapper;
 using DualJobDate.BusinessObjects.Entities;
-using DualJobDate.BusinessObjects.Resources;
+using DualJobDate.BusinessObjects.Entities.Models;
+using DualJobDate.BusinessObjects.Dtos;
 
-namespace DualJobDate.Api.Mapping
+namespace DualJobDate.Api.Mapping;
+
+public class ResourceToModelProfile : Profile
 {
-    public class ResourceToModelProfile : Profile
+    public ResourceToModelProfile()
     {
-        public ResourceToModelProfile()
-        {
-            CreateMap<UserResource, ApplicationUser>();
-        }
+        CreateMap<UserDto, User>();
+        CreateMap<CompanyDetailsDto, CompanyDetails>();
+        CreateMap<ActivityDto, CompanyActivity>();
+        CreateMap<InstitutionDto, Institution>();
+        CreateMap<AcademicProgramDto, AcademicProgram>();
+        // CreateMap<AddressDto, Address>();
+        CreateMap<AppointmentDto, Appointment>();
     }
 }

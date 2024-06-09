@@ -32,6 +32,7 @@ public static class DatabaseConnectionTester
             {
                 logger.LogCritical("Error while trying to establish connection: {ExMessage}", ex.Message);
             }
+
             attempt++;
             if (isConnected || attempt >= 5) continue;
             logger.LogInformation("Waiting 5 seconds before attempt {Attempt}...", attempt + 1);

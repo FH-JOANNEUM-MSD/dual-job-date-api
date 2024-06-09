@@ -1,59 +1,45 @@
 using System.Diagnostics;
 using DualJobDate.BusinessObjects.Entities;
+using DualJobDate.BusinessObjects.Entities.Enum;
+using DualJobDate.BusinessObjects.Entities.Interface;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
+using Activity = DualJobDate.BusinessObjects.Entities.Activity;
 
-namespace DualJobDate.DatabaseInitializer
+
+namespace DualJobDate.DatabaseInitializer;
+
+public static class DbInitializer
 {
-    public static class DbInitializer
+    public static void InitializeDb(ILoggerFactory loggerFactory)
     {
-        public static void InitializeDb(ILoggerFactory loggerFactory)
+        var logger = loggerFactory.CreateLogger("DbInitializer");
+        logger.LogInformation("Starting container using Docker Compose...");
+
+        logger.LogInformation("Starting container using Docker Compose...");
+        var workingDirectory = Directory.GetCurrentDirectory();
+        var startInfo = new ProcessStartInfo
         {
+            FileName = "docker-compose",
+            Arguments = "-f db-dev-compose.yml up -d",
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            CreateNoWindow = true,
+            WorkingDirectory = workingDirectory
+        };
 
-            var logger = loggerFactory.CreateLogger("DbInitializer");
-            logger.LogInformation("Starting container using Docker Compose...");
+        using var process = Process.Start(startInfo);
+        process?.WaitForExit();
 
-            logger.LogInformation("Starting container using Docker Compose...");
-            var workingDirectory = Directory.GetCurrentDirectory();
-            var startInfo = new ProcessStartInfo
-            {
-                FileName = "docker-compose",
-                Arguments = "-f db-dev-compose.yml up -d",
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                CreateNoWindow = true,
-                WorkingDirectory = workingDirectory
-            };
+        var output = process?.StandardOutput.ReadToEnd();
+        var error = process?.StandardError.ReadToEnd();
 
-            using var process = Process.Start(startInfo);
-            process?.WaitForExit();
+        if (!string.IsNullOrWhiteSpace(output)) logger.LogInformation("Output: {Output}", output);
 
-            var output = process?.StandardOutput.ReadToEnd();
-            var error = process?.StandardError.ReadToEnd();
-
-            if (!string.IsNullOrWhiteSpace(output))
-            {
-                logger.LogInformation("Output: {Output}", output);
-            }
-
-            if (!string.IsNullOrWhiteSpace(error))
-            {
-                logger.LogInformation("Output: {Error}", error);
-            }
-        }
-        
-        public static async Task SeedData(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
-        {
-            await SeedRoles(roleManager);
-        }
-
-        public static async Task SeedRoles(RoleManager<IdentityRole> roleManager)
-        {
-            if (!await roleManager.RoleExistsAsync("Admin"))
-            {
-                await roleManager.CreateAsync(new IdentityRole("Admin"));
-            }
-        }
+        if (!string.IsNullOrWhiteSpace(error)) logger.LogInformation("Output: {Error}", error);
     }
 }

@@ -13,6 +13,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DualJobDate.DataAccess", "D
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DualJobDate.DatabaseInitializer", "DualJobDate.DatabaseInitializer\DualJobDate.DatabaseInitializer.csproj", "{3D02EE07-1A15-4C5F-9C4F-FE3EE2091882}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DualJobDate.Testing", "DualJobDate.Testing\DualJobDate.Testing.csproj", "{F6B59BDE-634B-4B0D-A983-9A08047CDCB2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,14 @@ Global
 		{3D02EE07-1A15-4C5F-9C4F-FE3EE2091882}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3D02EE07-1A15-4C5F-9C4F-FE3EE2091882}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3D02EE07-1A15-4C5F-9C4F-FE3EE2091882}.Release|Any CPU.Build.0 = Release|Any CPU
+		{663B81AB-3DA4-4883-9BF2-3FA7C796852E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{663B81AB-3DA4-4883-9BF2-3FA7C796852E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{663B81AB-3DA4-4883-9BF2-3FA7C796852E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{663B81AB-3DA4-4883-9BF2-3FA7C796852E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F6B59BDE-634B-4B0D-A983-9A08047CDCB2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F6B59BDE-634B-4B0D-A983-9A08047CDCB2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F6B59BDE-634B-4B0D-A983-9A08047CDCB2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F6B59BDE-634B-4B0D-A983-9A08047CDCB2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -18,15 +18,15 @@ public class EmailHelper : IEmailHelper
             {
                 Port = 587,
                 Credentials = new NetworkCredential(senderEmail, senderPassword),
-                EnableSsl = true,
+                EnableSsl = true
             };
-            var invitationLink = $"http://localhost:4200/Login";
+            var invitationLink = "http://localhost:4200/Login";
             var mailMessage = new MailMessage
             {
                 From = new MailAddress(senderEmail),
                 Subject = "Registrierung DualJobDate",
                 Body = await GetEmailTemplate(invitationLink, recipientEmail, recipientPassword),
-                IsBodyHtml = true,
+                IsBodyHtml = true
             };
             mailMessage.To.Add(recipientEmail);
 
@@ -57,6 +57,4 @@ public class EmailHelper : IEmailHelper
             .Replace("{{temporaryPassword}}", password);
         return content;
     }
-
-
 }
