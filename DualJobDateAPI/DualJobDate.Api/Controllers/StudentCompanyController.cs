@@ -1,15 +1,13 @@
 ﻿using AutoMapper;
-using DualJobDate.BusinessLogic.Exceptions;
 using DualJobDate.BusinessObjects.Dtos;
 using DualJobDate.BusinessObjects.Entities;
 using DualJobDate.BusinessObjects.Entities.Enum;
 using DualJobDate.BusinessObjects.Entities.Interface.Service;
 using DualJobDate.BusinessObjects.Entities.Models;
-using DualJobDate.DataAccess;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Org.BouncyCastle.Crypto.Engines;
+using Microsoft.EntityFrameworkCore;
 
 namespace DualJobDate.Api.Controllers;
 
@@ -123,32 +121,31 @@ public class StudentCompanyController(UserManager<User> userManager, ICompanySer
     [HttpGet("MatchCompaniesToStudent")]
     public async Task<ActionResult> MatchCompaniesToStudent([FromQuery] MatchModel model)
     {
-        
-        var companies = companyService.GetCompaniesByAcademicProgramAsync(model.AcademicProgramId).Result
-            .Where(company => company.IsActive).ToList();        
+        var companies = await companyService.GetCompaniesByAcademicProgramAsync(model.AcademicProgramId);
+        var activeCompanies = companies.Where(company => company.IsActive).ToList();
         var students = userManager.Users.Where(x => x.AcademicProgramId == model.AcademicProgramId &&
-                                                    x.UserType == UserTypeEnum.Student).ToList();
+                                                    x.UserType == UserTypeEnum.Student).Include(s => s.StudentCompanies).ToList();
 
         var appointments = new List<Appointment>();
-        var matches = studentCompanyService.MatchCompaniesToStudents(students, companies);
-        var duration = (model.EndTime - model.StartTime) / model.MatchesPerStudent;
+        var matches = studentCompanyService.MatchCompaniesToStudents(students, activeCompanies, model);
+
         foreach (var match in matches)
         {
-            for (int i = 0; i < match.Value.Count; i++)
+            foreach (var appointmentInfo in match.Value)
             {
                 appointments.Add(new Appointment
                 {
-                    StartTime = model.StartTime + duration * i,
-                    EndTime = model.StartTime + duration * (i + 1),
+                    StartTime = appointmentInfo.Item2,
+                    EndTime = appointmentInfo.Item2.AddHours(1), // Assuming each appointment is 1 hour long
                     User = match.Key,
-                    Company = match.Value[i],
+                    Company = appointmentInfo.Item1,
                 });
             }
         }
 
         await studentCompanyService.DeleteAppointments(model.AcademicProgramId);
-        
         await studentCompanyService.SaveAppointments(appointments);
         return Ok();
     }
+
 }

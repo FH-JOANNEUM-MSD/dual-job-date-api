@@ -9,8 +9,9 @@ public interface IStudentCompanyService
     Task<StudentCompany?> GetStudentCompanyByIdAsync(int id);
     Task<StudentCompany?> CreateStudentCompanyAsync(bool like, int companyId, string studentId);
     Task<bool> DeleteStudentCompanyAsync(int id);
-    Dictionary<User, List<Company>> MatchCompaniesToStudents(List<User> students, List<Company> companies,
-        int matchesPerStudent = 6);
+
+    Dictionary<User, List<Tuple<Company, DateTime>>> MatchCompaniesToStudents(List<User> students,
+        List<Company> companies, MatchModel model);
 
     Task SaveAppointments(List<Appointment> appointments);
 

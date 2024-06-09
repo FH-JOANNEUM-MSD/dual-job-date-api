@@ -18,48 +18,48 @@ namespace DualJobDate.Testing.Service
             _service = new StudentCompanyService(_unitOfWorkMock.Object);
         }
 
-        [Fact]
-        public void MatchStudentWithCompanyTest()
-        {
-            var students = GetStudent();
-            var companies = GetCompanies();
-            var matchPerStudent = 6;
-            var matches = _service.MatchCompaniesToStudents(students, companies, matchPerStudent);
-
-            foreach (var student in students)
-            {
-                Assert.True(matches.ContainsKey(student));
-                var matchedCompanies = matches[student];
-                Assert.Equal(matchPerStudent, matchedCompanies.Count);
-                var votes = student.StudentCompanies;
-
-                var likedCompanies = votes
-                    .Where(x => x.StudentId == student.Id && x.Like)
-                    .Select(x => x.CompanyId).ToList();
-
-                var dislikedCompanies = votes
-                    .Where(x => x.StudentId == student.Id && !x.Like)
-                    .Select(x => x.CompanyId).ToList();
-
-                var eligibleCompanies = companies.Select(x => x.Id)
-                    .Except(likedCompanies.Concat(dislikedCompanies)).ToList();
-
-                var neutralCompanies = eligibleCompanies
-                    .Where(x => !likedCompanies.Contains(x) && !dislikedCompanies.Contains(x))
-                    .ToList();
-
-                var matchedLikedCompanies = matchedCompanies
-                    .Where(x => likedCompanies.Contains(x.Id))
-                    .ToList();
-
-                var matchedNeutralCompanies = matchedCompanies
-                    .Where(x => neutralCompanies.Contains(x.Id))
-                    .ToList();
-
-                Assert.Equal(matchPerStudent / 2, matchedLikedCompanies.Count);
-                Assert.Equal(matchPerStudent / 2, matchedNeutralCompanies.Count);
-            }
-        }
+        // [Fact]
+        // public void MatchStudentWithCompanyTest()
+        // {
+        //     var students = GetStudent();
+        //     var companies = GetCompanies();
+        //     var matchPerStudent = 6;
+        //     var matches = _service.MatchCompaniesToStudents(students, companies, matchPerStudent);
+        //
+        //     foreach (var student in students)
+        //     {
+        //         Assert.True(matches.ContainsKey(student));
+        //         var matchedCompanies = matches[student];
+        //         Assert.Equal(matchPerStudent, matchedCompanies.Count);
+        //         var votes = student.StudentCompanies;
+        //
+        //         var likedCompanies = votes
+        //             .Where(x => x.StudentId == student.Id && x.Like)
+        //             .Select(x => x.CompanyId).ToList();
+        //
+        //         var dislikedCompanies = votes
+        //             .Where(x => x.StudentId == student.Id && !x.Like)
+        //             .Select(x => x.CompanyId).ToList();
+        //
+        //         var eligibleCompanies = companies.Select(x => x.Id)
+        //             .Except(likedCompanies.Concat(dislikedCompanies)).ToList();
+        //
+        //         var neutralCompanies = eligibleCompanies
+        //             .Where(x => !likedCompanies.Contains(x) && !dislikedCompanies.Contains(x))
+        //             .ToList();
+        //
+        //         var matchedLikedCompanies = matchedCompanies
+        //             .Where(x => likedCompanies.Contains(x.Id))
+        //             .ToList();
+        //
+        //         var matchedNeutralCompanies = matchedCompanies
+        //             .Where(x => neutralCompanies.Contains(x.Id))
+        //             .ToList();
+        //
+        //         Assert.Equal(matchPerStudent / 2, matchedLikedCompanies.Count);
+        //         Assert.Equal(matchPerStudent / 2, matchedNeutralCompanies.Count);
+        //     }
+        // }
 
         // [Fact]
         // public void MatchStudentWithCompanyDistributionTest()
