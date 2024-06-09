@@ -1,0 +1,138 @@
+name: .NET CI/CD Pipeline
+
+on:
+  push:
+    branches: 
+      - dev
+  pull_request:
+    branches:
+      - dev
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: '8.0'
+
+    - name: Restore dependencies
+      working-directory: DualJobDateAPI
+      run: dotnet restore DualJobDateAPI.sln
+
+    - name: Build
+      working-directory: DualJobDateAPI
+      run: dotnet build --no-restore -c Release
+
+    - name: Cache NuGet Packages
+      uses: actions/cache@v2
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: ${{ runner.os }}-nuget-
+
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: '8.0'
+    - name: Restore dependencies
+      working-directory: DualJobDateAPI
+      run: dotnet restore DualJobDateAPI.sln
+    - name: Run Tests
+      working-directory: DualJobDateAPI
+      run: |
+        dotnet test DualJobDateAPI.sln --collect:"Xplat Code Coverage" --results-directory ./TestResults
+        dotnet ~/.nuget/packages/reportgenerator/5.2.5/tools/net8.0/ReportGenerator.dll -reports:./TestResults/*/coverage.cobertura.xml -targetdir:coveragereport
+    - name: Upload Coverage Report
+      uses: actions/upload-artifact@v2
+      with:
+        name: coverage-report
+        path: DualJobDateAPI/coveragereport/
+      
+  build-and-push-docker:
+    permissions:
+      contents: read
+      packages: write
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Convert to lowercase
+      run: |
+        echo "IMAGE_NAME=${IMAGE_NAME@L}" >> "${GITHUB_ENV}"
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./DualJobDateAPI
+        push: true
+        tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:build-develop
+
+  notify_failure:
+    name: Notify on Build, Test or Dockerization Failure
+    runs-on: ubuntu-latest
+    needs: [build, test, build-and-push-docker]
+    if: failure()
+    steps:
+      - name: Get Committer Username
+        id: commit_info
+        run: echo "::set-output name=COMMITTER::$(git log -1 --pretty=format:'%an')"
+      - name: Send Discord Notification on Failure
+        env:
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+          WORKFLOW: ${{ github.workflow }}
+          BRANCH: ${{ github.ref_name }}
+          REPOSITORY: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+          SERVER_URL: ${{ github.server_url }}
+          AUTHOR: ${{ github.event.head_commit.author.name }}
+        run: |
+          set -e
+          curl -H "Content-Type: application/json" \
+          -X POST \
+          -d "{\"content\": \"❌❌ **Workflow Failed:** $WORKFLOW\n**Branch:** $BRANCH\n**Repository:** $REPOSITORY\n**Link:** $SERVER_URL/$REPOSITORY/actions/runs/$RUN_ID\n**Committer:** @$AUTHOR\"}" \
+          $WEBHOOK_URL || exit 1
+
+  notify_success:
+    name: Notify on Build, Test or Dockerization Success
+    runs-on: ubuntu-latest
+    needs: [build, test, build-and-push-docker]
+    if: success()
+    steps:
+      - name: Get Committer Username
+        id: commit_info
+        run: echo "::set-output name=COMMITTER::$(git log -1 --pretty=format:'%an')"
+      
+      - name: Send Discord Notification on Success
+        env:
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+          WORKFLOW: ${{ github.workflow }}
+          BRANCH: ${{ github.ref_name }}
+          REPOSITORY: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+          SERVER_URL: ${{ github.server_url }}
+          AUTHOR: ${{ github.event.head_commit.author.name }}
+        run: |
+          curl -H "Content-Type: application/json" \
+          -X POST \
+          -d "{\"content\": \"✅ **Workflow succeeded:** $WORKFLOW\n**Branch:** $BRANCH\n**Repository:** $REPOSITORY\n**Link:** $SERVER_URL/$REPOSITORY/actions/runs/$RUN_ID\n**Committer:** $AUTHOR\"}" \
+          $WEBHOOK_URL

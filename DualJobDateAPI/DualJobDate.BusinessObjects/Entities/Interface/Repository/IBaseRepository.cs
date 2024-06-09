@@ -1,12 +1,14 @@
-﻿namespace DualJobDate.BusinessObjects.Entities.Interface.Repository
+﻿namespace DualJobDate.BusinessObjects.Entities.Interface.Repository;
+
+public interface IBaseRepository<T> : IDisposable
 {
-    public interface IBaseRepository<T> : IDisposable
-    {
-        Task<T?> GetByIdAsync(int id);
-        Task<IQueryable<T>> GetAllAsync();
-        Task AddAsync(T entity);
-        Task UpdateAsync(T entity);
-        Task DeleteAsync(int id);
-        Task SaveAsync();
-    }
+    Task<T?> GetByIdAsync(int id);
+    Task<IQueryable<T>> GetAllAsync();
+    Task AddAsync(T entity);
+    Task UpdateAsync(T entity);
+    Task DeleteAsync(int id);
+    Task AddRangeAsync(IEnumerable<T> entities);
+    Task SaveAsync();
+
+    Task DeleteRangeAsync(IEnumerable<T> entities);
 }

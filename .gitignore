@@ -1,4 +1,3 @@
-/DualJobDateAPI/DualJobDate.DataAccess/Migrations/*
 
 # macOS
 *.DS_Store
@@ -306,3 +305,5 @@ __pycache__/
 *.odx.cs
 *.xsd.cs
 
+
+dual-dating-test.config

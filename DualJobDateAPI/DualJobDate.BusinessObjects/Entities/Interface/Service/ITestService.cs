@@ -1,7 +1,6 @@
-﻿namespace DualJobDate.BusinessObjects.Entities.Interface.Service
+﻿namespace DualJobDate.BusinessObjects.Entities.Interface.Service;
+
+public interface ITestService
 {
-    public interface ITestService
-    {
-        public Task Test();
-    }
+    public Task Test();
 }
