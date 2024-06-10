@@ -205,8 +205,8 @@ internal class Program
         app.UseAuthentication();
         app.UseAuthorization();
 
-        app.UseSwagger();
-        app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "DualJobDate API v1"));
+        //app.UseSwagger();
+        //app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "DualJobDate API v1"));
 
         app.MapControllers();
         app.MapGet("/", () => "DualJobDate API.");

@@ -8,6 +8,7 @@ using DualJobDate.BusinessObjects.Entities.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace DualJobDate.Api.Controllers;
 
@@ -21,7 +22,7 @@ public class UtilController(IUtilService utilService,    ICompanyService company
     [HttpGet("Institutions")]
     public async Task<ActionResult<IEnumerable<InstitutionDto>>> GetInstitutions()
     {
-        var institutions = await utilService.GetInstitutionsAsync();
+        var institutions = await utilService.GetInstitutionsAsync().Result.Where(x => x.KeyName != "admin").ToListAsync();
         var institutionResources = mapper.Map<IEnumerable<Institution>, IEnumerable<InstitutionDto>>(institutions);
         return Ok(institutionResources);
     }
@@ -30,7 +31,7 @@ public class UtilController(IUtilService utilService,    ICompanyService company
     [HttpGet("AcademicPrograms")]
     public async Task<ActionResult<IEnumerable<AcademicProgramDto>>> GetAcademicPrograms(int? institutionId)
     {
-        var academicPrograms = await utilService.GetAcademicProgramsAsync(institutionId);
+        var academicPrograms = await utilService.GetAcademicProgramsAsync(institutionId).Result.Where(x => x.KeyName != "admin").ToListAsync();
         var academicProgramResources =
             mapper.Map<IEnumerable<AcademicProgram>, IEnumerable<AcademicProgramDto>>(academicPrograms);
         return Ok(academicProgramResources);
