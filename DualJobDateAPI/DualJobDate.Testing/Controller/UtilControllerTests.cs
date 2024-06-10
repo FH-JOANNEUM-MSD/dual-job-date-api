@@ -36,21 +36,22 @@ public class UtilControllerTests {
         // Arrange
         var institutions = new List<Institution>
         {
-            new Institution { Id = 1, Name = "Institution 1" },
-            new Institution { Id = 2, Name = "Institution 2" }
+            new Institution { Id = 1, Name = "Institution 1", KeyName = "1"},
+            new Institution { Id = 2, Name = "Institution 2", KeyName = "2"},
+            new Institution { Id = 3, Name = "Admin Institution", KeyName = "admin"}
         };
-        
+
         var institutionsMock = institutions.AsQueryable().BuildMockDbSet().Object;
 
         _utilServiceMock.Setup(service => service.GetInstitutionsAsync()).ReturnsAsync(institutionsMock);
 
         var institutionDtos = new List<InstitutionDto>
         {
-            new InstitutionDto { Id = 1, Name = "Institution 1" },
-            new InstitutionDto { Id = 2, Name = "Institution 2" }
+            new InstitutionDto { Id = 1, Name = "Institution 1", KeyName = "1"},
+            new InstitutionDto { Id = 2, Name = "Institution 2", KeyName = "2"}
         };
 
-        _mapperMock.Setup(mapper => mapper.Map<IEnumerable<Institution>, IEnumerable<InstitutionDto>>(institutionsMock))
+        _mapperMock.Setup(mapper => mapper.Map<IEnumerable<Institution>, IEnumerable<InstitutionDto>>(It.Is<IEnumerable<Institution>>(x => x.Count() == 2)))
             .Returns(institutionDtos);
 
         // Act
@@ -62,6 +63,7 @@ public class UtilControllerTests {
         Assert.Equal(institutionDtos.Count, returnedInstitutions.Count());
     }
 
+
     [Fact]
     public async Task GetAcademicPrograms_ReturnsListOfAcademicPrograms()
     {
@@ -70,8 +72,9 @@ public class UtilControllerTests {
 
         var academicPrograms = new List<AcademicProgram>
         {
-            new AcademicProgram { Id = 1, Name = "Program 1", InstitutionId = 1 },
-            new AcademicProgram { Id = 2, Name = "Program 2", InstitutionId = 1 }
+            new AcademicProgram { Id = 1, Name = "Program 1", InstitutionId = 1, KeyName = "1" },
+            new AcademicProgram { Id = 2, Name = "Program 2", InstitutionId = 1, KeyName = "2" },
+            new AcademicProgram { Id = 3, Name = "Admin Program", InstitutionId = 1, KeyName = "admin" }
         };
 
         var programs = academicPrograms.AsQueryable().BuildMockDbSet().Object;
@@ -85,7 +88,7 @@ public class UtilControllerTests {
         };
 
         _mapperMock.Setup(mapper =>
-                mapper.Map<IEnumerable<AcademicProgram>, IEnumerable<AcademicProgramDto>>(programs))
+                mapper.Map<IEnumerable<AcademicProgram>, IEnumerable<AcademicProgramDto>>(It.Is<IEnumerable<AcademicProgram>>(x => x.Count() == 2)))
             .Returns(academicProgramDtos);
 
         // Act
@@ -96,6 +99,7 @@ public class UtilControllerTests {
         var returnedAcademicPrograms = Assert.IsAssignableFrom<IEnumerable<AcademicProgramDto>>(okResult.Value);
         Assert.Equal(academicProgramDtos.Count, returnedAcademicPrograms.Count());
     }
+
 
     [Fact]
     public async Task PostAcademicProgram_CreatesNewAcademicProgram_ReturnsCreatedResource()
