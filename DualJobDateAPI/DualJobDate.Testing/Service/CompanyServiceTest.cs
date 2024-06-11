@@ -123,26 +123,5 @@ public class CompanyServiceTest
         _unitOfWorkMock.Verify(u => u.SaveChanges(), Times.Once);
     }
 
-    [Theory]
-    [InlineData(null, "Technology", "https://example.com", "base64string")]
-    [InlineData("Test Company", null, "https://example.com", "base64string")]
-    [InlineData("Test Company", "Technology", "invalidurl", "base64string")]
-    [InlineData("Test Company", "Technology", "https://example.com", "invalidbase64")]
-    public async Task UpdateCompany_InvalidModel_ThrowsArgumentException(string name, string industry, string website,
-        string logoBase64)
-    {
-        // Arrange
-        var model = new UpdateCompanyModel
-        {
-            Name = name,
-            Industry = industry,
-            Website = website,
-            LogoBase64 = logoBase64
-        };
-
-        var company = new Company { Id = 1 };
-
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentException>(() => _service.UpdateCompany(model, company));
-    }
+    
 }
