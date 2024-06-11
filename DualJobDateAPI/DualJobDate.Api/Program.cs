@@ -198,7 +198,7 @@ internal class Program
                 logger.LogError(e, "An error occurred while migrating the database.");
             }
         }
-        DbSeeder.SeedData(services).Wait();
+        //DbSeeder.SeedData(services).Wait();
         app.UseCors();
 
         app.UseRouting();

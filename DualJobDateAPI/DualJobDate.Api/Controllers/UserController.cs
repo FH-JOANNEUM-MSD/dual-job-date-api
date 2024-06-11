@@ -35,7 +35,7 @@ public class UserController(
     private const string LowerCase = "abcdefghijklmnopqrstuvwxyz";
     private const string UpperCase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     private const string Digits = "0123456789";
-    private const string SpecialChars = "!@#$%^&*()_-+=[{]};:<>|./?";
+    private const string SpecialChars = "!";
     private static readonly EmailAddressAttribute EmailAddressAttribute = new();
 
 
