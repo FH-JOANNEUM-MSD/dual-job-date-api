@@ -67,11 +67,6 @@ public class CompanyService(IUnitOfWork unitOfWork, UserManager<User> userManage
         {
             throw new ArgumentException("Industry cannot be null or whitespace.");
         }
-    
-        if (!string.IsNullOrWhiteSpace(model.Website) && !Uri.IsWellFormedUriString(model.Website, UriKind.Absolute))
-        {
-            throw new ArgumentException("Website must be a valid URL.");
-        }
 
         if (!string.IsNullOrWhiteSpace(model.LogoBase64) && !IsBase64String(model.LogoBase64))
         {
